@@ -21,7 +21,7 @@
           "dependency",
           "import"
         ],
-        "always_load": false
+        "always_load": true
       },
       "priority": 1
     },
@@ -141,6 +141,7 @@
           "tool",
           "interrupt"
         ],
+        "min_keyword_matches": 2,
         "always_load": false
       },
       "priority": 6
@@ -168,6 +169,7 @@
           "helm",
           "kubernetes"
         ],
+        "min_keyword_matches": 2,
         "always_load": false
       },
       "priority": 7
@@ -197,7 +199,29 @@
       "priority": 8
     },
     {
+      "skill": "github-actions",
+      "triggers": {
+        "files": [
+          ".github/workflows/*.yml",
+          ".github/workflows/*.yaml"
+        ],
+        "keywords": [
+          "github actions",
+          "ci",
+          "workflow",
+          "lint job",
+          "test job",
+          "deploy",
+          "matrix",
+          "pipeline"
+        ],
+        "always_load": false
+      },
+      "priority": 9
+    },
+    {
       "skill": "design-doc-creator",
+      "optional": true,
       "triggers": {
         "files": [
           "design-doc.md",
@@ -214,10 +238,11 @@
         ],
         "always_load": false
       },
-      "priority": 9
+      "priority": 10
     },
     {
       "skill": "skill-developer",
+      "optional": true,
       "triggers": {
         "files": [
           ".claude/skills/**"
@@ -230,7 +255,7 @@
         ],
         "always_load": false
       },
-      "priority": 10
+      "priority": 11
     },
     {
       "skill": "nlp-slm-patterns",
@@ -254,7 +279,7 @@
         ],
         "always_load": false
       },
-      "priority": 11
+      "priority": 12
     },
     {
       "skill": "predictive-analytics",
@@ -278,7 +303,7 @@
         ],
         "always_load": false
       },
-      "priority": 12
+      "priority": 13
     },
     {
       "skill": "rag-vector-db",
@@ -303,7 +328,7 @@
         ],
         "always_load": false
       },
-      "priority": 13
+      "priority": 14
     }
   ],
   "context_management": {

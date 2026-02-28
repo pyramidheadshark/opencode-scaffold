@@ -270,5 +270,52 @@ class TestCLAUDEmd(unittest.TestCase):
                 )
 
 
+class TestSkillMetadata(unittest.TestCase):
+    def test_every_skill_has_metadata_file(self):
+        for skill_dir in get_all_skill_dirs():
+            with self.subTest(skill=skill_dir.name):
+                self.assertTrue(
+                    (skill_dir / "skill-metadata.json").exists(),
+                    f"Skill '{skill_dir.name}' is missing skill-metadata.json"
+                )
+
+    def test_metadata_has_required_fields(self):
+        for skill_dir in get_all_skill_dirs():
+            metadata_path = skill_dir / "skill-metadata.json"
+            if not metadata_path.exists():
+                continue
+            with self.subTest(skill=skill_dir.name):
+                data = json.loads(metadata_path.read_text(encoding="utf-8"))
+                self.assertIn("version", data, f"{skill_dir.name}/skill-metadata.json missing 'version'")
+                self.assertIn("updated", data, f"{skill_dir.name}/skill-metadata.json missing 'updated'")
+                self.assertIn("size_lines", data, f"{skill_dir.name}/skill-metadata.json missing 'size_lines'")
+
+    def test_metadata_size_lines_is_accurate(self):
+        tolerance = 10
+        for skill_dir in get_all_skill_dirs():
+            metadata_path = skill_dir / "skill-metadata.json"
+            skill_md = skill_dir / "SKILL.md"
+            if not metadata_path.exists() or not skill_md.exists():
+                continue
+            data = json.loads(metadata_path.read_text(encoding="utf-8"))
+            actual_lines = len(skill_md.read_text(encoding="utf-8").splitlines())
+            declared_lines = data.get("size_lines", 0)
+            with self.subTest(skill=skill_dir.name):
+                self.assertAlmostEqual(
+                    actual_lines, declared_lines, delta=tolerance,
+                    msg=f"{skill_dir.name}/skill-metadata.json size_lines={declared_lines} but SKILL.md has {actual_lines} lines"
+                )
+
+    def test_min_keyword_matches_is_valid_if_present(self):
+        rules = load_skill_rules()
+        for rule in rules["rules"]:
+            triggers = rule.get("triggers", {})
+            if "min_keyword_matches" in triggers:
+                with self.subTest(skill=rule["skill"]):
+                    value = triggers["min_keyword_matches"]
+                    self.assertIsInstance(value, int, f"{rule['skill']}: min_keyword_matches must be int")
+                    self.assertGreaterEqual(value, 2, f"{rule['skill']}: min_keyword_matches should be >= 2")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

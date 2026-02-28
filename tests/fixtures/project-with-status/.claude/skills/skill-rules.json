@@ -1,309 +1,44 @@
 {
   "version": "1.0",
-  "description": "Skill auto-activation rules for ml-claude-infra",
+  "description": "Test fixture skill rules",
   "rules": [
     {
       "skill": "python-project-standards",
       "triggers": {
-        "files": [
-          "pyproject.toml",
-          "*.py",
-          ".pre-commit-config.yaml",
-          "uv.lock"
-        ],
-        "keywords": [
-          "lint",
-          "ruff",
-          "mypy",
-          "type hint",
-          "pre-commit",
-          "uv",
-          "dependency",
-          "import"
-        ],
-        "always_load": false
+        "files": ["pyproject.toml", "*.py"],
+        "keywords": ["lint", "ruff", "mypy", "pre-commit", "uv"],
+        "always_load": true
       },
       "priority": 1
     },
     {
       "skill": "fastapi-patterns",
       "triggers": {
-        "files": [
-          "main.py",
-          "routers/*.py",
-          "api/*.py",
-          "services/*.py",
-          "adapters/*.py"
-        ],
-        "keywords": [
-          "fastapi",
-          "router",
-          "endpoint",
-          "pydantic",
-          "dependency injection",
-          "middleware",
-          "lifespan"
-        ],
+        "files": ["main.py", "api/*.py"],
+        "keywords": ["fastapi", "router", "endpoint"],
         "always_load": false
       },
       "priority": 2
     },
     {
-      "skill": "htmx-frontend",
+      "skill": "langgraph-patterns",
       "triggers": {
-        "files": [
-          "templates/*.html",
-          "static/*.js",
-          "static/*.css",
-          "*.jinja2"
-        ],
-        "keywords": [
-          "htmx",
-          "jinja",
-          "template",
-          "frontend",
-          "hx-get",
-          "hx-post",
-          "html"
-        ],
+        "files": ["graph.py", "agent*.py"],
+        "keywords": ["langgraph", "state", "graph", "node"],
+        "min_keyword_matches": 2,
         "always_load": false
       },
       "priority": 3
     },
     {
-      "skill": "ml-data-handling",
+      "skill": "design-doc-creator",
+      "optional": true,
       "triggers": {
-        "files": [
-          "*.pkl",
-          "*.onnx",
-          "*.parquet",
-          "*.feather",
-          "data/*.py",
-          "datasets/*.py"
-        ],
-        "keywords": [
-          "pickle",
-          "onnx",
-          "parquet",
-          "s3",
-          "dataset",
-          "dataframe",
-          "artifact",
-          "dvc"
-        ],
+        "files": ["design-doc.md"],
+        "keywords": ["design document", "design doc"],
         "always_load": false
       },
       "priority": 4
-    },
-    {
-      "skill": "multimodal-router",
-      "triggers": {
-        "files": [
-          "*.pdf",
-          "*.docx",
-          "*.xlsx",
-          "*.mp4",
-          "*.mp3"
-        ],
-        "keywords": [
-          "pdf",
-          "document",
-          "image analysis",
-          "video",
-          "multimodal",
-          "gemini",
-          "openrouter",
-          "large document"
-        ],
-        "always_load": false
-      },
-      "priority": 5
-    },
-    {
-      "skill": "langgraph-patterns",
-      "triggers": {
-        "files": [
-          "graph.py",
-          "agent*.py",
-          "pipeline*.py",
-          "workflow*.py",
-          "nodes/*.py",
-          "edges/*.py"
-        ],
-        "keywords": [
-          "langgraph",
-          "state",
-          "graph",
-          "node",
-          "edge",
-          "checkpointer",
-          "agent",
-          "tool",
-          "interrupt"
-        ],
-        "always_load": false
-      },
-      "priority": 6
-    },
-    {
-      "skill": "infra-yandex-cloud",
-      "triggers": {
-        "files": [
-          "*.tf",
-          "*.pkr.hcl",
-          "*.tfvars",
-          "infra/*.py",
-          "Dockerfile",
-          "docker-compose.yml"
-        ],
-        "keywords": [
-          "terraform",
-          "packer",
-          "yandex",
-          "yc",
-          "docker",
-          "container",
-          "vm",
-          "instance",
-          "helm",
-          "kubernetes"
-        ],
-        "always_load": false
-      },
-      "priority": 7
-    },
-    {
-      "skill": "test-first-patterns",
-      "triggers": {
-        "files": [
-          "tests/**/*.py",
-          "conftest.py",
-          "*.feature",
-          "pytest.ini"
-        ],
-        "keywords": [
-          "test",
-          "pytest",
-          "bdd",
-          "gherkin",
-          "fixture",
-          "mock",
-          "assert",
-          "coverage",
-          "tdd"
-        ],
-        "always_load": false
-      },
-      "priority": 8
-    },
-    {
-      "skill": "design-doc-creator",
-      "triggers": {
-        "files": [
-          "design-doc.md",
-          "DESIGN.md"
-        ],
-        "keywords": [
-          "design document",
-          "design doc",
-          "requirements",
-          "dizayn",
-          "ttz",
-          "functional requirements",
-          "nfr"
-        ],
-        "always_load": false
-      },
-      "priority": 9
-    },
-    {
-      "skill": "skill-developer",
-      "triggers": {
-        "files": [
-          ".claude/skills/**"
-        ],
-        "keywords": [
-          "create skill",
-          "new skill",
-          "skill template",
-          "skill-rules"
-        ],
-        "always_load": false
-      },
-      "priority": 10
-    },
-    {
-      "skill": "nlp-slm-patterns",
-      "triggers": {
-        "files": [
-          "*.py"
-        ],
-        "keywords": [
-          "nlp",
-          "slm",
-          "anonymiz",
-          "presidio",
-          "spacy",
-          "ner",
-          "ollama",
-          "vllm",
-          "local model",
-          "transformers",
-          "pii",
-          "анонимизац"
-        ],
-        "always_load": false
-      },
-      "priority": 11
-    },
-    {
-      "skill": "predictive-analytics",
-      "triggers": {
-        "files": [
-          "ml/*.py",
-          "features/*.py",
-          "mlruns/**"
-        ],
-        "keywords": [
-          "sklearn",
-          "scikit",
-          "mlflow",
-          "classifier",
-          "regressor",
-          "feature engineering",
-          "cross-validation",
-          "training",
-          "optuna",
-          "shap"
-        ],
-        "always_load": false
-      },
-      "priority": 12
-    },
-    {
-      "skill": "rag-vector-db",
-      "triggers": {
-        "files": [
-          "adapters/vector*.py",
-          "adapters/qdrant*.py",
-          "services/rag*.py",
-          "services/ingestion*.py"
-        ],
-        "keywords": [
-          "qdrant",
-          "pgvector",
-          "embedding",
-          "vector store",
-          "chunking",
-          "rag",
-          "retrieval",
-          "ingestion pipeline",
-          "knowledge base",
-          "semantic search"
-        ],
-        "always_load": false
-      },
-      "priority": 13
     }
   ],
   "context_management": {

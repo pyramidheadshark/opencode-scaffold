@@ -2,12 +2,13 @@
 # deploy.sh — copy ml-claude-infra into a target project directory
 #
 # Usage:
-#   ./scripts/deploy.sh <target-dir> [--skills skill1,skill2,...|--all] [--with-tests]
+#   ./scripts/deploy.sh <target-dir> [--skills skill1,skill2,...|--all] [--with-tests] [--include-meta]
 #
 # Examples:
 #   ./scripts/deploy.sh ~/Repos/my-project --all
 #   ./scripts/deploy.sh ~/Repos/my-project --skills python-project-standards,fastapi-patterns,test-first-patterns
 #   ./scripts/deploy.sh ~/Repos/my-project --all --with-tests
+#   ./scripts/deploy.sh ~/Repos/my-project --all --include-meta
 
 set -euo pipefail
 
@@ -26,6 +27,7 @@ ALL_SKILLS=(
   predictive-analytics
   infra-yandex-cloud
   test-first-patterns
+  github-actions
   design-doc-creator
   skill-developer
 )
@@ -41,6 +43,7 @@ TARGET_DIR=""
 SELECTED_SKILLS=()
 USE_ALL=false
 WITH_TESTS=false
+INCLUDE_META=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -54,6 +57,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --with-tests)
       WITH_TESTS=true
+      shift
+      ;;
+    --include-meta)
+      INCLUDE_META=true
       shift
       ;;
     -h|--help)
@@ -91,10 +98,11 @@ fi
 
 echo ""
 echo "=== ml-claude-infra deploy ==="
-echo "Source : $INFRA_DIR"
-echo "Target : $TARGET_DIR"
-echo "Skills : ${SELECTED_SKILLS[*]}"
-echo "Tests  : $WITH_TESTS"
+echo "Source       : $INFRA_DIR"
+echo "Target       : $TARGET_DIR"
+echo "Skills       : ${SELECTED_SKILLS[*]}"
+echo "Tests        : $WITH_TESTS"
+echo "Include meta : $INCLUDE_META"
 echo ""
 
 mkdir -p "$TARGET_DIR"
@@ -133,7 +141,12 @@ for skill in "${SELECTED_SKILLS[@]}"; do
 done
 
 echo "[4b/5] Generating skill-rules.json for selected skills..."
+GENERATE_ARGS=()
+if [[ "$INCLUDE_META" == false ]]; then
+  GENERATE_ARGS+=("--exclude-optional")
+fi
 python "$INFRA_DIR/scripts/generate_skill_rules.py" \
+  "${GENERATE_ARGS[@]}" \
   "$INFRA_DIR/.claude/skills/skill-rules.json" \
   "$TARGET_DIR/.claude/skills/skill-rules.json" \
   "${SELECTED_SKILLS[@]}"

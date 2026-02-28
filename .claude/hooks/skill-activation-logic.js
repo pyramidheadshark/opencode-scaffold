@@ -19,6 +19,7 @@ function matchSkills(rules, prompt, changedFiles, maxSkills) {
 
   for (const rule of rules) {
     if (matched.length >= maxSkills) break;
+    if (rule.optional) continue;
 
     const triggers = rule.triggers || {};
     let hit = false;
@@ -28,7 +29,11 @@ function matchSkills(rules, prompt, changedFiles, maxSkills) {
     }
 
     if (!hit && triggers.keywords) {
-      hit = triggers.keywords.some((kw) => promptLower.includes(kw.toLowerCase()));
+      const minMatches = triggers.min_keyword_matches || 1;
+      const matchCount = triggers.keywords.filter((kw) =>
+        promptLower.includes(kw.toLowerCase())
+      ).length;
+      if (matchCount >= minMatches) hit = true;
     }
 
     if (!hit && triggers.files && changedFiles.length > 0) {

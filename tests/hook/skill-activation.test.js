@@ -122,6 +122,89 @@ describe("matchSkills", () => {
   });
 });
 
+describe("matchSkills — optional rules", () => {
+  const rulesWithOptional = [
+    {
+      skill: "python-project-standards",
+      triggers: { keywords: ["pyproject", "python"], files: ["pyproject.toml"] },
+      priority: 1,
+    },
+    {
+      skill: "design-doc-creator",
+      optional: true,
+      triggers: { keywords: ["design document", "design doc"], files: ["design-doc.md"] },
+      priority: 2,
+    },
+  ];
+
+  test("skips optional skills even when keywords match", () => {
+    const matched = matchSkills(rulesWithOptional, "write a design document for me", [], 3);
+    expect(matched).not.toContain("design-doc-creator");
+  });
+
+  test("still matches non-optional skills when optional ones are present", () => {
+    const matched = matchSkills(rulesWithOptional, "pyproject design document", [], 3);
+    expect(matched).toContain("python-project-standards");
+    expect(matched).not.toContain("design-doc-creator");
+  });
+});
+
+describe("matchSkills — min_keyword_matches", () => {
+  const rulesWithMin = [
+    {
+      skill: "langgraph-patterns",
+      triggers: {
+        keywords: ["langgraph", "state", "graph", "node"],
+        min_keyword_matches: 2,
+        files: ["graph.py"],
+      },
+      priority: 1,
+    },
+  ];
+
+  test("does not activate with 1 keyword match when min_keyword_matches is 2", () => {
+    const matched = matchSkills(rulesWithMin, "how does this graph work", [], 3);
+    expect(matched).not.toContain("langgraph-patterns");
+  });
+
+  test("activates with 2 or more keyword matches", () => {
+    const matched = matchSkills(rulesWithMin, "langgraph state machine setup", [], 3);
+    expect(matched).toContain("langgraph-patterns");
+  });
+
+  test("activates on file match regardless of min_keyword_matches", () => {
+    const matched = matchSkills(rulesWithMin, "update this", ["graph.py"], 3);
+    expect(matched).toContain("langgraph-patterns");
+  });
+});
+
+describe("matchSkills — always_load with optional filter", () => {
+  const mixedRules = [
+    {
+      skill: "python-project-standards",
+      triggers: { always_load: true, keywords: [], files: [] },
+      priority: 1,
+    },
+    {
+      skill: "skill-developer",
+      optional: true,
+      triggers: { keywords: ["create skill", "new skill"], files: [] },
+      priority: 2,
+    },
+  ];
+
+  test("always_load non-optional skill is always included", () => {
+    const matched = matchSkills(mixedRules, "write me a poem about clouds", [], 3);
+    expect(matched).toContain("python-project-standards");
+  });
+
+  test("optional skill is never included even with matching keyword", () => {
+    const matched = matchSkills(mixedRules, "create skill for my project", [], 3);
+    expect(matched).toContain("python-project-standards");
+    expect(matched).not.toContain("skill-developer");
+  });
+});
+
 describe("loadSkillContent", () => {
   const mockPath = { join: (...parts) => parts.join("/") };
 

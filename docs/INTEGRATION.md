@@ -91,9 +91,32 @@ For example: `"How should I structure pyproject.toml?"` should inject `python-pr
 | NLP / anonymization | `python-project-standards`, `nlp-slm-patterns`, `test-first-patterns` |
 
 **Skip these for most projects:**
-- `design-doc-creator` — only needed during the design phase of a new project
-- `skill-developer` — only if you're extending the infra itself
+- `design-doc-creator` — only needed during the design phase of a new project (meta-skill, `optional: true`)
+- `skill-developer` — only if you're extending the infra itself (meta-skill, `optional: true`)
 - `htmx-frontend` — only if using server-side rendering with HTMX
+
+### Meta-skills and `--include-meta`
+
+`design-doc-creator` and `skill-developer` are marked `"optional": true` in `skill-rules.json`. The hook **never loads them automatically**, even when keywords match. This prevents accidental token waste.
+
+To include them in a deploy:
+
+```bash
+./scripts/deploy.sh ~/Repos/my-project --all --include-meta
+```
+
+Without `--include-meta`, the deploy script excludes optional skills from the generated `skill-rules.json`.
+
+### Skills with `min_keyword_matches`
+
+Some skills use generic keywords that would fire too broadly. They require 2+ keyword matches before activating:
+
+| Skill | Why |
+|---|---|
+| `langgraph-patterns` | "graph", "node", "state" appear in many non-LangGraph contexts |
+| `infra-yandex-cloud` | "docker", "container" appear in general cloud prompts |
+
+A single generic keyword will not trigger these. Two or more specific keywords will.
 
 ---
 
@@ -204,7 +227,13 @@ python tests/infra/test_infra.py   # 27 structural tests
 Check trigger keywords in `skill-rules.json` match what you're typing. Keywords are matched case-insensitively against the full prompt text.
 
 ### On Windows: hook fails with stdin error
-The hook reads from `/dev/stdin` which requires Git Bash. Ensure Git Bash is in PATH and Claude Code terminal is configured to use it.
+The hook uses file descriptor `0` (stdin) which works cross-platform. If you see errors, ensure Node.js is in PATH and Claude Code terminal is Git Bash (not cmd/PowerShell).
+
+### On Windows: `npm run test:infra` fails with `python3 not found`
+The `test:infra` script falls back to `python` automatically. If both fail, run directly:
+```bash
+python tests/infra/test_infra.py
+```
 
 ### dev/status.md not loading
 The hook loads status only if `dev/status.md` exists at the project root. If missing, create it:

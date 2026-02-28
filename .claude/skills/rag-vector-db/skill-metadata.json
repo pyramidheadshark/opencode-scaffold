@@ -1,0 +1,6 @@
+{
+  "version": "1.1.0",
+  "updated": "2026-03-03",
+  "size_lines": 90,
+  "resources": ["chunking-strategies.md", "embeddings.md", "eval-ragas.md", "ingestion-pipeline.md", "pgvector-alternative.md", "qdrant-adapter.md", "reranking.md"]
+}
