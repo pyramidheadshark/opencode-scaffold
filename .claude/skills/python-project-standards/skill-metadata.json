@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-03-03",
+  "size_lines": 160,
+  "resources": ["gitignore.md", "pre-commit-config.md"]
+}
