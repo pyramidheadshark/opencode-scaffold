@@ -19,10 +19,10 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 - [x] Phase 2: Environment Setup
 - [x] Phase 3: Development Loop
 - [x] Phase 4: API Layer & Testing
-- [ ] Phase 5: CI/CD
-- [ ] Phase 6: Deploy
+- [x] Phase 5: CI/CD
+- [ ] Phase 6: Deploy (carry to real projects)
 
-**Active phase**: Phase 5 — CI/CD (add GitHub Actions for the infra repo itself)
+**Active phase**: Phase 6 — Deploy (ready for use in real projects)
 
 ---
 
@@ -30,14 +30,16 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 
 Tasks in priority order. Check off when done.
 
-- [ ] Add `.github/workflows/` for self-CI (lint JS, run Jest + Python tests)
-- [ ] Windows path compatibility in `skill-activation-prompt.js` (`/dev/stdin`)
-- [ ] Normalize `python3` → `python` in `package.json` for Windows
+- [ ] Deploy to first real project — verify hook, skills, dev/status.md in practice
 
 **Completed (most recent first):**
+- [x] Second iteration: 10 commits — fixes, features, tests, docs — 2026-03-03
+  - Ghost dirs removed, Windows stdin fixed, git status --porcelain, rag-vector-db refactor
+  - skill-rules: always_load, optional, min_keyword_matches; matchSkills updated
+  - New github-actions skill; skill-metadata.json for all 14 skills
+  - 37 Jest tests (incl. E2E), 31 Python infra tests; bilingual docs
+  - deploy.sh --include-meta; generate_skill_rules.py --exclude-optional
 - [x] Convert DOCX docs to Markdown, remove binary files — 2026-03-03
-- [x] Fix `loadStatusContent` to accept `path` as parameter (rm `require("path")` hardcode) — 2026-03-03
-- [x] Create `dev/status.md` and `.gitignore` — 2026-03-03
 - [x] Add full test suite (24 Jest + 27 Python infra tests) — v0.5.0 — 2026-03-02
 - [x] Add `rag-vector-db` skill, `init-design-doc` command, ADRs — v0.4.0 — 2026-03-02
 - [x] Add `nlp-slm-patterns` and `predictive-analytics` skills — v0.3.0 — 2026-03-02
@@ -48,25 +50,11 @@ Tasks in priority order. Check off when done.
 
 ## Known Issues and Solutions
 
-### Windows `python3` not found
-
-**Problem**: `npm run test:infra` fails with "`python3` is not recognized" on Windows
-**Root cause**: Windows uses `python`, not `python3`
-**Solution**: Run `python tests/infra/test_infra.py` directly, or update `package.json` to use `python` for Windows
-**Date**: 2026-03-03
-
 ### Python infra tests UnicodeDecodeError on Windows
 
 **Problem**: `read_text()` uses system default encoding (cp1251) instead of UTF-8
 **Root cause**: UTF-8 files with non-ASCII chars trigger cp1251 decode error
 **Solution**: Add `encoding="utf-8"` to all `read_text()` and `open()` calls in `test_infra.py`
-**Date**: 2026-03-03
-
-### loadStatusContent returns null on Windows
-
-**Problem**: Jest tests for `loadStatusContent` fail — function returns null instead of file content
-**Root cause**: `require("path").join()` on Windows produces backslash paths; mock fs uses forward slashes
-**Solution**: Remove `require("path")` hardcode; accept `path` as parameter and pass it from `buildInjections`
 **Date**: 2026-03-03
 
 ---
@@ -79,14 +67,17 @@ Tasks in priority order. Check off when done.
 | Skill compression | LLMLingua-2 strategy — header extraction + first 50 lines | 2026-03-02 |
 | Model routing | Explicit via `multimodal-router` skill, no auto-escalation | 2026-03-02 |
 | Test strategy | Jest for hook logic, Python unittest for infra contracts | 2026-03-02 |
+| python-project-standards | always_load: true (consumed 1 of 3 skill slots always) | 2026-03-03 |
+| Meta-skills | optional: true — never auto-loaded; require --include-meta in deploy | 2026-03-03 |
+| min_keyword_matches | langgraph-patterns=2, infra-yandex-cloud=2 (generic keywords) | 2026-03-03 |
 
 ---
 
 ## Next Session Plan
 
-1. Add `.github/workflows/` (lint + test CI for the infra repo itself)
-2. Fix `skill-activation-prompt.js` Windows path (`/dev/stdin` → cross-platform stdin read)
-3. Update `package.json` test:infra to use `python` on Windows
+1. Deploy to first real project via `python scripts/deploy.py`
+2. Fill dev/status.md with real project goal
+3. Verify skill injection in practice on first prompt
 
 ---
 
@@ -96,11 +87,13 @@ Tasks in priority order. Check off when done.
 |---|---|
 | `.claude/hooks/skill-activation-logic.js` | Core hook logic (testable, no Node deps) |
 | `.claude/hooks/skill-activation-prompt.js` | Entry point for `UserPromptSubmit` hook |
-| `.claude/skills/skill-rules.json` | Trigger rules for all 13 skills |
-| `tests/hook/skill-activation.test.js` | Jest unit tests for hook logic |
-| `tests/infra/test_infra.py` | Python infra contract tests |
+| `.claude/skills/skill-rules.json` | Trigger rules for all 14 skills |
+| `tests/hook/skill-activation.test.js` | Jest unit tests (31 tests) |
+| `tests/hook/skill-activation-e2e.test.js` | Jest E2E tests (6 tests) |
+| `tests/infra/test_infra.py` | Python infra contract tests (31 tests) |
 | `docs/ARCHITECTURE.md` | ADRs and design decisions |
-| `docs/CHANGELOG.md` | Version history |
+| `docs/INTEGRATION.md` | EN integration guide |
+| `docs/INTEGRATION.ru.md` | RU integration guide |
 
 ---
 
