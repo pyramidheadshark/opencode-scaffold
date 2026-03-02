@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-hook:
+    name: Jest (hook logic + E2E)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - run: npm ci
+
+      - run: npm run test:hook
+
+  test-infra:
+    name: Python infra contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: python tests/infra/test_infra.py
+
+  validate-deploy:
+    name: Validate deploy.py
+    runs-on: ubuntu-latest
+    needs: [test-hook, test-infra]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Deploy to temp target (all skills)
+        run: |
+          python scripts/deploy.py /tmp/test-target --all
+
+      - name: Verify deployed structure
+        run: |
+          test -d /tmp/test-target/.claude/hooks
+          test -d /tmp/test-target/.claude/skills
+          test -d /tmp/test-target/.claude/agents
+          test -d /tmp/test-target/.claude/commands
+          test -f /tmp/test-target/.claude/skills/skill-rules.json
+          test -f /tmp/test-target/dev/status.md
+          echo "Deploy structure OK"
+
+      - name: Verify skill-rules excludes optional by default
+        run: |
+          python - <<'EOF'
+          import json
+          rules = json.load(open("/tmp/test-target/.claude/skills/skill-rules.json"))
+          skill_names = [r["skill"] for r in rules["rules"]]
+          assert "design-doc-creator" not in skill_names, "optional skill leaked into default deploy"
+          assert "skill-developer" not in skill_names, "optional skill leaked into default deploy"
+          assert "python-project-standards" in skill_names
+          print(f"Skill rules OK: {len(skill_names)} skills, no optional leakage")
+          EOF
