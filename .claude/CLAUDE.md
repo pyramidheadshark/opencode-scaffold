@@ -143,3 +143,4 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 - Hardcode secrets or model names as strings without constants
 - Start coding before design-doc.md exists and is approved
 - Add `Co-Authored-By: Claude` or any AI authorship footer to commit messages
+- **Commit `.claude/` to git in target projects** — it is a local developer tool, invisible to the repo. Always ensure `.claude/` is in the target project's `.gitignore` before or immediately after deploy. If accidentally committed: rewrite history to remove all traces.
