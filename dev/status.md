@@ -33,6 +33,13 @@ Tasks in priority order. Check off when done.
 - [ ] Deploy to first real project — verify hook, skills, dev/status.md in practice
 
 **Completed (most recent first):**
+- [x] Optimization sprint: 5 phases — 2026-03-04
+  - Phase 1: .claudeignore (node_modules, logs, cache, active/, *.jsonl, archives)
+  - Phase 2: skill line budget test (300 lines soft limit + check:budget script)
+  - Phase 3: SessionStart hook (platform detection, python_cmd, onboarding on first run)
+  - Phase 4: Skill efficiency metrics (skill-metrics.jsonl + npm run metrics report)
+  - Phase 5: Session cache (skill dedup + status.md hash-check per session)
+  - Tests: 35 Python infra, 63 Jest (was 31+37)
 - [x] Second iteration: 10 commits — fixes, features, tests, docs — 2026-03-03
   - Ghost dirs removed, Windows stdin fixed, git status --porcelain, rag-vector-db refactor
   - skill-rules: always_load, optional, min_keyword_matches; matchSkills updated
@@ -77,7 +84,7 @@ Tasks in priority order. Check off when done.
 
 1. Deploy to first real project via `python scripts/deploy.py`
 2. Fill dev/status.md with real project goal
-3. Verify skill injection in practice on first prompt
+3. Verify skill injection, session cache, and metrics in practice
 
 ---
 
@@ -86,7 +93,9 @@ Tasks in priority order. Check off when done.
 | File | Purpose |
 |---|---|
 | `.claude/hooks/skill-activation-logic.js` | Core hook logic (testable, no Node deps) |
-| `.claude/hooks/skill-activation-prompt.js` | Entry point for `UserPromptSubmit` hook |
+| `.claude/hooks/skill-activation-prompt.js` | Entry point for `UserPromptSubmit` hook (+ cache + metrics) |
+| `.claude/hooks/session-start.js` | `SessionStart` hook — platform detection + onboarding |
+| `scripts/metrics-report.js` | Skill load frequency report (npm run metrics) |
 | `.claude/skills/skill-rules.json` | Trigger rules for all 14 skills |
 | `tests/hook/skill-activation.test.js` | Jest unit tests (31 tests) |
 | `tests/hook/skill-activation-e2e.test.js` | Jest E2E tests (6 tests) |
@@ -97,4 +106,4 @@ Tasks in priority order. Check off when done.
 
 ---
 
-*Last updated: 2026-03-03 by Claude Code*
+*Last updated: 2026-03-04 by Claude Code*
