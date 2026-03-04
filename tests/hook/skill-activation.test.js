@@ -1,5 +1,5 @@
 const path = require("path");
-const { loadSkillRules, loadStatusContent, matchSkills, loadSkillContent, buildInjections, buildOutput } = require("../../.claude/hooks/skill-activation-logic");
+const { simpleHash, loadSkillRules, loadStatusContent, matchSkills, loadSkillContent, buildInjections, buildOutput } = require("../../.claude/hooks/skill-activation-logic");
 
 const FIXTURE_WITH_STATUS = path.join(__dirname, "../fixtures/project-with-status");
 
@@ -318,5 +318,107 @@ describe("buildInjections — integration", () => {
     expect(matchedSkills).toContain("fastapi-patterns");
     const skillInjection = injections.find((i) => i.includes("fastapi-patterns"));
     expect(skillInjection).toBeUndefined();
+  });
+});
+
+describe("simpleHash", () => {
+  test("returns consistent string for same input", () => {
+    expect(simpleHash("hello")).toBe(simpleHash("hello"));
+  });
+
+  test("returns different values for different inputs", () => {
+    expect(simpleHash("hello")).not.toBe(simpleHash("world"));
+  });
+
+  test("returns a hex string", () => {
+    const h = simpleHash("test");
+    expect(h).toMatch(/^[0-9a-f]+$/);
+  });
+
+  test("handles empty string", () => {
+    const h = simpleHash("");
+    expect(typeof h).toBe("string");
+    expect(h.length).toBeGreaterThan(0);
+  });
+});
+
+describe("matchSkills — alreadyLoaded filter", () => {
+  const rules = MINIMAL_RULES.rules;
+
+  test("skips skills already in alreadyLoaded", () => {
+    const matched = matchSkills(rules, "pyproject python", [], 3, ["python-project-standards"]);
+    expect(matched).not.toContain("python-project-standards");
+  });
+
+  test("still matches other skills when some are already loaded", () => {
+    const matched = matchSkills(rules, "fastapi router pyproject", [], 3, ["python-project-standards"]);
+    expect(matched).toContain("fastapi-patterns");
+    expect(matched).not.toContain("python-project-standards");
+  });
+
+  test("empty alreadyLoaded behaves as before", () => {
+    const matched = matchSkills(rules, "pyproject python", [], 3, []);
+    expect(matched).toContain("python-project-standards");
+  });
+});
+
+describe("buildInjections — sessionContext", () => {
+  const mockPath = { join: (...parts) => parts.join("/") };
+
+  function buildMockFs(cwd, skills = {}) {
+    const files = {};
+    files[`${cwd}/dev/status.md`] = "# Status\n\nGoal: test project";
+    for (const [skillName, content] of Object.entries(skills)) {
+      files[`${cwd}/.claude/skills/${skillName}/SKILL.md`] = content;
+    }
+    return mockFs(files);
+  }
+
+  test("skips already loaded skills when alreadyLoadedSkills provided", () => {
+    const fs = buildMockFs("/project", {
+      "python-project-standards": "# Python Standards\n\nContent.",
+    });
+    const sessionContext = { alreadyLoadedSkills: ["python-project-standards"], lastStatusHash: null };
+    const { matchedSkills } = buildInjections(
+      fs, mockPath, "/project", "pyproject.toml setup", [], MINIMAL_RULES, sessionContext
+    );
+    expect(matchedSkills).not.toContain("python-project-standards");
+  });
+
+  test("skips status.md when hash unchanged", () => {
+    const fs = buildMockFs("/project");
+    const { statusHash } = buildInjections(
+      fs, mockPath, "/project", "anything", [], MINIMAL_RULES, {}
+    );
+    const { injections } = buildInjections(
+      fs, mockPath, "/project", "anything", [], MINIMAL_RULES,
+      { alreadyLoadedSkills: [], lastStatusHash: statusHash }
+    );
+    const hasStatus = injections.some((i) => i.startsWith("## Project Status"));
+    expect(hasStatus).toBe(false);
+  });
+
+  test("injects status.md when hash changed", () => {
+    const fs = buildMockFs("/project");
+    const { injections } = buildInjections(
+      fs, mockPath, "/project", "anything", [], MINIMAL_RULES,
+      { alreadyLoadedSkills: [], lastStatusHash: "stale-hash" }
+    );
+    const hasStatus = injections.some((i) => i.startsWith("## Project Status"));
+    expect(hasStatus).toBe(true);
+  });
+
+  test("returns statusHash in result", () => {
+    const fs = buildMockFs("/project");
+    const { statusHash } = buildInjections(
+      fs, mockPath, "/project", "anything", [], MINIMAL_RULES, {}
+    );
+    expect(typeof statusHash).toBe("string");
+    expect(statusHash.length).toBeGreaterThan(0);
+  });
+
+  test("backward compatible — works without sessionContext argument", () => {
+    const fs = buildMockFs("/project");
+    expect(() => buildInjections(fs, mockPath, "/project", "anything", [], MINIMAL_RULES)).not.toThrow();
   });
 });

@@ -1,3 +1,9 @@
+function simpleHash(str) {
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
+  return (h >>> 0).toString(16);
+}
+
 function loadSkillRules(fs, rulesPath) {
   if (!fs.existsSync(rulesPath)) return null;
   try {
@@ -13,13 +19,14 @@ function loadStatusContent(fs, path, cwd, statusFile) {
   return fs.readFileSync(statusPath, "utf8");
 }
 
-function matchSkills(rules, prompt, changedFiles, maxSkills) {
+function matchSkills(rules, prompt, changedFiles, maxSkills, alreadyLoaded = []) {
   const promptLower = prompt.toLowerCase();
   const matched = [];
 
   for (const rule of rules) {
     if (matched.length >= maxSkills) break;
     if (rule.optional) continue;
+    if (alreadyLoaded.includes(rule.skill)) continue;
 
     const triggers = rule.triggers || {};
     let hit = false;
@@ -76,27 +83,31 @@ function loadSkillContent(fs, path, cwd, skillName, compressionThreshold) {
   };
 }
 
-function buildInjections(fs, path, cwd, prompt, changedFiles, rules) {
+function buildInjections(fs, path, cwd, prompt, changedFiles, rules, sessionContext = {}) {
   const contextMgmt = rules.context_management || {};
   const maxSkills = contextMgmt.max_skills_per_session || 3;
   const statusFile = contextMgmt.status_file || "dev/status.md";
   const compressionThreshold = contextMgmt.compression_threshold_lines || 300;
 
+  const { alreadyLoadedSkills = [], lastStatusHash = null } = sessionContext;
+
   const injections = [];
 
   const statusContent = loadStatusContent(fs, path, cwd, statusFile);
-  if (statusContent) {
+  const statusHash = statusContent ? simpleHash(statusContent) : null;
+  const statusChanged = statusHash !== lastStatusHash;
+  if (statusContent && statusChanged) {
     injections.push(`## Project Status\n\n${statusContent}`);
   }
 
-  const matchedSkills = matchSkills(rules.rules || [], prompt, changedFiles, maxSkills);
+  const matchedSkills = matchSkills(rules.rules || [], prompt, changedFiles, maxSkills, alreadyLoadedSkills);
 
   for (const skillName of matchedSkills) {
     const result = loadSkillContent(fs, path, cwd, skillName, compressionThreshold);
     if (result) injections.push(result.output);
   }
 
-  return { injections, matchedSkills };
+  return { injections, matchedSkills, statusHash };
 }
 
 function buildOutput(injections) {
@@ -110,6 +121,7 @@ function buildOutput(injections) {
 }
 
 module.exports = {
+  simpleHash,
   loadSkillRules,
   loadStatusContent,
   matchSkills,

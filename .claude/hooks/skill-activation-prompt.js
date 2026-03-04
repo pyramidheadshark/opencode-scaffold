@@ -5,6 +5,24 @@ const path = require("path");
 const { execSync } = require("child_process");
 const { loadSkillRules, buildInjections, buildOutput } = require("./skill-activation-logic");
 
+const CACHE_DIR = path.join(process.cwd(), ".claude/cache");
+
+function loadSessionCache(sessionId) {
+  const cachePath = path.join(CACHE_DIR, `session-${sessionId}.json`);
+  if (!fs.existsSync(cachePath)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(cachePath, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveSessionCache(sessionId, cache) {
+  if (!fs.existsSync(CACHE_DIR)) fs.mkdirSync(CACHE_DIR, { recursive: true });
+  const cachePath = path.join(CACHE_DIR, `session-${sessionId}.json`);
+  fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2), "utf8");
+}
+
 const input = JSON.parse(fs.readFileSync(0, "utf8"));
 const prompt = input.prompt || "";
 const sessionId = input.session_id || "default";
@@ -28,7 +46,24 @@ const changedFiles = (() => {
   }
 })();
 
-const { injections, matchedSkills } = buildInjections(fs, path, cwd, prompt, changedFiles, rules);
+const cache = loadSessionCache(sessionId);
+const sessionContext = {
+  alreadyLoadedSkills: cache.loaded_skills || [],
+  lastStatusHash: cache.last_status_hash || null,
+};
+
+const { injections, matchedSkills, statusHash } = buildInjections(fs, path, cwd, prompt, changedFiles, rules, sessionContext);
+
+const updatedLoadedSkills = [...new Set([...(cache.loaded_skills || []), ...matchedSkills])];
+try {
+  saveSessionCache(sessionId, {
+    session_id: sessionId,
+    loaded_skills: updatedLoadedSkills,
+    last_status_hash: statusHash,
+    prompt_count: (cache.prompt_count || 0) + 1,
+  });
+} catch {
+}
 
 const logsDir = path.join(cwd, ".claude/logs");
 try {
