@@ -98,7 +98,7 @@ Two hook types are registered in `.claude/settings.json`:
 | Event | Hook | Action |
 |---|---|---|
 | `UserPromptSubmit` | `skill-activation-prompt.js` | Injects status.md + matched skills |
-| `PostToolUse` | `python-quality-check.sh` | Runs `ruff check` + `mypy` on edited `.py` files |
+| `Stop` | `python-quality-check.sh` | Runs `ruff check` + `mypy` at session end |
 | `PostToolUse` | `post-tool-use-tracker.sh` | Appends `{timestamp, tool}` to `.claude/logs/tool-usage.jsonl` |
 
 ### Agent System

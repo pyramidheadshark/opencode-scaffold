@@ -57,7 +57,7 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 | Hook | Event | Action |
 |---|---|---|
 | `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills |
-| `python-quality-check.sh` | PostToolUse | Run ruff + mypy on edited .py files |
+| `python-quality-check.sh` | Stop | Run ruff + mypy at session end |
 | `post-tool-use-tracker.sh` | PostToolUse | Log tool usage to `.claude/logs/` |
 
 ---

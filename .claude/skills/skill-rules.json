@@ -42,7 +42,10 @@
           "pydantic",
           "dependency injection",
           "middleware",
-          "lifespan"
+          "lifespan",
+          "роутер",
+          "эндпоинт",
+          "апи маршрут"
         ],
         "always_load": false
       },
@@ -107,7 +110,7 @@
         ],
         "keywords": [
           "pdf",
-          "document",
+          "docx",
           "image analysis",
           "video",
           "multimodal",
@@ -139,7 +142,10 @@
           "checkpointer",
           "agent",
           "tool",
-          "interrupt"
+          "interrupt",
+          "ланграф",
+          "агентный граф",
+          "стейт машин"
         ],
         "min_keyword_matches": 2,
         "always_load": false
@@ -167,7 +173,10 @@
           "vm",
           "instance",
           "helm",
-          "kubernetes"
+          "kubernetes",
+          "терраформ",
+          "яндекс облак",
+          "облачн инфр"
         ],
         "min_keyword_matches": 2,
         "always_load": false
@@ -192,7 +201,10 @@
           "mock",
           "assert",
           "coverage",
-          "tdd"
+          "tdd",
+          "тест",
+          "покрытие",
+          "заглушк"
         ],
         "always_load": false
       },
@@ -261,7 +273,9 @@
       "skill": "nlp-slm-patterns",
       "triggers": {
         "files": [
-          "*.py"
+          "nlp/*.py",
+          "anonymiz*.py",
+          "presidio*.py"
         ],
         "keywords": [
           "nlp",
@@ -324,7 +338,11 @@
           "retrieval",
           "ingestion pipeline",
           "knowledge base",
-          "semantic search"
+          "semantic search",
+          "эмбеддинг",
+          "индексац",
+          "база знаний",
+          "семантическ"
         ],
         "always_load": false
       },

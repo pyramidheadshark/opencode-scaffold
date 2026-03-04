@@ -139,6 +139,19 @@ class TestSkillMdFiles(unittest.TestCase):
                     f"{skill_dir.name}/SKILL.md has {len(lines)} lines (limit: {HARD_LIMIT}). Extract to resources/."
                 )
 
+    def test_skill_line_budget(self):
+        SOFT_LIMIT = 300
+        for skill_dir in get_all_skill_dirs():
+            skill_md = skill_dir / "SKILL.md"
+            if not skill_md.exists():
+                continue
+            lines = skill_md.read_text(encoding="utf-8").splitlines()
+            with self.subTest(skill=skill_dir.name):
+                self.assertLessEqual(
+                    len(lines), SOFT_LIMIT,
+                    f"{skill_dir.name}: {len(lines)} lines (limit: {SOFT_LIMIT})"
+                )
+
 
 class TestAgentFiles(unittest.TestCase):
     REQUIRED_SECTIONS = ["Purpose", "When to Use", "Instructions for Claude Code"]
@@ -244,6 +257,23 @@ class TestHookFiles(unittest.TestCase):
         self.assertTrue(hook_file.exists())
         content = hook_file.read_text(encoding="utf-8")
         self.assertTrue(content.startswith("#!/"), "Shell hook should start with shebang")
+
+
+class TestClaudeIgnore(unittest.TestCase):
+    def test_claudeignore_exists(self):
+        claudeignore = INFRA_ROOT / ".claudeignore"
+        self.assertTrue(
+            claudeignore.exists(),
+            ".claudeignore missing — add it to reduce context noise"
+        )
+
+    def test_claudeignore_excludes_node_modules(self):
+        content = (INFRA_ROOT / ".claudeignore").read_text(encoding="utf-8")
+        self.assertIn("node_modules/", content)
+
+    def test_claudeignore_excludes_jsonl(self):
+        content = (INFRA_ROOT / ".claudeignore").read_text(encoding="utf-8")
+        self.assertIn("*.jsonl", content)
 
 
 class TestCLAUDEmd(unittest.TestCase):
