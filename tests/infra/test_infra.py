@@ -139,6 +139,19 @@ class TestSkillMdFiles(unittest.TestCase):
                     f"{skill_dir.name}/SKILL.md has {len(lines)} lines (limit: {HARD_LIMIT}). Extract to resources/."
                 )
 
+    def test_skill_line_budget(self):
+        SOFT_LIMIT = 300
+        for skill_dir in get_all_skill_dirs():
+            skill_md = skill_dir / "SKILL.md"
+            if not skill_md.exists():
+                continue
+            lines = skill_md.read_text(encoding="utf-8").splitlines()
+            with self.subTest(skill=skill_dir.name):
+                self.assertLessEqual(
+                    len(lines), SOFT_LIMIT,
+                    f"{skill_dir.name}: {len(lines)} lines (limit: {SOFT_LIMIT})"
+                )
+
 
 class TestAgentFiles(unittest.TestCase):
     REQUIRED_SECTIONS = ["Purpose", "When to Use", "Instructions for Claude Code"]

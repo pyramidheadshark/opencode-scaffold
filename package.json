@@ -11,7 +11,8 @@
     "test": "jest tests/hook/ --no-coverage && (python3 tests/infra/test_infra.py || python tests/infra/test_infra.py)",
     "test:hook": "jest tests/hook/ --no-coverage",
     "test:infra": "python3 tests/infra/test_infra.py || python tests/infra/test_infra.py",
-    "test:watch": "jest tests/hook/ --watch"
+    "test:watch": "jest tests/hook/ --watch",
+    "check:budget": "python tests/infra/test_infra.py TestSkillMdFiles.test_skill_line_budget"
   },
   "keywords": [],
   "author": "",
