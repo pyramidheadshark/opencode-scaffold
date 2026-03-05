@@ -49,6 +49,14 @@ First Claude Code session detected. Please ask the user these questions before s
 3. Main goal of this session?
 Save answers to .claude/project-config.json.`;
 
+const WINDOWS_RULES_BLOCK = `## Windows Compatibility Rules
+Platform is win32. Apply to ALL generated code and terminal instructions:
+1. Python command: use \`python\` (not \`python3\`). Detected python_cmd is saved in .claude/project-config.json.
+2. Shell: Claude Code Bash tool runs in Git Bash — use Unix syntax for tool calls. For user-facing terminal commands in docs/README/scripts, always provide PowerShell syntax.
+3. Encoding: ALWAYS specify encoding explicitly in all file I/O:
+   - Python: \`open(..., encoding="utf-8")\` and \`Path(...).read_text(encoding="utf-8")\`
+   - Never use bare \`open()\` without encoding — Windows defaults to cp1251/cp1252 which corrupts UTF-8 files`;
+
 function main(inputStr, cwd, platform, detectPython) {
   let input = {};
   try {
@@ -79,6 +87,7 @@ function main(inputStr, cwd, platform, detectPython) {
 
   const additions = [envBlock];
   if (isFirstRun) additions.push(ONBOARDING_BLOCK);
+  if (effectivePlatform === "win32") additions.push(WINDOWS_RULES_BLOCK);
 
   return {
     continue: true,
@@ -92,4 +101,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, ONBOARDING_BLOCK };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK };

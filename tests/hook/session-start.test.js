@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, ONBOARDING_BLOCK } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -104,6 +104,42 @@ describe("main — subsequent runs (config exists)", () => {
     main("{}", tmpDir, "win32", () => "python");
     const config = loadConfig(tmpDir);
     expect(config.session_count).toBe(5);
+  });
+});
+
+describe("WINDOWS_RULES_BLOCK", () => {
+  test("is exported and non-empty", () => {
+    expect(typeof WINDOWS_RULES_BLOCK).toBe("string");
+    expect(WINDOWS_RULES_BLOCK.length).toBeGreaterThan(0);
+  });
+
+  test("contains all three rule areas", () => {
+    expect(WINDOWS_RULES_BLOCK).toContain("python");
+    expect(WINDOWS_RULES_BLOCK).toContain("PowerShell");
+    expect(WINDOWS_RULES_BLOCK).toContain('encoding="utf-8"');
+  });
+});
+
+describe("main — Windows rules injection", () => {
+  let tmpDir;
+
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("injects Windows rules on win32", () => {
+    const result = main("{}", tmpDir, "win32", () => "python");
+    expect(result.system_prompt_addition).toContain("## Windows Compatibility Rules");
+  });
+
+  test("does NOT inject Windows rules on linux", () => {
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.system_prompt_addition).not.toContain("## Windows Compatibility Rules");
+  });
+
+  test("Windows rules injected on all win32 sessions, not just first", () => {
+    saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 2 });
+    const result = main("{}", tmpDir, "win32", () => "python");
+    expect(result.system_prompt_addition).toContain("## Windows Compatibility Rules");
   });
 });
 

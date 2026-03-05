@@ -79,6 +79,14 @@ src/{project_name}/
 - `.env` for secrets locally, GitHub Secrets in CI/CD
 - Validate all required env vars at application startup
 
+## Windows Compatibility
+
+When `Session Environment` shows `Platform: win32`:
+
+- **Python command**: use `python` (not `python3`) — check `python_cmd` in `.claude/project-config.json`
+- **Shell**: Bash tool uses Git Bash (Unix syntax for tool calls). For user-facing terminal commands in docs/README/scripts — always provide PowerShell syntax
+- **Encoding**: always specify `encoding="utf-8"` in ALL file I/O. Bare `open()` without encoding defaults to cp1251/cp1252 on Windows and corrupts UTF-8 files
+
 ## Commit Convention
 
 ```
