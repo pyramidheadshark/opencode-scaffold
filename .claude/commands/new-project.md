@@ -18,6 +18,12 @@ Ask the developer for:
 - Infrastructure tier: Docker Compose / K8s-ready / GPU
 - Does it need a frontend? (HTMX or none)
 - Does it need an agent pipeline? (LangGraph or none)
+- CI/CD profile (choose one):
+  - `minimal` — lint + typecheck + test (CLI tools, data scripts, scrapers — no Docker)
+  - `fastapi` — + docker-build (standard FastAPI service)
+  - `fastapi-db` — + postgres service + alembic migration check + docker-build
+  - `ml-heavy` — + HuggingFace model cache + bandit security scan + docker-build
+- Deploy target (choose one): `none` / `yc` (Yandex Cloud Serverless Container) / `vps` (SSH + docker-compose)
 
 Then execute in order:
 
@@ -39,8 +45,11 @@ Copy from `ml-claude-infra/templates/`:
 - `design-doc.md` → project root (replace `{Project Name}` with actual name)
 - `status.md` → `dev/status.md` (initialize Phase 0 as active)
 - `Dockerfile` → project root (replace `project_name` placeholder)
-- `docker-compose.yml` → project root
-- `github/workflows/*.yml` → `.github/workflows/`
+- `docker-compose.yml` → project root (skip if CI profile is `minimal`)
+- `github-actions/{ci_profile}.yml` → `.github/workflows/ci.yml`
+- If deploy target is not `none`: `github-actions/deploy/{deploy_target}.yml` → `.github/workflows/deploy.yml`
+
+Do NOT copy the old `templates/github/workflows/` files — use the new profile-based templates above.
 
 ### 3. Initialize Python project
 
