@@ -34,8 +34,10 @@ Tasks in priority order. Check off when done.
 - [ ] Add CI to existing repos: regional-budget (minimal), nalog-parser (minimal), TechCon (fastapi-db), sbera (ml-heavy)
 
 **Completed (most recent first):**
-- [x] CI debt audit + systemic fix: template [project.optional-dependencies]→[dependency-groups], add .pre-commit-config.yaml template, enforce ruff-before-commit in CLAUDE.md — 2026-03-05
-- [x] CI_DEBT.md created in sd_support_suggestions_sbera (53 ruff errors) and TechCon_Passports (dep structure fix) — 2026-03-05
+- [x] README: full English, replace hardcoded paths, fix clone URL, badges, hooks table, add update workflow — 2026-03-06
+- [x] Update mechanism: deploy.py --status/--update/--update-all; bootstrapped registry (8 repos); --update-all run — 2026-03-06
+- [x] CI debt audit: template [project.optional-dependencies]→[dependency-groups], .pre-commit-config.yaml, ruff-before-commit rule in CLAUDE.md — 2026-03-06
+- [x] CI_DEBT.md created in sd_support_suggestions_sbera (53 ruff errors), TechCon_Passports, phs-calorie-app (dep mismatch) — 2026-03-06
 - [x] Windows compatibility: session-start.js injects WINDOWS_RULES_BLOCK on win32 (python cmd, PowerShell docs, encoding) — 2026-03-05
 - [x] .gitignore: exclude project-config.json and nested .claude/cache/logs — 2026-03-05
 - [x] CI/CD standard: 4 profiles + 2 deploy targets, deploy.py --ci-profile/--deploy-target, /new-project wizard — 2026-03-05
@@ -88,9 +90,9 @@ Tasks in priority order. Check off when done.
 
 ## Next Session Plan
 
-1. Deploy to first real project via `python scripts/deploy.py`
-2. Fill dev/status.md with real project goal
-3. Verify skill injection, session cache, and metrics in practice
+1. Fix CI debt in TechCon_Passports — migrate pyproject.toml to [dependency-groups], add mypy + pytest-cov, fix test job
+2. Fix CI debt in phs-calorie-app — same dep structure fix
+3. Fix CI debt in sd_support_suggestions_sbera — ruff --fix + rename `l` in 3 places (E741)
 
 ---
 
