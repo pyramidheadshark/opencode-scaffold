@@ -1,11 +1,12 @@
 # ml-claude-infra
 
-**Claude Code configuration layer for ML engineering projects.**
-Plug-and-play skills, hooks, agents, and templates that turn Claude Code into a disciplined ML engineering assistant enforcing hexagonal architecture, TDD-first workflow, and deterministic model routing.
+**Your personal Claude Code brain — one repo that makes Claude a disciplined ML engineer across all your projects.**
+
+Clone once. Deploy to any project in one command. Tell Claude to run `--update-all` whenever you improve the config — every project stays in sync automatically.
 
 [![CI](https://github.com/pyramidheadshark/ml-claude-infra/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/ml-claude-infra/actions/workflows/ci.yml)
-![Jest Tests](https://img.shields.io/badge/Jest-68%20tests-brightgreen)
-![Python Tests](https://img.shields.io/badge/Python-35%20tests-blue)
+![Jest Tests](https://img.shields.io/badge/Jest-71%20tests-brightgreen)
+![Python Tests](https://img.shields.io/badge/Python-37%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-14-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -13,12 +14,36 @@ Plug-and-play skills, hooks, agents, and templates that turn Claude Code into a 
 
 ---
 
+## The Concept
+
+Most Claude Code setups are per-project and drift apart. This repo is different: it's a **central infrastructure layer** that you own and deploy everywhere.
+
+```
+ml-claude-infra  ← you edit this once
+      │
+      ├── deploy → project-a/.claude/
+      ├── deploy → project-b/.claude/
+      └── deploy → project-c/.claude/
+
+Later: python scripts/deploy.py --update-all
+      → all three stay in sync with zero manual work
+```
+
+You can ask Claude directly to handle this:
+> *"Deploy ml-claude-infra to my new project with fastapi and test-first skills"*
+> *"Update all registered projects to the latest infra version"*
+
+Claude reads this README, runs `deploy.py`, and wires everything up. No manual config copy-pasting.
+
+---
+
 ## What It Does
 
 On every Claude Code prompt, the hook automatically:
 1. Injects `dev/status.md` — your project's current state and next steps
-2. Matches the prompt against 14 skill rules (keywords + changed files)
-3. Injects up to 2 additional relevant skills into `system_prompt_addition`
+2. Detects planning intent ("план", "multi-step", etc.) and reminds to enter plan mode
+3. Matches the prompt against 14 skill rules (keywords + changed files)
+4. Injects up to 2 additional relevant skills into `system_prompt_addition`
 
 Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs, CI/CD configs, test-first workflow — injected only when needed, compressed if large.
 
@@ -57,10 +82,10 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 
 | Hook | Event | Action |
 |---|---|---|
-| `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills (with session cache + dedup) |
-| `session-start.js` | SessionStart | Detect platform, inject windows rules, onboarding on first run |
+| `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills + plan-mode reminder on planning keywords |
+| `session-start.js` | SessionStart | Detect platform (win32/unix), inject Windows rules, onboarding on first run |
 | `python-quality-check.sh` | Stop | Run ruff + mypy at session end |
-| `post-tool-use-tracker.sh` | PostToolUse | Log tool usage to `.claude/logs/` |
+| `post-tool-use-tracker.sh` | PostToolUse | Log tool + session_id + repo + is_error to `.claude/logs/` |
 
 ---
 
@@ -112,15 +137,17 @@ echo '{"prompt":"pyproject.toml ruff setup"}' | node .claude/hooks/skill-activat
 # → JSON with python-project-standards in system_prompt_addition
 ```
 
-### 5. Keep all deployed projects up to date
+### 5. Keep all projects in sync
 
-After `git pull` in ml-claude-infra — propagate changes to all registered projects:
+This is the core workflow. After any change to ml-claude-infra, one command propagates it everywhere:
 
 ```bash
-python scripts/deploy.py --status                      # show version drift for all projects
-python scripts/deploy.py --update-all                  # update outdated ones (.claude/ only, never touches CI)
-python scripts/deploy.py --update /path/to/my-project  # update a single project
+python scripts/deploy.py --status                      # show all registered projects + version drift
+python scripts/deploy.py --update-all                  # sync all outdated projects (.claude/ only, CI untouched)
+python scripts/deploy.py --update /path/to/my-project  # sync a single project
 ```
+
+> You can ask Claude to run this for you: *"Check which projects are outdated and update them all."*
 
 ---
 
@@ -165,8 +192,8 @@ On a 200K context window: < 3% overhead per prompt.
 ## Running Tests
 
 ```bash
-npm run test:hook                  # 68 Jest tests (unit + E2E + session-start)
-python tests/infra/test_infra.py   # 35 Python infra contract tests
+npm run test:hook                  # 71 Jest tests (unit + E2E + session-start)
+python tests/infra/test_infra.py   # 37 Python infra contract tests
 npm test                           # both (Windows: python3 falls back to python automatically)
 npm run check:budget               # verify all skills stay under 300 lines
 npm run metrics                    # skill load frequency report
