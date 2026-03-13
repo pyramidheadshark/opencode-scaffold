@@ -6,7 +6,7 @@ Clone once. Deploy to any project in one command. Update all projects whenever y
 
 [![CI](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml)
 ![npm](https://img.shields.io/badge/npm-v1.0.0-blue)
-![Jest Tests](https://img.shields.io/badge/Jest-106%20tests-brightgreen)
+![Jest Tests](https://img.shields.io/badge/Jest-146%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-43%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-16-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
@@ -87,8 +87,8 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 |---|---|---|
 | `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills + plan-mode reminder on planning keywords |
 | `session-start.js` | SessionStart | Detect platform (win32/unix), inject Windows rules, onboarding on first run |
-| `python-quality-check.sh` | Stop | Run ruff + mypy at session end |
-| `post-tool-use-tracker.sh` | PostToolUse | Log tool + session_id + repo + is_error to `.claude/logs/` |
+| `python-quality-check.js` | Stop | Run ruff + mypy at session end |
+| `post-tool-use-tracker.js` | PostToolUse | Log tool + session_id + repo + is_error to `.claude/logs/` |
 
 ---
 
@@ -192,8 +192,8 @@ On a 200K context window: < 3% overhead per prompt.
 ## Running Tests
 
 ```bash
-npm run test:hook                  # 71 Jest tests (unit + E2E + session-start)
-python tests/infra/test_infra.py   # 37 Python infra contract tests
+npm run test:hook                  # 106 Jest tests (unit + E2E + session-start)
+python tests/infra/test_infra.py   # 43 Python infra contract tests
 npm test                           # both (Windows: python3 falls back to python automatically)
 npm run check:budget               # verify all skills stay under 300 lines
 npm run metrics                    # skill load frequency report
@@ -206,7 +206,7 @@ npm run metrics                    # skill load frequency report
 ```
 claude-scaffold/
 ├── .claude/
-│   ├── skills/          # 14 skill modules (SKILL.md + resources/ + skill-metadata.json)
+│   ├── skills/          # 16 skill modules (SKILL.md + resources/ + skill-metadata.json)
 │   ├── hooks/           # lifecycle automation
 │   ├── agents/          # 8 sub-agents
 │   ├── commands/        # 4 slash commands
