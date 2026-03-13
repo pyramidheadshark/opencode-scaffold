@@ -34,6 +34,7 @@ Tasks in priority order. Check off when done.
 - [ ] Add CI to existing repos: regional-budget (minimal), nalog-parser (minimal), TechCon (fastapi-db), sbera (ml-heavy)
 
 **Completed (most recent first):**
+- [x] Convert PostToolUse + Stop hooks from bash to Node.js (fix WSL/bash path errors on Windows); 17 new Jest tests; deployed to regional-budget-analysis — 2026-03-13
 - [x] Proactive UX sprint + RU language fixes: security hint (15 patterns), plan-mode MANDATORY + survey, QUESTION_PREFIXES (можешь/можно), PLAN_MODE_KEYWORDS (внедри/оптимизир/разверни), ONBOARDING_BLOCK×5, CLAUDE.md Task Completion Format — 81 Jest + 37 Python — deployed to 11 repos — 2026-03-13
 - [x] README: full English, replace hardcoded paths, fix clone URL, badges, hooks table, add update workflow — 2026-03-06
 - [x] Update mechanism: deploy.py --status/--update/--update-all; bootstrapped registry (8 repos); --update-all run — 2026-03-06
@@ -106,9 +107,26 @@ Tasks in priority order. Check off when done.
 
 ## Next Session Plan
 
-1. Fix CI debt in TechCon_Passports — migrate pyproject.toml to [dependency-groups], add mypy + pytest-cov, fix test job
-2. Fix CI debt in phs-calorie-app — same dep structure fix
-3. Fix CI debt in sd_support_suggestions_sbera — ruff --fix + rename `l` in 3 places (E741)
+### Phase A — ✅ DONE (2026-03-13)
+
+- ✅ GitHub repo переименован: `ml-claude-infra` → `claude-scaffold`
+- ✅ Локальная папка переименована: `C:\Users\pyramidheadshark\Repos\claude-scaffold`
+- ✅ Memory скопирована в новый путь
+- ✅ Ветка `feat/open-source` создана и запушена
+
+### Phase B — Open-source release на ветке `feat/open-source`
+
+2. Аудит контента на публичность — убрать личные пути, внутренние ссылки
+3. Обновить README для публичной аудитории (убрать "personal", расширить Getting Started)
+4. Добавить `LICENSE` (MIT — как в README badge)
+5. Добавить `CONTRIBUTING.md`
+6. Тег `v1.0.0` на main после слияния `feat/open-source`
+
+### Phase C — CI debt (параллельно, независимо от open-source)
+
+7. Fix TechCon_Passports — migrate pyproject.toml to [dependency-groups], add mypy + pytest-cov
+8. Fix phs-calorie-app — same dep structure fix
+9. Fix sd_support_suggestions_sbera — ruff --fix + rename `l` in 3 places (E741)
 
 ---
 
@@ -124,6 +142,7 @@ Tasks in priority order. Check off when done.
 | `tests/hook/skill-activation.test.js` | Jest unit tests (46 tests) |
 | `tests/hook/skill-activation-e2e.test.js` | Jest E2E tests (20 tests) |
 | `tests/hook/session-start.test.js` | Jest session-start tests (15 tests) |
+| `tests/hook/post-tool-use-tracker.test.js` | Jest tests for PostToolUse tracker (17 tests) |
 | `tests/infra/test_infra.py` | Python infra contract tests (37 tests) |
 | `docs/ARCHITECTURE.md` | ADRs and design decisions |
 | `docs/INTEGRATION.md` | EN integration guide |
@@ -131,4 +150,4 @@ Tasks in priority order. Check off when done.
 
 ---
 
-*Last updated: 2026-03-13 (log audit: TechCon_Passports) by Claude Code*
+*Last updated: 2026-03-13 (bash→Node.js hook conversion complete) by Claude Code*
