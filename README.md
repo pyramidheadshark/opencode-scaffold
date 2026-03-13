@@ -1,10 +1,11 @@
 # claude-scaffold
 
-**Your personal Claude Code brain — one repo that makes Claude a disciplined ML engineer across all your projects.**
+**A Claude Code infrastructure layer for ML and AI engineers — one repo that makes Claude a disciplined engineering partner across all your projects.**
 
-Clone once. Deploy to any project in one command. Tell Claude to run `--update-all` whenever you improve the config — every project stays in sync automatically.
+Clone once. Deploy to any project in one command. Update all projects whenever you improve the config — every project stays in sync automatically.
 
 [![CI](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml)
+![npm](https://img.shields.io/badge/npm-coming%20soon-lightgrey)
 ![Jest Tests](https://img.shields.io/badge/Jest-71%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-37%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-14-orange)
@@ -16,7 +17,7 @@ Clone once. Deploy to any project in one command. Tell Claude to run `--update-a
 
 ## The Concept
 
-Most Claude Code setups are per-project and drift apart. This repo is different: it's a **central infrastructure layer** that you own and deploy everywhere.
+Most Claude Code setups are per-project and drift apart. claude-scaffold is a **central infrastructure layer** that you own and deploy everywhere.
 
 ```
 claude-scaffold  ← you edit this once
