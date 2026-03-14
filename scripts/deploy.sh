@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# deploy.sh — copy ml-claude-infra into a target project directory
+# deploy.sh — copy claude-scaffold into a target project directory
 #
 # Usage:
 #   ./scripts/deploy.sh <target-dir> [--skills skill1,skill2,...|--all] [--with-tests] [--include-meta]
@@ -97,7 +97,7 @@ if [[ "$USE_ALL" == true ]]; then
 fi
 
 echo ""
-echo "=== ml-claude-infra deploy ==="
+echo "=== claude-scaffold deploy ==="
 echo "Source       : $INFRA_DIR"
 echo "Target       : $TARGET_DIR"
 echo "Skills       : ${SELECTED_SKILLS[*]}"

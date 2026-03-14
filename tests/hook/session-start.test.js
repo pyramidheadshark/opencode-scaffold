@@ -118,6 +118,10 @@ describe("WINDOWS_RULES_BLOCK", () => {
     expect(WINDOWS_RULES_BLOCK).toContain("PowerShell");
     expect(WINDOWS_RULES_BLOCK).toContain('encoding="utf-8"');
   });
+
+  test("contains chcp 65001 instruction", () => {
+    expect(WINDOWS_RULES_BLOCK).toContain("chcp 65001");
+  });
 });
 
 describe("main — Windows rules injection", () => {
@@ -140,6 +144,20 @@ describe("main — Windows rules injection", () => {
     saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 2 });
     const result = main("{}", tmpDir, "win32", () => "python");
     expect(result.system_prompt_addition).toContain("## Windows Compatibility Rules");
+  });
+});
+
+describe("detectPythonCmd — win32 shortcut", () => {
+  let tmpDir;
+
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("returns 'python' on win32 without attempting execSync", () => {
+    const result = main("{}", tmpDir, "win32", null);
+    const config = loadConfig(tmpDir);
+    expect(config.python_cmd).toBe("python");
+    expect(result.system_prompt_addition).toContain("Python: python");
   });
 });
 

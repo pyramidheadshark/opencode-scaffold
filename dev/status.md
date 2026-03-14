@@ -30,10 +30,11 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 
 Tasks in priority order. Check off when done.
 
-- [ ] Deploy to first real project — verify hook, skills, dev/status.md in practice
+- [x] Deploy to first real project — verified via TechCon_Passports logs — 2026-03-13
 - [ ] Add CI to existing repos: regional-budget (minimal), nalog-parser (minimal), TechCon (fastapi-db), sbera (ml-heavy)
 
 **Completed (most recent first):**
+- [x] Proactive UX sprint + RU language fixes: security hint (15 patterns), plan-mode MANDATORY + survey, QUESTION_PREFIXES (можешь/можно), PLAN_MODE_KEYWORDS (внедри/оптимизир/разверни), ONBOARDING_BLOCK×5, CLAUDE.md Task Completion Format — 81 Jest + 37 Python — deployed to 11 repos — 2026-03-13
 - [x] README: full English, replace hardcoded paths, fix clone URL, badges, hooks table, add update workflow — 2026-03-06
 - [x] Update mechanism: deploy.py --status/--update/--update-all; bootstrapped registry (8 repos); --update-all run — 2026-03-06
 - [x] CI debt audit: template [project.optional-dependencies]→[dependency-groups], .pre-commit-config.yaml, ruff-before-commit rule in CLAUDE.md — 2026-03-06
@@ -88,6 +89,21 @@ Tasks in priority order. Check off when done.
 
 ---
 
+## Наблюдения по логам TechCon_Passports (2026-03-13)
+
+Проверено на реальных данных из `skill-metrics.jsonl` (22 записи, 2 сессии):
+
+**Что работает корректно:**
+- `python-project-standards` загружается на prompt #1 каждой сессии (always_load) — ✅
+- `fastapi-patterns` и `test-first-patterns` подхватились по context (18 changed_files в сессии 2) — ✅
+- Cache dedup: в сессии 2 все 17+ промптов после первого — `skills: []`, повторной загрузки нет — ✅
+- `status_injected: true` только на 1-м промпте сессии (хэш-чек) — ✅
+
+**Потенциальная точка роста:**
+- В сессии 2 (19+ промптов) кеш живёт всю сессию — это нормально, но при смене контекста (переход к другой задаче внутри одной сессии) скиллы не обновляются. Пока не критично.
+
+---
+
 ## Next Session Plan
 
 1. Fix CI debt in TechCon_Passports — migrate pyproject.toml to [dependency-groups], add mypy + pytest-cov, fix test job
@@ -105,13 +121,14 @@ Tasks in priority order. Check off when done.
 | `.claude/hooks/session-start.js` | `SessionStart` hook — platform detection + onboarding |
 | `scripts/metrics-report.js` | Skill load frequency report (npm run metrics) |
 | `.claude/skills/skill-rules.json` | Trigger rules for all 14 skills |
-| `tests/hook/skill-activation.test.js` | Jest unit tests (31 tests) |
-| `tests/hook/skill-activation-e2e.test.js` | Jest E2E tests (6 tests) |
-| `tests/infra/test_infra.py` | Python infra contract tests (31 tests) |
+| `tests/hook/skill-activation.test.js` | Jest unit tests (46 tests) |
+| `tests/hook/skill-activation-e2e.test.js` | Jest E2E tests (20 tests) |
+| `tests/hook/session-start.test.js` | Jest session-start tests (15 tests) |
+| `tests/infra/test_infra.py` | Python infra contract tests (37 tests) |
 | `docs/ARCHITECTURE.md` | ADRs and design decisions |
 | `docs/INTEGRATION.md` | EN integration guide |
 | `docs/INTEGRATION.ru.md` | RU integration guide |
 
 ---
 
-*Last updated: 2026-03-04 by Claude Code*
+*Last updated: 2026-03-13 (log audit: TechCon_Passports) by Claude Code*

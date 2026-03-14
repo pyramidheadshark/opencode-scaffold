@@ -1,0 +1,14 @@
+# Normalize line endings on checkout
+* text=auto
+
+# Shell scripts must always have LF — CRLF breaks bash hooks on Windows
+*.sh text eol=lf
+
+# Source files: consistent LF
+*.js   text eol=lf
+*.ts   text eol=lf
+*.py   text eol=lf
+*.md   text eol=lf
+*.json text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf

@@ -1,8 +1,8 @@
-# Integration Guide — ml-claude-infra
+# Integration Guide — claude-scaffold
 
 ## Overview
 
-This guide explains how to deploy `ml-claude-infra` into a new or existing project so Claude Code works with your domain skills, hooks, and workflow commands from the first prompt.
+This guide explains how to deploy `claude-scaffold` into a new or existing project so Claude Code works with your domain skills, hooks, and workflow commands from the first prompt.
 
 ---
 
@@ -30,8 +30,8 @@ your-project/
 ### Step 1 — Clone the infra repo
 
 ```bash
-git clone <ml-claude-infra-url> ~/tools/ml-claude-infra
-cd ~/tools/ml-claude-infra
+git clone <claude-scaffold-url> ~/tools/claude-scaffold
+cd ~/tools/claude-scaffold
 npm install
 ```
 
@@ -176,7 +176,7 @@ To pull updates from this repo into a deployed project:
 
 ```bash
 # Pull latest infra
-cd ~/tools/ml-claude-infra
+cd ~/tools/claude-scaffold
 git pull
 
 # Re-deploy (preserves your dev/status.md)

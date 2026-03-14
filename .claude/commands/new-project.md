@@ -1,6 +1,6 @@
 # /new-project
 
-Initializes a new project from the ml-claude-infra template.
+Initializes a new project from the claude-scaffold template.
 
 ## What This Command Does
 
@@ -41,7 +41,7 @@ touch {project-name}/models/.gitkeep
 
 ### 2. Copy and customize templates
 
-Copy from `ml-claude-infra/templates/`:
+Copy from `claude-scaffold/templates/`:
 - `design-doc.md` → project root (replace `{Project Name}` with actual name)
 - `status.md` → `dev/status.md` (initialize Phase 0 as active)
 - `Dockerfile` → project root (replace `project_name` placeholder)
@@ -62,14 +62,14 @@ uv add --dev ruff mypy pytest pytest-asyncio pytest-bdd pytest-cov
 
 ### 4. Copy .claude infrastructure
 
-Copy `.claude/` from `ml-claude-infra` into the project. This is the full skills/hooks/agents directory.
+Copy `.claude/` from `claude-scaffold` into the project. This is the full skills/hooks/agents directory.
 
 ### 5. Initialize git
 
 ```bash
 git init
 git add .
-git commit -m "chore: initialize project from ml-claude-infra template"
+git commit -m "chore: initialize project from claude-scaffold template"
 ```
 
 ### 6. Activate design doc phase

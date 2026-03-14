@@ -1,4 +1,4 @@
-# Architecture — ml-claude-infra
+# Architecture — claude-scaffold
 
 This document covers two things:
 1. **System overview** — what the system is, how the components fit together
@@ -10,10 +10,10 @@ For usage, see `README.md` and `docs/INTEGRATION.md`.
 
 ## System Overview
 
-`ml-claude-infra` is a Claude Code configuration layer — a portable set of skills, hooks, agents, and commands that turns Claude Code into a disciplined ML engineering assistant.
+`claude-scaffold` is a Claude Code configuration layer — a portable set of skills, hooks, agents, and commands that turns Claude Code into a disciplined ML engineering assistant.
 
 ```
-ml-claude-infra/
+claude-scaffold/
 ├── .claude/
 │   ├── hooks/                    # Lifecycle automation (Node.js + Bash)
 │   │   ├── skill-activation-prompt.js   # UserPromptSubmit: injects skills

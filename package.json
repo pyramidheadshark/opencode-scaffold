@@ -1,5 +1,5 @@
 {
-  "name": "ml-claude-infra",
+  "name": "claude-scaffold",
   "version": "1.0.0",
   "description": "Personal Claude Code infrastructure for ML engineering projects.",
   "main": "index.js",

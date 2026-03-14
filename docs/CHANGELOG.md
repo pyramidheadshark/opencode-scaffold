@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `ml-claude-infra` are documented here.
+All notable changes to `claude-scaffold` are documented here.
 Format: [Semantic Versioning](https://semver.org/).
 
 ---

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-deploy.py — cross-platform deploy script for ml-claude-infra.
+deploy.py — cross-platform deploy script for claude-scaffold.
 
 Copies hooks, agents, commands, and selected skills into a target project.
 Works on Windows, Linux, and macOS with Python 3.11+.
@@ -72,7 +72,7 @@ SKILLS: list[tuple[str, str]] = [
 
 META_SKILLS: list[tuple[str, str]] = [
     ("design-doc-creator", "Design doc wizard (use only during project design phase)"),
-    ("skill-developer",    "Skill authoring tools (use only when extending ml-claude-infra)"),
+    ("skill-developer",    "Skill authoring tools (use only when extending claude-scaffold)"),
 ]
 
 PROJECT_PRESETS: dict[str, list[str]] = {
@@ -234,7 +234,7 @@ def _choose_str(prompt: str) -> str:
 
 def interactive_wizard() -> argparse.Namespace:
     print()
-    _header("ml-claude-infra :: Deploy Wizard")
+    _header("claude-scaffold :: Deploy Wizard")
     print()
 
     raw = _choose_str("  Target project directory: ")
@@ -418,7 +418,7 @@ def deploy(args: argparse.Namespace) -> None:
     include_meta = getattr(args, "include_meta", False)
 
     print()
-    _header("ml-claude-infra :: Deploy")
+    _header("claude-scaffold :: Deploy")
     print(f"  Source       : {INFRA_DIR}")
     print(f"  Target       : {target}")
     print(f"  Skills       : {', '.join(selected)}")
@@ -554,7 +554,7 @@ def main() -> None:
         return
 
     parser = argparse.ArgumentParser(
-        description="Deploy ml-claude-infra into a target project.",
+        description="Deploy claude-scaffold into a target project.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="\n".join([
             "Examples:",

@@ -10,7 +10,7 @@ This skill guides the creation of a complete design document. It is always the f
 
 ## Document Structure (10 Sections)
 
-The template lives at `templates/design-doc.md` in `ml-claude-infra`.
+The template lives at `templates/design-doc.md` in `claude-scaffold`.
 
 | Section | Owner | When |
 |---|---|---|

@@ -22,7 +22,7 @@ These six principles govern every interaction:
 
 5. **Clarity and structure.** Formulate thoughts clearly. Use lists, code blocks, and formatting to improve readability. Explain complex concepts in plain language without sacrificing technical precision. No comments inside code blocks — all explanations go before or after.
 
-6. **Proactive clarification.** Before starting any non-trivial task, present a numbered list of critical unknowns. Do not assume answers to questions that meaningfully affect architecture, scope, or approach.
+6. **Proactive clarification.** Before starting any non-trivial task, ask a structured set of clarifying questions as a numbered list — even if you think you know the answers. Always cover: (1) scope limits, (2) constraints or non-goals, (3) success criteria. Do not assume answers to questions that meaningfully affect architecture, scope, or approach. When plan mode is active, ask these questions BEFORE writing the plan.
 
 ## Tech Stack (Non-Negotiable)
 
@@ -58,13 +58,14 @@ src/{project_name}/
 
 ## Development Workflow
 
-0. **Before any multi-phase implementation**: enter plan mode (EnterPlanMode). Workflow: plan → user approval → implement → review → minor fixes → new plan mode if scope changes → update dev/status.md.
+0. **Before any implementation task** that touches more than one file, introduces new functionality, involves refactoring, architecture decisions, migrations, or integrations — call EnterPlanMode immediately. Default assumption: if you have a design choice to make, it IS multi-phase. Workflow: plan → user approval → implement → review → minor fixes → new plan mode if scope changes → update dev/status.md. **When in doubt, enter plan mode.**
 1. Design document is written FIRST (business logic by human, technical sections by agent)
 2. BDD scenarios (`.feature` files) are written SECOND based on design doc
 3. Unit tests with TDD Red-Green-Refactor are written THIRD
 4. Code is written LAST to make tests pass
 5. Never adapt tests to fit existing code — always the reverse
 6. Before every `git commit`: run `uv run ruff check --fix . && uv run ruff format .` — fix violations, then re-stage
+6.5. For changes touching authentication, database queries, external APIs, or user input — run `/security-review` before committing. Built-in Claude Code command (Pro/Max), complements ruff, does not replace manual review.
 7. After `git push` to a repo with CI: run `gh run watch` or `gh run list` to confirm the run passed
 
 ## Context Management
@@ -83,6 +84,18 @@ src/{project_name}/
 - No magic strings — use Enums or constants
 - `.env` for secrets locally, GitHub Secrets in CI/CD
 - Validate all required env vars at application startup
+
+## Task Completion Format
+
+After completing any task that changed ≥ 2 files or addressed ≥ 2 requirements,
+output a console summary table:
+
+| # | Task | Status | Files Changed | Notes |
+|---|------|--------|---------------|-------|
+| 1 | ... | ✅ Done | file.py, test.py | ... |
+
+Keep to 1–4 rows. If any changed file touches auth, DB queries, external APIs,
+or user input — append: "→ Run `/security-review` before committing."
 
 ## Commit Convention
 
@@ -136,6 +149,7 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 | `/init-design-doc` | Interactive wizard to create design-doc.md |
 | `/new-project` | Initializes project structure from template |
 | `/review` | Runs code-reviewer agent on changed files |
+| `/security-review` | Built-in: scans for SQL injection, XSS, auth flaws, insecure data handling, dependency vulnerabilities. Run before push on security-sensitive code. |
 | `/dev-status` | Updates dev/status.md before session end |
 
 ## What You Never Do
@@ -150,4 +164,4 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 - Add `Co-Authored-By: Claude` or any AI authorship footer to commit messages
 - **Commit `.claude/` to git in target projects** — it is a local developer tool, invisible to the repo. Always ensure `.claude/` is in the target project's `.gitignore` before or immediately after deploy. If accidentally committed: rewrite history to remove all traces.
 - Push code without first verifying `ruff check` passes locally — CI will catch it and leave a red run
-- Start a multi-phase implementation without entering plan mode first
+- Start any implementation task (beyond trivial single-line fixes) without first calling EnterPlanMode — the bar is low: touching more than one file or making a design choice means plan mode is required

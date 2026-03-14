@@ -47,7 +47,7 @@ Agent marks document status as `REVIEW`, confirms with developer, then `APPROVED
 
 ## Instructions for Claude Code
 
-1. Load template from `templates/design-doc.md` in `ml-claude-infra`
+1. Load template from `templates/design-doc.md` in `claude-scaffold`
 2. Do NOT fill technical sections until business sections are fully resolved
 3. Every scenario in section 4 MUST have a corresponding `.feature` file path noted
 4. Keep language precise — avoid vague phrases like "system should be fast"

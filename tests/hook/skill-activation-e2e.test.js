@@ -63,6 +63,120 @@ describe("E2E — hook process output", () => {
     const output = runHook("langgraph state machine setup guide");
     expect(getLoadedSkills(output)).toContain("langgraph-patterns");
   });
+
+  test("injects plan mode reminder on RU planning keyword", () => {
+    const output = runHook("давай запланируем новую фичу");
+    expect(output.system_prompt_addition).toContain("MANDATORY");
+    expect(output.system_prompt_addition).toContain("EnterPlanMode");
+  });
+
+  test("injects plan mode reminder on EN planning keyword", () => {
+    const output = runHook("let's plan a multi-step refactor");
+    expect(output.system_prompt_addition).toContain("MANDATORY");
+  });
+
+  test("injects plan mode reminder for EN scope keyword: refactor", () => {
+    const output = runHook("let's refactor the auth module");
+    expect(output.system_prompt_addition).toContain("MANDATORY");
+    expect(output.system_prompt_addition).toContain("EnterPlanMode");
+  });
+
+  test("injects plan mode reminder for RU scope keyword: рефакторинг", () => {
+    const output = runHook("давай спланируем архитектуру");
+    expect(output.system_prompt_addition).toContain("MANDATORY");
+  });
+
+  test("does not inject plan mode reminder for simple questions", () => {
+    const output = runHook("what does this function do?");
+    expect(output.system_prompt_addition || "").not.toContain("MANDATORY");
+    expect(output.system_prompt_addition || "").not.toContain("EnterPlanMode");
+  });
+
+  test("does not inject plan mode reminder for generic prompts", () => {
+    const output = runHook("fix the login bug");
+    expect(output.system_prompt_addition || "").not.toContain("MANDATORY");
+  });
+
+  test("plan-mode block includes clarifying survey questions", () => {
+    const output = runHook("давай спланируем рефакторинг");
+    const addition = output.system_prompt_addition || "";
+    expect(addition).toContain("MANDATORY");
+    expect(addition).toContain("Scope");
+    expect(addition).toContain("Success criteria");
+  });
+
+  test("injects plan mode for new RU keywords: внедри, оптимизир, разверни", () => {
+    const cases = [
+      "внедри авторизацию в FastAPI",
+      "оптимизируй пайплайн обработки данных",
+      "разверни приложение на сервере",
+    ];
+    for (const prompt of cases) {
+      const output = runHook(prompt);
+      expect(output.system_prompt_addition || "").toContain("MANDATORY");
+    }
+  });
+
+  test("does not inject plan mode for RU question prefixes: можешь, можно", () => {
+    const cases = [
+      "можешь объяснить архитектуру рефакторинга?",
+      "можно ли так написать внедри паттерн?",
+    ];
+    for (const prompt of cases) {
+      const output = runHook(prompt);
+      expect(output.system_prompt_addition || "").not.toContain("MANDATORY");
+    }
+  });
+});
+
+describe("E2E — security hint injection", () => {
+  const { execSync } = require("child_process");
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "e2e-sec-test-"));
+    execSync("git init", { cwd: tmpDir });
+    execSync("git config user.email test@test.com", { cwd: tmpDir });
+    execSync("git config user.name Test", { cwd: tmpDir });
+    fs.writeFileSync(path.join(tmpDir, "auth_service.py"), "# auth", "utf8");
+    execSync("git add .", { cwd: tmpDir });
+    const skillsDir = path.join(tmpDir, ".claude/skills");
+    fs.mkdirSync(skillsDir, { recursive: true });
+    fs.copyFileSync(
+      path.join(FIXTURE_CWD, ".claude/skills/skill-rules.json"),
+      path.join(skillsDir, "skill-rules.json")
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test("injects security hint when auth file is in git status", () => {
+    const output = runHook("fix the bug", tmpDir);
+    expect(output.system_prompt_addition || "").toContain("Security Heads-Up");
+  });
+
+  test("does NOT inject security hint when no security-sensitive files changed", () => {
+    const cleanDir = fs.mkdtempSync(path.join(os.tmpdir(), "e2e-sec-clean-"));
+    try {
+      execSync("git init", { cwd: cleanDir });
+      execSync("git config user.email test@test.com", { cwd: cleanDir });
+      execSync("git config user.name Test", { cwd: cleanDir });
+      fs.writeFileSync(path.join(cleanDir, "utils.py"), "# utils", "utf8");
+      execSync("git add .", { cwd: cleanDir });
+      const skillsDir = path.join(cleanDir, ".claude/skills");
+      fs.mkdirSync(skillsDir, { recursive: true });
+      fs.copyFileSync(
+        path.join(FIXTURE_CWD, ".claude/skills/skill-rules.json"),
+        path.join(skillsDir, "skill-rules.json")
+      );
+      const output = runHook("fix the bug", cleanDir);
+      expect(output.system_prompt_addition || "").not.toContain("Security Heads-Up");
+    } finally {
+      fs.rmSync(cleanDir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("E2E — session cache deduplication", () => {

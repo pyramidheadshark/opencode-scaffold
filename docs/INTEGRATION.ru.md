@@ -1,4 +1,4 @@
-# Руководство по интеграции — ml-claude-infra
+# Руководство по интеграции — claude-scaffold
 
 ## Что деплоится
 
@@ -26,8 +26,8 @@ your-project/
 ### Шаг 1 — Клонировать infra-репозиторий
 
 ```bash
-git clone <ml-claude-infra-url> ~/tools/ml-claude-infra
-cd ~/tools/ml-claude-infra
+git clone <claude-scaffold-url> ~/tools/claude-scaffold
+cd ~/tools/claude-scaffold
 npm install
 ```
 
