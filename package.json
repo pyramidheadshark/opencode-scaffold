@@ -1,23 +1,41 @@
 {
   "name": "claude-scaffold",
   "version": "1.0.0",
-  "description": "Personal Claude Code infrastructure for ML engineering projects.",
+  "description": "Claude Code infrastructure for ML and AI engineers — skills, hooks, agents, and CI profiles.",
   "main": "index.js",
+  "bin": {
+    "claude-scaffold": "./bin/cli.js"
+  },
   "directories": {
     "doc": "docs",
     "test": "tests"
   },
   "scripts": {
-    "test": "jest tests/hook/ --no-coverage && (python3 tests/infra/test_infra.py || python tests/infra/test_infra.py)",
+    "test": "jest tests/hook/ tests/cli/ --no-coverage && (python3 tests/infra/test_infra.py || python tests/infra/test_infra.py)",
     "test:hook": "jest tests/hook/ --no-coverage",
+    "test:cli": "jest tests/cli/ --no-coverage",
     "test:infra": "python3 tests/infra/test_infra.py || python tests/infra/test_infra.py",
-    "test:watch": "jest tests/hook/ --watch",
+    "test:watch": "jest tests/hook/ tests/cli/ --watch",
     "check:budget": "python tests/infra/test_infra.py TestSkillMdFiles.test_skill_line_budget",
     "metrics": "node scripts/metrics-report.js"
   },
-  "keywords": [],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "ml",
+    "developer-tools",
+    "llm",
+    "prompt-engineering"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "commander": "^14.0.0"
+  },
   "devDependencies": {
     "jest": "^30.2.0"
   },

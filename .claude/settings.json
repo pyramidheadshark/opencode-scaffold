@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/post-tool-use-tracker.sh"
+            "command": "node .claude/hooks/post-tool-use-tracker.js"
           }
         ]
       }
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/python-quality-check.sh"
+            "command": "node .claude/hooks/python-quality-check.js"
           }
         ]
       }

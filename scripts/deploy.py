@@ -38,8 +38,8 @@ REGISTRY_PATH = INFRA_DIR / "deployed-repos.json"
 HOOKS_DEFINITION: dict = {
     "SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": "node .claude/hooks/session-start.js"}]}],
     "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": "node .claude/hooks/skill-activation-prompt.js"}]}],
-    "PostToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "bash .claude/hooks/post-tool-use-tracker.sh"}]}],
-    "Stop": [{"matcher": "", "hooks": [{"type": "command", "command": "bash .claude/hooks/python-quality-check.sh"}]}],
+    "PostToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "node .claude/hooks/post-tool-use-tracker.js"}]}],
+    "Stop": [{"matcher": "", "hooks": [{"type": "command", "command": "node .claude/hooks/python-quality-check.js"}]}],
 }
 
 CI_PROFILES: list[tuple[str, str]] = [
