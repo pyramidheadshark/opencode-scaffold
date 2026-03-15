@@ -12,3 +12,7 @@
 *.json text eol=lf
 *.yml  text eol=lf
 *.yaml text eol=lf
+
+# Profile templates have .en/.ru extensions — tell Linguist they are documentation
+templates/profiles/**/*.en linguist-language=Markdown linguist-documentation=true
+templates/profiles/**/*.ru linguist-language=Markdown linguist-documentation=true
