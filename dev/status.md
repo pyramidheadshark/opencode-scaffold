@@ -32,6 +32,7 @@ Tasks in priority order. Check off when done.
 
 - [x] Deploy to first real project — verified via TechCon_Passports logs — 2026-03-13
 - [ ] Add CI to existing repos: regional-budget (minimal), nalog-parser (minimal), TechCon (fastapi-db), sbera (ml-heavy)
+- [ ] **Fix registry pollution by CLI tests** — `registerDeploy` пишет в реальный `deployed-repos.json` при каждом `npm test`, накапливая ~120 temp-записей. Решение: передавать путь к реестру параметром в `registerDeploy`/`loadRegistry` и подменять его в тестах на temp-файл.
 
 **Completed (most recent first):**
 - [x] Convert PostToolUse + Stop hooks from bash to Node.js (fix WSL/bash path errors on Windows); 17 new Jest tests; deployed to regional-budget-analysis — 2026-03-13
