@@ -155,7 +155,20 @@ Total: 196 Jest + 45 Python = 241 tests (all green).
 
 ---
 
-### v1.2.0 Plan (Agent Orchestration Framework)
+### v1.2.0 ✅ DONE (2026-03-16)
+
+- `session-checkpoint.js` PostToolUse hook — ExitPlanMode trigger + N=50 threshold
+- README упрощён: 282→160 строк, техника вынесена в `docs/REFERENCE.md`
+- 196 Jest + 45 Python = 241 tests (all green)
+- npm publish: v1.2.0 успешно опубликован (18s, все шаги зелёные)
+- 18 локальных репо обновлены до `338497f`
+- Реестр очищен от 121 temp-записи (побочный эффект Jest-тестов)
+
+**Известная проблема:** CLI-тесты пишут в реальный `deployed-repos.json` — нужно изолировать реестр в тестах (mock или temp path). Не блокирует работу, но загрязняет реестр при каждом `npm test`.
+
+---
+
+### v1.3.0 Plan (Agent Orchestration Framework)
 
 **Идея:** встроить multi-agent паттерны как first-class feature в claude-scaffold.
 
@@ -203,4 +216,4 @@ Total: 196 Jest + 45 Python = 241 tests (all green).
 
 ---
 
-*Last updated: 2026-03-16 (v1.2.0: session-checkpoint hook + README redesign)*
+*Last updated: 2026-03-16 (v1.2.0 published + 18 repos updated)*
