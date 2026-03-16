@@ -141,6 +141,20 @@ Tasks in priority order. Check off when done.
 
 ---
 
+### Session Continuity — Auto Checkpoint ✅ (2026-03-16)
+
+**Feature:** `session-checkpoint.js` — PostToolUse hook that auto-writes `dev/status.md` at two trigger points:
+1. **ExitPlanMode** — план одобрен → инжектирует `[AUTO CHECKPOINT — Plan Approved]`
+2. **Threshold N=50** — 50+ tool calls since last checkpoint → инжектирует `[AUTO CHECKPOINT — Activity Threshold]`
+
+Cache: `.claude/cache/checkpoint-{session_id}.json` (отдельный файл, не конфликтует с skill cache).
+New tests: 27 новых Jest-тестов в `tests/hook/session-checkpoint.test.js`.
+Total: 196 Jest + 45 Python = 241 tests (all green).
+
+**Files changed:** `.claude/hooks/session-checkpoint.js` (new), `tests/hook/session-checkpoint.test.js` (new), `.claude/settings.json` (PostToolUse +1 hook), `lib/deploy/copy.js` (HOOKS_DEFINITION updated).
+
+---
+
 ### v1.2.0 Plan (Agent Orchestration Framework)
 
 **Идея:** встроить multi-agent паттерны как first-class feature в claude-scaffold.
@@ -167,13 +181,6 @@ Tasks in priority order. Check off when done.
 
 ---
 
-### CI Debt (независимо)
-
-- TechCon_Passports: migrate pyproject.toml to [dependency-groups], add mypy+pytest-cov
-- phs-calorie-app: same dep fix
-- sd_support_suggestions_sbera: ruff --fix + rename `l` (E741)
-- techcon_infra_yac: CRITICAL — ротация AWS creds из git history
-
 ---
 
 ## Files to Know
@@ -196,4 +203,4 @@ Tasks in priority order. Check off when done.
 
 ---
 
-*Last updated: 2026-03-15 (v1.1.0 post-release cleanup complete)*
+*Last updated: 2026-03-16 (v1.2.0: session-checkpoint hook + README redesign)*

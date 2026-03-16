@@ -1,13 +1,11 @@
 # claude-scaffold
 
-**A Claude Code infrastructure layer for ML and AI engineers — one repo that makes Claude a disciplined engineering partner across all your projects.**
-
-Clone once. Deploy to any project in one command. Update all projects whenever you improve the config — every project stays in sync automatically.
+**Claude Code infrastructure for ML/AI projects — deploy once, keep all projects in sync.**
 
 [![CI](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml)
-![npm](https://img.shields.io/badge/npm-v1.1.0-blue)
-![Jest Tests](https://img.shields.io/badge/Jest-172%20tests-brightgreen)
-![Python Tests](https://img.shields.io/badge/Python-43%20tests-blue)
+![npm](https://img.shields.io/badge/npm-v1.2.0-blue)
+![Jest Tests](https://img.shields.io/badge/Jest-196%20tests-brightgreen)
+![Python Tests](https://img.shields.io/badge/Python-45%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-18-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -15,157 +13,104 @@ Clone once. Deploy to any project in one command. Update all projects whenever y
 
 ---
 
-## The Concept
-
-Most Claude Code setups are per-project and drift apart. claude-scaffold is a **central infrastructure layer** that you own and deploy everywhere.
+## How It Works
 
 ```
-claude-scaffold  ← you configure this once
+claude-scaffold  ← configure once
       │
       ├── deploy → project-a/.claude/
       ├── deploy → project-b/.claude/
       └── deploy → project-c/.claude/
 
 Later: npx claude-scaffold update --all
-      → all three stay in sync with zero manual work
+      → all projects stay in sync automatically
 ```
 
-You can ask Claude directly to handle this:
+On every prompt, the hook injects `dev/status.md` and up to 2 relevant skills from 18 available — only what the current context needs, never a monolithic config file.
+
+You can ask Claude to handle deploys and updates directly:
 > *"Deploy claude-scaffold to my new project with the fastapi-developer profile"*
-> *"Update all registered projects to the latest infra version"*
-
-Claude reads this README, runs the CLI, and wires everything up. No manual config copy-pasting.
-
----
-
-## Why claude-scaffold?
-
-### Before vs After
-
-**Before:** every project has its own CLAUDE.md copied from memory, hooks are not synchronized, each project drifts toward different standards. When you improve your workflow, you update one project — the rest stay stale.
-
-**After:** one source of truth. `npx claude-scaffold update --all` propagates every improvement to all registered projects simultaneously. Claude reads the same discipline everywhere.
-
-### Why not just copy a CLAUDE.md?
-
-A single CLAUDE.md copy works for one project. claude-scaffold adds:
-- **Sync mechanism** — `update --all` keeps every project in sync with one command
-- **Skill injection** — 18 domain skills loaded automatically per prompt, not as a single monolithic file
-- **Profile system** — different CLAUDE.md per role (ML engineer, FastAPI dev, AI developer, fullstack)
-- **Hook infrastructure** — session tracking, onboarding, quality checks, all wired automatically
-
----
-
-## What It Does
-
-On every Claude Code prompt, the hook automatically:
-1. Injects `dev/status.md` — your project's current state and next steps
-2. Detects planning intent and reminds to enter plan mode
-3. Matches the prompt against 16 skill rules (keywords + changed files)
-4. Injects up to 2 additional relevant skills into `system_prompt_addition`
-
-Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs, CI/CD configs, test-first workflow — injected only when needed, compressed if large.
 
 ---
 
 ## Components
 
-### 16 Skills
+### 18 Skills
 
 | Skill | Triggers On |
 |---|---|
-| `python-project-standards` | **Always loaded** (always_load: true) |
-| `fastapi-patterns` | FastAPI, routers, endpoints, Pydantic |
-| `htmx-frontend` | HTMX, Jinja2 templates, server-side rendering |
-| `ml-data-handling` | pickle, ONNX, Parquet, S3, artifacts |
-| `multimodal-router` | PDF, DOCX, video, image analysis, Gemini |
-| `langgraph-patterns` | langgraph + state/graph/node (min 2 keywords) |
-| `rag-vector-db` | Qdrant, pgvector, embeddings, chunking, RAG |
-| `nlp-slm-patterns` | Presidio, spaCy, Ollama, vLLM, PII |
-| `predictive-analytics` | sklearn, MLflow, Optuna, feature engineering |
-| `infra-yandex-cloud` | terraform + yandex/docker (min 2 keywords) |
-| `test-first-patterns` | pytest, BDD, Gherkin, fixtures, coverage |
-| `github-actions` | `.github/workflows/*.yml`, CI/CD jobs |
-| `claude-api-patterns` | anthropic SDK, tool_use, MessageCreate, claude-sonnet |
-| `prompt-engineering` | system_prompt, few_shot, chain-of-thought, eval |
-| `design-doc-creator` | *Meta — manual only, not auto-loaded* |
-| `skill-developer` | *Meta — manual only, not auto-loaded* |
+| `python-project-standards` | **Always loaded** |
+| `fastapi-patterns` | FastAPI, routers, Pydantic |
+| `htmx-frontend` | HTMX, Jinja2 templates |
+| `ml-data-handling` | pickle, ONNX, Parquet, S3 |
+| `multimodal-router` | PDF, DOCX, video, image analysis |
+| `langgraph-patterns` | langgraph + state/graph/node |
+| `rag-vector-db` | Qdrant, pgvector, embeddings, RAG |
+| `nlp-slm-patterns` | Presidio, spaCy, Ollama, vLLM |
+| `predictive-analytics` | sklearn, MLflow, Optuna |
+| `infra-yandex-cloud` | terraform + yandex/docker |
+| `test-first-patterns` | pytest, BDD, Gherkin, coverage |
+| `github-actions` | `.github/workflows/*.yml` |
+| `claude-api-patterns` | anthropic SDK, tool_use |
+| `prompt-engineering` | system_prompt, few_shot, chain-of-thought |
+| `experiment-tracking` | MLflow, model registry, log_metric |
+| `data-validation` | pandera, great expectations, schema validation |
+| `design-doc-creator` | *Meta — manual only* |
+| `skill-developer` | *Meta — manual only* |
 
 ### 8 Agents
 
 `design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant`
 
+### 5 Hooks
+
+| Hook | Event | Action |
+|---|---|---|
+| `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills + plan-mode reminder |
+| `session-start.js` | SessionStart | Detect platform, inject Windows rules, onboarding |
+| `session-checkpoint.js` | PostToolUse | Auto-checkpoint at plan approval or every 50 tool calls |
+| `post-tool-use-tracker.js` | PostToolUse | Log tool calls to `.claude/logs/` |
+| `python-quality-check.js` | Stop | Run ruff + mypy at session end |
+
 ### 4 Commands
 
 `/init-design-doc` · `/new-project` · `/review` · `/dev-status`
 
-### 4 Hooks
+### Preset Profiles
 
-| Hook | Event | Action |
-|---|---|---|
-| `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills + plan-mode reminder on planning keywords |
-| `session-start.js` | SessionStart | Detect platform (win32/unix), inject Windows rules, onboarding on first run |
-| `python-quality-check.js` | Stop | Run ruff + mypy at session end |
-| `post-tool-use-tracker.js` | PostToolUse | Log tool + session_id + repo + is_error to `.claude/logs/` |
+| Profile | Skills |
+|---|---|
+| `ml-engineer` | python-project-standards, ml-data-handling, predictive-analytics, rag-vector-db, langgraph-patterns, test-first-patterns |
+| `ai-developer` | python-project-standards, fastapi-patterns, multimodal-router, langgraph-patterns, github-actions, test-first-patterns |
+| `fastapi-developer` | python-project-standards, fastapi-patterns, htmx-frontend, test-first-patterns, github-actions |
+| `fullstack` | python-project-standards, fastapi-patterns, htmx-frontend, test-first-patterns, github-actions |
 
 ---
 
 ## Quick Start
 
-### Option A — NPX (no clone needed)
-
 ```bash
-# Interactive wizard — asks profile, language, CI, deploy target
+# Interactive wizard
 npx claude-scaffold init /path/to/my-project
 
-# One-liner with profile
+# One-liner
 npx claude-scaffold init /path/to/my-project --profile ml-engineer --lang en
-
-# Available profiles: ml-engineer | ai-developer | fastapi-developer | fullstack
-# Available languages: en | ru
 ```
 
-### Option B — Clone and deploy (Python, no npm required)
+Profiles: `ml-engineer` · `ai-developer` · `fastapi-developer` · `fullstack`
+Languages: `en` · `ru`
 
 ```bash
-git clone https://github.com/pyramidheadshark/claude-scaffold
-cd claude-scaffold
-npm install  # only needed to run tests
-
-# Interactive wizard
-python scripts/deploy.py
-
-# CLI — selected skills + CI profile
-python scripts/deploy.py /path/to/my-project \
-  --skills python-project-standards,fastapi-patterns,test-first-patterns \
-  --ci-profile fastapi
-```
-
-### After deploy
-
-```bash
-# 1. Edit session context (goal, phase, next steps)
+# Edit session context after deploy
 code /path/to/my-project/dev/status.md
 
-# 2. Verify hook works
-cd /path/to/my-project
-echo '{"prompt":"pyproject.toml ruff setup"}' | node .claude/hooks/skill-activation-prompt.js
-# → JSON with python-project-standards in system_prompt_addition
+# Keep all projects in sync
+npx claude-scaffold status        # show all registered projects + version drift
+npx claude-scaffold update --all  # sync all outdated projects
+npx claude-scaffold update /path  # sync a single project
 ```
 
-### Keep all projects in sync
-
-```bash
-npx claude-scaffold status            # show all registered projects + version drift
-npx claude-scaffold update --all      # sync all outdated projects (.claude/ only)
-npx claude-scaffold update /path      # sync a single project
-
-# Python equivalent
-python scripts/deploy.py --status
-python scripts/deploy.py --update-all
-```
-
-> You can ask Claude to run this for you: *"Check which projects are outdated and update them all."*
+> Python deploy alternative and advanced options: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 
 > See [examples/](examples/) for complete project setup snapshots.
 
@@ -181,94 +126,14 @@ python scripts/deploy.py --update-all
 
 ---
 
-## Preset Profiles
-
-| Project Type | Skills |
-|---|---|
-| FastAPI REST API | `python-project-standards`, `fastapi-patterns`, `test-first-patterns`, `github-actions` |
-| ML pipeline | `python-project-standards`, `ml-data-handling`, `predictive-analytics`, `test-first-patterns` |
-| RAG / LLM app | `fastapi-patterns`, `rag-vector-db`, `langgraph-patterns`, `github-actions` |
-| NLP / anonymization | `python-project-standards`, `nlp-slm-patterns`, `test-first-patterns` |
-| Full ML platform | `--all` |
-
----
-
-## Model Routing
-
-| Task | Model | Provider |
-|---|---|---|
-| Code, architecture, tests, refactoring | `claude-sonnet-4-6` | Claude Code subscription |
-| PDF / image / video / audio analysis | `google/gemini-3-flash-preview` | OpenRouter |
-| Documents > 400k tokens | `google/gemini-3-flash-preview` | OpenRouter |
-
-Routing is **explicit** — triggered manually via `multimodal-router` skill, never automatic.
-
----
-
-## Token Budget
-
-| Component | Tokens / prompt |
-|---|---|
-| `dev/status.md` | ~200 |
-| Small skill (< 150 lines) | ~800–1 200 |
-| Medium skill (150–250 lines) | ~1 500–2 500 |
-| Compressed skill (> 300 lines) | ~600 (headers only) |
-| Typical session (status + 2 skills) | ~3 500–5 500 |
-
-On a 200K context window: < 3% overhead per prompt.
-
----
-
 ## Running Tests
 
 ```bash
-npm run test:hook                  # 106 Jest tests (unit + E2E + session-start)
-python tests/infra/test_infra.py   # 43 Python infra contract tests
-npm test                           # both (Windows: python3 falls back to python automatically)
-npm run check:budget               # verify all skills stay under 300 lines
-npm run metrics                    # skill load frequency report
+npm test                          # 196 Jest + 45 Python
+npm run test:hook                 # 134 hook tests only
+npm run check:budget              # verify all skills under 300 lines
+npm run metrics                   # skill load frequency report
 ```
-
----
-
-## Repository Structure
-
-```
-claude-scaffold/
-├── .claude/
-│   ├── skills/          # 16 skill modules (SKILL.md + resources/ + skill-metadata.json)
-│   ├── hooks/           # lifecycle automation
-│   ├── agents/          # 8 sub-agents
-│   ├── commands/        # 4 slash commands
-│   └── CLAUDE.md        # core profile + interaction principles
-├── scripts/
-│   ├── deploy.py        # cross-platform deploy wizard (--status, --update, --update-all)
-│   ├── deploy.sh        # bash deploy script (legacy)
-│   ├── metrics-report.js
-│   └── generate_skill_rules.py
-├── templates/           # pyproject.toml, Dockerfile, docker-compose, Makefile, etc.
-├── tests/
-│   ├── hook/            # Jest tests
-│   ├── infra/           # Python tests
-│   └── fixtures/        # mock project for E2E
-├── docs/
-│   ├── INTEGRATION.md   # deploy guide (EN)
-│   ├── INTEGRATION.ru.md # deploy guide (RU)
-│   ├── ARCHITECTURE.md  # system overview + ADRs
-│   └── CHANGELOG.md
-└── dev/
-    └── status.md        # session context
-```
-
----
-
-## VS Code Setup
-
-Install for the best experience:
-- `anthropic.claude-code` — official Claude Code extension
-- `charliermarsh.ruff` — real-time linting
-- `eamodio.gitlens` — inline git history
-- `usernamehw.errorlens` — inline error display (pairs with mypy)
 
 ---
 
@@ -277,4 +142,5 @@ Install for the best experience:
 - [Integration Guide (EN)](docs/INTEGRATION.md)
 - [Integration Guide (RU)](docs/INTEGRATION.ru.md)
 - [Architecture + ADRs](docs/ARCHITECTURE.md)
+- [Reference: token budget, model routing, repo structure](docs/REFERENCE.md)
 - [Changelog](docs/CHANGELOG.md)
