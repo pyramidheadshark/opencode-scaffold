@@ -10,14 +10,17 @@ const { addSkill } = require('../../lib/commands/add-skill');
 
 
 let tmpDir;
+let registryPath;
 
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'cs-test-addskill-'));
-  deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'] });
+  registryPath = path.join(os.tmpdir(), `cs-test-addskill-reg-${Date.now()}.json`);
+  deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
 });
 
 afterEach(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
+  if (fs.existsSync(registryPath)) fs.unlinkSync(registryPath);
 });
 
 describe('add-skill — addSkill', () => {
