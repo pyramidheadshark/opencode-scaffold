@@ -129,10 +129,10 @@ describe('init — deployCore', () => {
     );
     const postToolCmd = settings.hooks.PostToolUse[0].hooks[0].command;
     const stopCmd = settings.hooks.Stop[0].hooks[0].command;
-    expect(postToolCmd).toMatch(/^node /);
-    expect(postToolCmd).toMatch(/\.js$/);
-    expect(stopCmd).toMatch(/^node /);
-    expect(stopCmd).toMatch(/\.js$/);
+    expect(postToolCmd).toMatch(/^node "/);
+    expect(postToolCmd).toMatch(/\.js"$/);
+    expect(stopCmd).toMatch(/^node "/);
+    expect(stopCmd).toMatch(/\.js"$/);
     expect(postToolCmd).not.toMatch(/bash/);
     expect(stopCmd).not.toMatch(/bash/);
   });
@@ -286,13 +286,40 @@ describe('init — deployCore', () => {
     ];
     for (const cmd of cmds) {
       expect(cmd).not.toMatch(/^node \.claude\//);
-      expect(cmd).toMatch(/^node /);
-      expect(cmd).toMatch(/\.js$/);
+      expect(cmd).toMatch(/^node "/);
+      expect(cmd).toMatch(/\.js"$/);
     }
     expect(cmds[0]).toContain('session-start.js');
     expect(cmds[1]).toContain('skill-activation-prompt.js');
     expect(cmds[2]).toContain('post-tool-use-tracker.js');
     expect(cmds[3]).toContain('python-quality-check.js');
+  });
+
+  test('buildHooksDefinition quotes path — spaces in targetDir are safe', () => {
+    const { buildHooksDefinition } = require('../../lib/deploy/copy');
+    const fakeTarget = '/Users/John Doe/Repos/my project';
+    const hooks = buildHooksDefinition(fakeTarget);
+
+    const cmds = [
+      hooks.SessionStart[0].hooks[0].command,
+      hooks.UserPromptSubmit[0].hooks[0].command,
+      hooks.PostToolUse[0].hooks[0].command,
+      hooks.PostToolUse[0].hooks[1].command,
+      hooks.Stop[0].hooks[0].command,
+    ];
+
+    for (const cmd of cmds) {
+      expect(cmd).toMatch(/^node "/);
+      expect(cmd).toMatch(/\.js"$/);
+      expect(cmd).toContain('John Doe');
+      expect(cmd).toContain('my project');
+    }
+
+    expect(cmds[0]).toContain('session-start.js');
+    expect(cmds[1]).toContain('skill-activation-prompt.js');
+    expect(cmds[2]).toContain('post-tool-use-tracker.js');
+    expect(cmds[3]).toContain('session-checkpoint.js');
+    expect(cmds[4]).toContain('python-quality-check.js');
   });
 
   test('deployCore overwrites scaffold hook events with current definition', () => {

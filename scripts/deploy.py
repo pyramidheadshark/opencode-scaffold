@@ -43,10 +43,10 @@ REGISTRY_PATH = INFRA_DIR / "deployed-repos.json"
 def build_hooks_definition(target: Path) -> dict:
     h = (target / ".claude" / "hooks").resolve().as_posix()
     return {
-        "SessionStart":     [{"matcher": "", "hooks": [{"type": "command", "command": f"node {h}/session-start.js"}]}],
-        "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": f"node {h}/skill-activation-prompt.js"}]}],
-        "PostToolUse":      [{"matcher": ".*", "hooks": [{"type": "command", "command": f"node {h}/post-tool-use-tracker.js"}, {"type": "command", "command": f"node {h}/session-checkpoint.js"}]}],
-        "Stop":             [{"matcher": "", "hooks": [{"type": "command", "command": f"node {h}/python-quality-check.js"}]}],
+        "SessionStart":     [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/session-start.js"'}]}],
+        "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/skill-activation-prompt.js"'}]}],
+        "PostToolUse":      [{"matcher": ".*", "hooks": [{"type": "command", "command": f'node "{h}/post-tool-use-tracker.js"'}, {"type": "command", "command": f'node "{h}/session-checkpoint.js"'}]}],
+        "Stop":             [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/python-quality-check.js"'}]}],
     }
 
 CI_PROFILES: list[tuple[str, str]] = [
