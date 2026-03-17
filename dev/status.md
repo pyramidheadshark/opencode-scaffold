@@ -169,6 +169,17 @@ Total: 196 Jest + 45 Python = 241 tests (all green).
 
 ---
 
+### v1.2.1 ✅ DONE (2026-03-17)
+
+**README discoverability patch:**
+- Восстановлена структура README от v1.1.0 (problem statement, Before/After, Token Budget, Repo Structure, VS Code Setup, два Quick Start варианта)
+- npm keywords: 7 generic → 14 точечных (добавлены `ai-agents`, `coding-assistant`, `automation`, `scaffold` и др.; убраны `fastapi/langgraph/rag/npx/ml`)
+- Research: keywords в топ-репах Claude Code экосистемы; GEO-принципы для AI-discoverability
+- CI: зелёный (28s, все шаги прошли)
+- Пуш: `28ad29d` → main
+
+---
+
 ### v1.3.0 Plan (Agent Orchestration Framework)
 
 **Идея:** встроить multi-agent паттерны как first-class feature в claude-scaffold.
@@ -217,4 +228,4 @@ Total: 196 Jest + 45 Python = 241 tests (all green).
 
 ---
 
-*Last updated: 2026-03-16 (v1.2.0 published + 18 repos updated)*
+*Last updated: 2026-03-17 (v1.2.1 — README discoverability patch)*
