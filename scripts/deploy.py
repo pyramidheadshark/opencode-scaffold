@@ -40,12 +40,14 @@ SKILLS_DIR = INFRA_DIR / ".claude" / "skills"
 CI_TEMPLATES_DIR = INFRA_DIR / "templates" / "github-actions"
 REGISTRY_PATH = INFRA_DIR / "deployed-repos.json"
 
-HOOKS_DEFINITION: dict = {
-    "SessionStart": [{"matcher": "", "hooks": [{"type": "command", "command": "node .claude/hooks/session-start.js"}]}],
-    "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": "node .claude/hooks/skill-activation-prompt.js"}]}],
-    "PostToolUse": [{"matcher": ".*", "hooks": [{"type": "command", "command": "node .claude/hooks/post-tool-use-tracker.js"}]}],
-    "Stop": [{"matcher": "", "hooks": [{"type": "command", "command": "node .claude/hooks/python-quality-check.js"}]}],
-}
+def build_hooks_definition(target: Path) -> dict:
+    h = (target / ".claude" / "hooks").resolve().as_posix()
+    return {
+        "SessionStart":     [{"matcher": "", "hooks": [{"type": "command", "command": f"node {h}/session-start.js"}]}],
+        "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": f"node {h}/skill-activation-prompt.js"}]}],
+        "PostToolUse":      [{"matcher": ".*", "hooks": [{"type": "command", "command": f"node {h}/post-tool-use-tracker.js"}, {"type": "command", "command": f"node {h}/session-checkpoint.js"}]}],
+        "Stop":             [{"matcher": "", "hooks": [{"type": "command", "command": f"node {h}/python-quality-check.js"}]}],
+    }
 
 CI_PROFILES: list[tuple[str, str]] = [
     ("minimal",    "Lint + typecheck + test — CLI tools, data scripts, web scrapers"),
@@ -369,7 +371,7 @@ def deploy_settings(target: Path) -> None:
             existing = json.loads(settings_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             existing = {}
-    existing["hooks"] = HOOKS_DEFINITION
+    existing["hooks"] = build_hooks_definition(target)
     settings_path.write_text(
         json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",

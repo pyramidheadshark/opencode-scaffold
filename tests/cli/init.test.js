@@ -273,6 +273,28 @@ describe('init — deployCore', () => {
     expect(output).toContain('ru');
   });
 
+  test('settings.json hook commands use absolute paths (not relative .claude/)', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'] });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    const cmds = [
+      settings.hooks.SessionStart[0].hooks[0].command,
+      settings.hooks.UserPromptSubmit[0].hooks[0].command,
+      settings.hooks.PostToolUse[0].hooks[0].command,
+      settings.hooks.Stop[0].hooks[0].command,
+    ];
+    for (const cmd of cmds) {
+      expect(cmd).not.toMatch(/^node \.claude\//);
+      expect(cmd).toMatch(/^node /);
+      expect(cmd).toMatch(/\.js$/);
+    }
+    expect(cmds[0]).toContain('session-start.js');
+    expect(cmds[1]).toContain('skill-activation-prompt.js');
+    expect(cmds[2]).toContain('post-tool-use-tracker.js');
+    expect(cmds[3]).toContain('python-quality-check.js');
+  });
+
   test('deployCore overwrites scaffold hook events with current definition', () => {
     const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
     fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
