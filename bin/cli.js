@@ -35,18 +35,6 @@ program
   .option('--org-profile <org>', 'Org profile name (e.g. techcon-ml)')
   .option('--org-type <type>', 'Project type within org (required with --org-profile)')
   .action(async (targetPath, opts) => {
-    if (!targetPath && !opts.profile && !opts.skills) {
-      const answers = await runWizard();
-      targetPath = answers.targetPath;
-      opts.profile = answers.profileName;
-      opts.skills = answers.skills.join(',');
-      opts.lang = answers.lang;
-      opts.ci = answers.ciProfile;
-      opts.deploy = answers.deployTarget;
-    }
-
-    const resolvedTarget = path.resolve(targetPath || process.cwd());
-
     if (opts.orgProfile && !opts.orgType) {
       console.error('Error: --org-type is required with --org-profile (see list-org-profiles)');
       process.exit(1);
@@ -64,6 +52,18 @@ program
         process.exit(1);
       }
     }
+
+    if (!targetPath && !opts.profile && !opts.skills) {
+      const answers = await runWizard();
+      targetPath = answers.targetPath;
+      opts.profile = answers.profileName;
+      opts.skills = answers.skills.join(',');
+      opts.lang = answers.lang;
+      opts.ci = answers.ciProfile;
+      opts.deploy = answers.deployTarget;
+    }
+
+    const resolvedTarget = path.resolve(targetPath || process.cwd());
 
     let skills;
     if (opts.skills) {
