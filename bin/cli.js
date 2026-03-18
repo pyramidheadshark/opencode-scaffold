@@ -9,6 +9,7 @@ const { printStatusReport } = require('../lib/commands/status');
 const { addSkill } = require('../lib/commands/add-skill');
 const { runMetrics } = require('../lib/commands/metrics');
 const { runWizard } = require('../lib/ui/wizard');
+const { listOrgProfiles, updateOrgProfile, loadOrgProfile } = require('../lib/commands/org-profile');
 const { DEFAULT_REGISTRY_PATH } = require('../lib/deploy/registry');
 const PROFILES = require('../lib/profiles');
 
@@ -31,6 +32,8 @@ program
   .option('--ci <profile>', 'CI profile: minimal|fastapi|fastapi-db|ml-heavy')
   .option('--deploy <target>', 'Deploy target: none|yc|vps', 'none')
   .option('--dry-run', 'Preview what will be deployed without writing files')
+  .option('--org-profile <org>', 'Org profile name (e.g. techcon-ml)')
+  .option('--org-type <type>', 'Project type within org (required with --org-profile)')
   .action(async (targetPath, opts) => {
     if (!targetPath && !opts.profile && !opts.skills) {
       const answers = await runWizard();
@@ -43,6 +46,24 @@ program
     }
 
     const resolvedTarget = path.resolve(targetPath || process.cwd());
+
+    if (opts.orgProfile && !opts.orgType) {
+      console.error('Error: --org-type is required with --org-profile (see list-org-profiles)');
+      process.exit(1);
+    }
+    if (opts.orgProfile && opts.orgType) {
+      try {
+        const profile = loadOrgProfile(INFRA_DIR, opts.orgProfile);
+        if (!profile.project_types || !profile.project_types[opts.orgType]) {
+          console.error(`Error: unknown type '${opts.orgType}' for org '${opts.orgProfile}'`);
+          console.error(`Available types: ${Object.keys(profile.project_types || {}).join(', ')}`);
+          process.exit(1);
+        }
+      } catch (e) {
+        console.error(`Error: ${e.message}`);
+        process.exit(1);
+      }
+    }
 
     let skills;
     if (opts.skills) {
@@ -66,6 +87,9 @@ program
     console.log(`  Lang    : ${opts.lang}`);
     console.log(`  CI      : ${opts.ci || 'none'}`);
     console.log(`  Deploy  : ${opts.deploy}`);
+    if (opts.orgProfile) {
+      console.log(`  Org     : ${opts.orgProfile}/${opts.orgType}`);
+    }
     console.log();
 
     deployCore(INFRA_DIR, resolvedTarget, {
@@ -75,6 +99,8 @@ program
       ciProfile: opts.ci || '',
       deployTarget: opts.deploy || 'none',
       dryRun: !!opts.dryRun,
+      orgProfile: opts.orgProfile || '',
+      orgType: opts.orgType || '',
     });
 
     if (opts.dryRun) return;
@@ -134,6 +160,65 @@ program
   .description('Show skill load frequency report from .claude/logs/skill-metrics.jsonl')
   .action(() => {
     runMetrics(process.cwd());
+  });
+
+program
+  .command('list-org-profiles')
+  .description('List available org profiles and their project types')
+  .action(() => {
+    const profiles = listOrgProfiles(INFRA_DIR);
+    if (profiles.length === 0) {
+      console.log('No org profiles found. Create org-profiles/<org-name>/ in scaffold directory.');
+      return;
+    }
+    for (const { org, description, types } of profiles) {
+      console.log(`\n${org}  —  ${description}`);
+      for (const { name, description: typeDesc } of types) {
+        console.log(`  ${name.padEnd(14)} ${typeDesc}`);
+      }
+    }
+    console.log();
+  });
+
+program
+  .command('update-org-profile')
+  .description('Update CLAUDE.md from org profile templates in registered repos')
+  .requiredOption('--org <name>', 'Org profile name (e.g. techcon-ml)')
+  .option('--repos <paths>', 'Comma-separated repo paths (overrides repos.json)')
+  .option('--lang <lang>', 'Language for templates: en|ru', 'en')
+  .action((opts) => {
+    let repos = null;
+    if (opts.repos) {
+      repos = opts.repos.split(',').map(p => p.trim()).filter(Boolean).map(p => ({
+        path: path.resolve(p),
+        name: path.basename(p),
+        type: null,
+      }));
+    }
+    let result;
+    try {
+      result = updateOrgProfile(INFRA_DIR, opts.org, { repos, lang: opts.lang });
+    } catch (e) {
+      console.error(`Error: ${e.message}`);
+      process.exit(1);
+    }
+    console.log(`\n${LINE}`);
+    console.log('  update-org-profile :: Result');
+    console.log(LINE);
+    if (result.updated.length > 0) {
+      console.log(`  Updated (${result.updated.length}): ${result.updated.join(', ')}`);
+    }
+    if (result.skipped.length > 0) {
+      for (const s of result.skipped) {
+        console.log(`  Skipped: ${s.name} — ${s.reason}`);
+      }
+    }
+    if (result.errors.length > 0) {
+      for (const e of result.errors) {
+        console.log(`  Error:   ${e.name} — ${e.error}`);
+      }
+    }
+    console.log();
   });
 
 program.parse(process.argv);

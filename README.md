@@ -83,6 +83,28 @@ npx claude-scaffold update /path  # sync a single project
 
 ---
 
+## Advanced: Org Profiles (Teams)
+
+For teams with shared conventions — infrastructure topology, naming rules, internal links — org profiles add an organization-specific CLAUDE.md layer on top of scaffold core. This layer survives `update --all` and is updated independently.
+
+```bash
+# Deploy with org profile (team-specific CLAUDE.md)
+npx claude-scaffold init /path/to/repo --profile ai-developer --org-profile techcon-ml --org-type ml-pipeline
+
+# List available org profiles and types
+npx claude-scaffold list-org-profiles
+
+# Update CLAUDE.md in all org repos (reads org-profiles/<org>/repos.json)
+npx claude-scaffold update-org-profile --org techcon-ml
+
+# Override repo list explicitly
+npx claude-scaffold update-org-profile --org techcon-ml --repos /path/a,/path/b
+```
+
+Org profiles live in `org-profiles/<org-name>/` in the scaffold repo. They are gitignored by default — internal org data stays private.
+
+---
+
 ## What It Does
 
 On every Claude Code prompt, the hook automatically:

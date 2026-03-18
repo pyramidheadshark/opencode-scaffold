@@ -32,7 +32,7 @@ Tasks in priority order. Check off when done.
 
 - [x] Deploy to first real project — verified via TechCon_Passports logs — 2026-03-13
 - [ ] Add CI to existing repos: regional-budget (minimal), nalog-parser (minimal), TechCon (fastapi-db), sbera (ml-heavy)
-- [ ] **Fix registry pollution by CLI tests** — `registerDeploy` пишет в реальный `deployed-repos.json` при каждом `npm test`, накапливая ~120 temp-записей. Решение: передавать путь к реестру параметром в `registerDeploy`/`loadRegistry` и подменять его в тестах на temp-файл.
+- [x] **Fix registry pollution by CLI tests** — изолированы через `registryPath` в `beforeEach`/`afterEach` — 2026-03-18
 
 **Completed (most recent first):**
 - [x] Convert PostToolUse + Stop hooks from bash to Node.js (fix WSL/bash path errors on Windows); 17 new Jest tests; deployed to regional-budget-analysis — 2026-03-13
@@ -180,7 +180,25 @@ Total: 196 Jest + 45 Python = 241 tests (all green).
 
 ---
 
-### v1.3.0 Plan (Agent Orchestration Framework)
+### v1.3.0 ✅ DONE (2026-03-18) — Org Profiles
+
+**Feature:** org-profiles layer — team-specific CLAUDE.md templates that survive `update --all`.
+
+**Components:**
+- `lib/commands/org-profile.js` — new module: loadOrgProfile, deployOrgTemplate, writeScaffoldMeta, listOrgProfiles, updateOrgProfile
+- `lib/commands/init.js` — deployCore integrates org-profile deploy + writeScaffoldMeta
+- `lib/commands/update.js` — updateOne now writes .scaffold-meta.json after each update
+- `bin/cli.js` — `--org-profile`/`--org-type` flags on init + `list-org-profiles` + `update-org-profile` commands
+- `org-profiles/techcon-ml/` — 4 types × 2 langs = 8 CLAUDE.md templates (gitignored)
+- `.scaffold-meta.json` written to `.claude/` on every init/update — machine-readable deploy metadata
+- Tests: 28 new tests in `tests/cli/org-profile.test.js` + 3 in `tests/infra/test_infra.py`
+- Docs: README Advanced section + REFERENCE.md CLI reference + `.scaffold-meta.json` schema
+
+**Test results:** 226 Jest + 48 Python (all green)
+
+---
+
+### v1.4.0 Plan (Agent Orchestration Framework)
 
 **Идея:** встроить multi-agent паттерны как first-class feature в claude-scaffold.
 
@@ -228,4 +246,31 @@ Total: 196 Jest + 45 Python = 241 tests (all green).
 
 ---
 
-*Last updated: 2026-03-17 (v1.2.1 — README discoverability patch)*
+---
+
+### v1.2.2 + v1.2.3 ✅ DONE (2026-03-18)
+
+**v1.2.2 — fix: quote hook paths to handle spaces in directory names**
+- `lib/deploy/copy.js` + `scripts/deploy.py`: пути хуков теперь в кавычках (`node "..."`)
+- `tests/cli/init.test.js`: исправлены assertions + новый unit-тест с пробелом в пути
+- `package.json`: npm pkg fix (bin field normalization)
+- 198 Jest + 45 Python (all green)
+
+**v1.2.3 — chore: update README badges and test counts**
+- Бейджи: `v1.2.1` → `v1.2.3`, `196 tests` → `198 tests`
+- Опубликовано на npmjs через publish.yml (GitHub Actions, NPM_TOKEN настроен)
+
+---
+
+### fix: isolate registry writes in CLI tests ✅ DONE (2026-03-18)
+
+**Проблема:** `tests/cli/init.test.js` и `tests/cli/add-skill.test.js` при каждом `npm test` писали temp-записи в реальный `deployed-repos.json`, накапливая мусор.
+
+**Решение:** `registryPath` — temp-файл с уникальным именем — создаётся в `beforeEach`, удаляется в `afterEach`, передаётся во все вызовы `deployCore`. Production-код не тронут.
+
+**Результат:** 198 Jest + 45 Python (all green). Реестр чист после тестов.
+
+- Закрыт backlog item "Fix registry pollution by CLI tests"
+- Commit: `87a0b39` — `fix: isolate registry writes in CLI tests`
+
+*Last updated: 2026-03-18*

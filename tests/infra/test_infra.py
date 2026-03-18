@@ -482,5 +482,30 @@ class TestProfileTemplates(unittest.TestCase):
                           f"Profile '{profile}' not found in lib/profiles.js")
 
 
+ORG_PROFILES_DIR = INFRA_ROOT / "org-profiles"
+
+
+class TestOrgProfilesStructure(unittest.TestCase):
+    def test_org_profiles_directory_exists(self):
+        self.assertTrue(
+            ORG_PROFILES_DIR.is_dir(),
+            "org-profiles/ directory missing from scaffold root"
+        )
+
+    def test_org_profile_module_exists(self):
+        module_path = INFRA_ROOT / "lib" / "commands" / "org-profile.js"
+        self.assertTrue(
+            module_path.exists(),
+            "lib/commands/org-profile.js not found"
+        )
+
+    def test_org_profile_module_exports_expected_functions(self):
+        module_path = INFRA_ROOT / "lib" / "commands" / "org-profile.js"
+        content = module_path.read_text(encoding="utf-8")
+        for func in ["loadOrgProfile", "deployOrgTemplate", "writeScaffoldMeta",
+                     "listOrgProfiles", "updateOrgProfile"]:
+            self.assertIn(func, content, f"Function '{func}' not found in org-profile.js")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
