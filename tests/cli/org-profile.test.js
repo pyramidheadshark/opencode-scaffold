@@ -405,17 +405,37 @@ describe('updateOrgProfile', () => {
 describe('integration: deployCore with org-profile', () => {
   const { deployCore } = require('../../lib/commands/init');
   let registryPath;
+  let infraWithOrg;
 
   beforeEach(() => {
     registryPath = path.join(os.tmpdir(), `cs-test-init-reg-org-${Date.now()}.json`);
+    infraWithOrg = fs.mkdtempSync(path.join(os.tmpdir(), 'cs-test-infra-org-'));
+    const claudeSrc = path.join(INFRA_DIR, '.claude');
+    if (fs.existsSync(claudeSrc)) fs.cpSync(claudeSrc, path.join(infraWithOrg, '.claude'), { recursive: true });
+    const templatesSrc = path.join(INFRA_DIR, 'templates');
+    if (fs.existsSync(templatesSrc)) fs.cpSync(templatesSrc, path.join(infraWithOrg, 'templates'), { recursive: true });
+    fs.copyFileSync(path.join(INFRA_DIR, 'package.json'), path.join(infraWithOrg, 'package.json'));
+    const orgTemplateDir = path.join(infraWithOrg, 'org-profiles', 'techcon-ml', 'templates', 'ml-pipeline');
+    fs.mkdirSync(orgTemplateDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(orgTemplateDir, 'CLAUDE.md.en'),
+      '# ML Pipeline\n\n## TechCon ML Team\n\nTest fixture template.',
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(orgTemplateDir, 'CLAUDE.md.ru'),
+      '# ML Pipeline (RU)\n\n## TechCon ML Team\n\nТестовый шаблон.',
+      'utf8'
+    );
   });
 
   afterEach(() => {
     if (fs.existsSync(registryPath)) fs.unlinkSync(registryPath);
+    if (fs.existsSync(infraWithOrg)) fs.rmSync(infraWithOrg, { recursive: true, force: true });
   });
 
   test('deployCore with --org-profile deploys correct CLAUDE.md', () => {
-    deployCore(INFRA_DIR, tmpDir, {
+    deployCore(infraWithOrg, tmpDir, {
       skills: ['python-project-standards'],
       profile: 'ai-developer',
       orgProfile: 'techcon-ml',
@@ -431,7 +451,7 @@ describe('integration: deployCore with org-profile', () => {
   });
 
   test('deployCore with --org-profile writes scaffold-meta with org fields', () => {
-    deployCore(INFRA_DIR, tmpDir, {
+    deployCore(infraWithOrg, tmpDir, {
       skills: ['python-project-standards'],
       profile: 'ai-developer',
       orgProfile: 'techcon-ml',
