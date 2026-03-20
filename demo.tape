@@ -1,34 +1,40 @@
 Output docs/demo.gif
-
-Set Shell "bash"
-Set FontSize 13
+Set Shell bash
+Set FontSize 17
 Set Width 1200
-Set Height 620
-Set Theme "Dracula"
-Set Padding 20
+Set Height 700
+Set Theme "Catppuccin Mocha"
+Set Padding 24
 Set Framerate 24
-Set TypingSpeed 75ms
+Set TypingSpeed 70ms
+Set WindowBar Colorful
+Set BorderRadius 12
+Set MarginFill "#1e1e2e"
+Set Margin 50
 
-# --- hidden setup ---
+# NOTE: render on Linux only (VHS requires headless Chrome — hangs on Windows)
+# ssh yc-ctrl, install vhs + ttyd 1.7.7 + chromium + claude-scaffold, then:
+# cd ~/vhs-demo && vhs demo.tape
+
 Hide
 Type "cd /tmp && rm -rf cs-demo && mkdir cs-demo && cd cs-demo && git init -q"
 Enter
-Sleep 300ms
+Sleep 400ms
+Type "clear"
+Enter
+Sleep 200ms
 Show
 
-# === Scene 1: empty project ===
-Sleep 600ms
+Sleep 500ms
 Type "ls -la"
 Enter
 Sleep 1.2s
 
-# === Scene 2: one command ===
-Sleep 400ms
+Sleep 300ms
 Type "claude-scaffold init . --profile ml-engineer --lang en 2>/dev/null"
 Enter
-Sleep 3.5s
+Sleep 4s
 
-# === Scene 3: show what was deployed ===
 Hide
 Type "clear"
 Enter
