@@ -11,5 +11,5 @@
 
 ## Optional
 
-- [Changelog](https://github.com/pyramidheadshark/claude-scaffold/blob/main/CHANGELOG.md): Release history
+- [Changelog](https://github.com/pyramidheadshark/claude-scaffold/blob/main/docs/CHANGELOG.md): Release history
 - [npm package](https://www.npmjs.com/package/claude-scaffold): Install via npm/npx
