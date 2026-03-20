@@ -1,4 +1,4 @@
-{"version": 2, "width": 120, "height": 32, "timestamp": 1742500800, "title": "claude-scaffold demo", "env": {"TERM": "xterm-256color", "SHELL": "/bin/bash"}}
+{"version": 2, "width": 100, "height": 28, "timestamp": 1742500800, "title": "claude-scaffold demo", "env": {"TERM": "xterm-256color", "SHELL": "/bin/bash"}}
 [0.5, "o", "\r\n\r\n"]
 [0.5, "o", "\u001b[1m\u001b[32muser@dev\u001b[0m\u001b[97m:\u001b[1m\u001b[34m~/cs-demo\u001b[0m$ \u001b[0m"]
 [1.17, "o", "l"]
@@ -73,7 +73,8 @@
 [7.09, "o", "  \u001b[1m\u001b[36mclaude-scaffold\u001b[0m \u001b[97m:: Deploy\u001b[0m\r\n"]
 [7.09, "o", "\u001b[2m------------------------------------------------------------\u001b[0m\r\n"]
 [7.24, "o", "  \u001b[2mTarget \u001b[0m : \u001b[97m~/cs-demo\u001b[0m\r\n"]
-[7.34, "o", "  \u001b[2mSkills \u001b[0m : \u001b[36mpython-project-standards\u001b[0m, \u001b[36mml-data-handling\u001b[0m, \u001b[36mpredictive-analytics\u001b[0m, \u001b[36mexperiment-tracking\u001b[0m, \u001b[36mrag-vector-db\u001b[0m, \u001b[36mlanggraph-patterns\u001b[0m, \u001b[36mtest-first-patterns\u001b[0m\r\n"]
+[7.34, "o", "  \u001b[2mSkills \u001b[0m : \u001b[36mpython-project-standards\u001b[0m, \u001b[36mml-data-handling\u001b[0m, \u001b[36mpredictive-analytics\u001b[0m, \u001b[36mexperiment-tracking\u001b[0m,\r\n"]
+[7.34, "o", "           \u001b[36mrag-vector-db\u001b[0m, \u001b[36mlanggraph-patterns\u001b[0m, \u001b[36mtest-first-patterns\u001b[0m\r\n"]
 [7.44, "o", "  \u001b[2mLang   \u001b[0m : \u001b[97men\u001b[0m\r\n"]
 [7.54, "o", "  \u001b[2mCI     \u001b[0m : \u001b[2mnone\u001b[0m\r\n"]
 [7.54, "o", "\r\n"]

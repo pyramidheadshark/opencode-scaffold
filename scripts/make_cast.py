@@ -3,8 +3,8 @@
 import json
 import time as time_module
 
-WIDTH = 120
-HEIGHT = 32
+WIDTH = 100
+HEIGHT = 28
 
 events = []
 t = 0.0
@@ -84,8 +84,10 @@ skills = [
     "langgraph-patterns",
     "test-first-patterns",
 ]
-skills_str = ", ".join(f"{CYAN}{s}{RESET}" for s in skills)
-out(f"  {DIM}Skills {RESET} : {skills_str}\r\n")
+row1 = ", ".join(f"{CYAN}{s}{RESET}" for s in skills[:4])
+row2 = ", ".join(f"{CYAN}{s}{RESET}" for s in skills[4:])
+out(f"  {DIM}Skills {RESET} : {row1},\r\n")
+out(f"           {row2}\r\n")
 pause(0.1)
 out(f"  {DIM}Lang   {RESET} : {WHITE}en{RESET}\r\n")
 pause(0.1)
