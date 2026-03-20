@@ -14,6 +14,8 @@ Clone once. Deploy to any project in one command. Update all projects whenever y
 ![Node](https://img.shields.io/badge/node-18%2B-green)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
+![Demo](docs/demo.gif)
+
 ---
 
 ## The Concept
