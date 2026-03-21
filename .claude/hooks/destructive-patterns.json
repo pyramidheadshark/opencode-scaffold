@@ -1,0 +1,35 @@
+{
+  "critical": [
+    "(?<!git )rm\\s+-[rRfF]{1,4}",
+    "git\\s+reset\\s+--hard",
+    "git\\s+clean\\s+-[fdxFDX]",
+    "git\\s+rebase",
+    "DROP\\s+(TABLE|DATABASE|INDEX|SCHEMA)",
+    "TRUNCATE",
+    "git\\s+push.*--force(?![\\w-])",
+    "shutil\\.rmtree"
+  ],
+  "moderate": [
+    "rm\\s+[^-]",
+    "git\\s+rm",
+    "mv\\s+\\S",
+    "git\\s+stash",
+    "pip\\s+(install|uninstall)",
+    "uv\\s+(add|remove)",
+    "ALTER\\s+TABLE",
+    "git\\s+branch\\s+-[dD]",
+    "git\\s+push.*--force-with-lease"
+  ],
+  "safe_targets": [
+    "/tmp",
+    "node_modules",
+    ".venv",
+    "dist/",
+    "build/",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".tox",
+    ".egg-info"
+  ]
+}

@@ -150,6 +150,25 @@ describe('init — deployCore', () => {
     expect(hooks[1].command).toContain('session-checkpoint.js');
   });
 
+  test('PreToolUse has exactly 1 hook (session-safety.js)', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.hooks.PreToolUse).toBeDefined();
+    const hooks = settings.hooks.PreToolUse[0].hooks;
+    expect(hooks).toHaveLength(1);
+    expect(hooks[0].command).toContain('session-safety.js');
+  });
+
+  test('PreToolUse matcher is Bash', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.hooks.PreToolUse[0].matcher).toBe('Bash');
+  });
+
   test('lang ru writes project-config.json with lang:ru', () => {
     deployCore(INFRA_DIR, tmpDir, {
       skills: ['python-project-standards'],

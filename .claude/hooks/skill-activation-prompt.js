@@ -52,7 +52,20 @@ const sessionContext = {
   lastStatusHash: cache.last_status_hash || null,
 };
 
+const WEIGHT_REFRESH_THRESHOLD = 30;
+const CONTEXT_REFRESH_BLOCK =
+  "## [CONTEXT REFRESH]\n" +
+  "Long session detected. Core rules reminder:\n" +
+  "- TDD: tests before code, never reverse\n" +
+  "- Hexagonal arch: no framework imports in core/\n" +
+  "- Commits: subject only, no AI attribution, ≤72 chars\n" +
+  "- Plan mode required for multi-file changes";
+const needsRefresh = (cache.weight || 0) > WEIGHT_REFRESH_THRESHOLD;
+
 const { injections, matchedSkills, statusHash } = buildInjections(fs, path, cwd, prompt, changedFiles, rules, sessionContext);
+if (needsRefresh) {
+  injections.push(CONTEXT_REFRESH_BLOCK);
+}
 
 const PLAN_MODE_KEYWORDS = [
   // Russian — planning intent (high-confidence imperatives/phrases)
@@ -130,6 +143,7 @@ try {
     loaded_skills: updatedLoadedSkills,
     last_status_hash: statusHash,
     prompt_count: (cache.prompt_count || 0) + 1,
+    weight: needsRefresh ? 0 : (cache.weight || 0),
   });
 } catch {
 }

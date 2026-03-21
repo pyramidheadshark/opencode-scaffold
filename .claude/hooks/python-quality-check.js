@@ -3,8 +3,22 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const { appendSessionEvent, deleteOldSessionLogs } = require("./session-utils");
+
+function loadSessionCache(cwd, sessionId) {
+  try {
+    const p = path.join(cwd, ".claude", "cache", `session-${sessionId}.json`);
+    return JSON.parse(fs.readFileSync(p, "utf8"));
+  } catch {
+    return {};
+  }
+}
 
 function main(inputStr, cwd) {
+  let input = {};
+  try { input = JSON.parse(inputStr); } catch { }
+  const sessionId = input.session_id || null;
+
   const pyprojectPath = path.join(cwd, "pyproject.toml");
   if (!fs.existsSync(pyprojectPath)) {
     return { continue: true };
@@ -59,6 +73,25 @@ function main(inputStr, cwd) {
     process.stderr.write("\nQuality checks failed. Consider fixing before committing.\n");
     process.stderr.write("This does not block the session — it is a reminder only.\n");
   }
+
+  try {
+    if (sessionId) {
+      const cache = loadSessionCache(cwd, sessionId);
+      if (cache.snapshot_tag) {
+        process.stderr.write(`\u2192 Session snapshot: ${cache.snapshot_tag}\n`);
+      }
+      appendSessionEvent(cwd, sessionId, {
+        type: "session_end",
+        session_id: sessionId,
+        timestamp: new Date().toISOString(),
+        snapshot_tag: cache.snapshot_tag || null,
+        tool_call_count: cache.tool_call_count || null,
+        weight: cache.weight || 0,
+      });
+      const logsDir = path.join(cwd, ".claude", "logs", "sessions");
+      deleteOldSessionLogs(logsDir, 30);
+    }
+  } catch { }
 
   return { continue: true };
 }

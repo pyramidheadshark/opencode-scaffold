@@ -160,3 +160,123 @@ describe("E2E — spawned process", () => {
     expect(JSON.parse(result.stdout)).toEqual({ continue: true });
   });
 });
+
+function readSessionCache(dir, sessionId) {
+  const p = path.join(dir, ".claude", "cache", `session-${sessionId}.json`);
+  if (!fs.existsSync(p)) return {};
+  return JSON.parse(fs.readFileSync(p, "utf8"));
+}
+
+function readSessionJsonl(dir) {
+  const sessDir = path.join(dir, ".claude", "logs", "sessions");
+  if (!fs.existsSync(sessDir)) return [];
+  const files = fs.readdirSync(sessDir).filter(f => f.endsWith(".jsonl"));
+  if (files.length === 0) return [];
+  return fs.readFileSync(path.join(sessDir, files[0]), "utf8")
+    .trim().split("\n").filter(Boolean).map(l => JSON.parse(l));
+}
+
+describe("weight accumulation", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("Write adds weight 2", () => {
+    main(JSON.stringify({ tool_name: "Write", session_id: "w1" }), tmpDir);
+    const cache = readSessionCache(tmpDir, "w1");
+    expect(cache.weight).toBeCloseTo(2);
+  });
+
+  test("Edit adds weight 1", () => {
+    main(JSON.stringify({ tool_name: "Edit", session_id: "w2" }), tmpDir);
+    const cache = readSessionCache(tmpDir, "w2");
+    expect(cache.weight).toBeCloseTo(1);
+  });
+
+  test("Bash adds weight 0.3", () => {
+    main(JSON.stringify({ tool_name: "Bash", session_id: "w3" }), tmpDir);
+    const cache = readSessionCache(tmpDir, "w3");
+    expect(cache.weight).toBeCloseTo(0.3);
+  });
+
+  test("Read adds weight 0", () => {
+    main(JSON.stringify({ tool_name: "Read", session_id: "w4" }), tmpDir);
+    const cache = readSessionCache(tmpDir, "w4");
+    expect(cache.weight || 0).toBeCloseTo(0);
+  });
+
+  test("weight accumulates across multiple calls", () => {
+    main(JSON.stringify({ tool_name: "Write", session_id: "w5" }), tmpDir);
+    main(JSON.stringify({ tool_name: "Write", session_id: "w5" }), tmpDir);
+    main(JSON.stringify({ tool_name: "Edit", session_id: "w5" }), tmpDir);
+    const cache = readSessionCache(tmpDir, "w5");
+    expect(cache.weight).toBeCloseTo(5);
+  });
+});
+
+describe("session JSONL — session_start", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("first call writes session_start event", () => {
+    main(JSON.stringify({ tool_name: "Read", session_id: "init1" }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    expect(events.length).toBeGreaterThan(0);
+    expect(events[0].type).toBe("session_start");
+  });
+
+  test("session_start event has session_id field", () => {
+    main(JSON.stringify({ tool_name: "Read", session_id: "init2" }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    expect(events[0].session_id).toBe("init2");
+  });
+
+  test("session_start not duplicated on second call", () => {
+    main(JSON.stringify({ tool_name: "Read", session_id: "init3" }), tmpDir);
+    main(JSON.stringify({ tool_name: "Read", session_id: "init3" }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    expect(events.filter(e => e.type === "session_start")).toHaveLength(1);
+  });
+});
+
+describe("session JSONL — file_change", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("Write tool writes file_change event", () => {
+    main(JSON.stringify({ tool_name: "Write", session_id: "fc1", tool_input: { file_path: "src/foo.py" } }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    const fc = events.find(e => e.type === "file_change");
+    expect(fc).toBeDefined();
+    expect(fc.tool).toBe("Write");
+  });
+
+  test("Edit tool writes file_change event", () => {
+    main(JSON.stringify({ tool_name: "Edit", session_id: "fc2", tool_input: { file_path: "src/bar.py" } }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    const fc = events.find(e => e.type === "file_change");
+    expect(fc).toBeDefined();
+    expect(fc.tool).toBe("Edit");
+  });
+
+  test("file_change event contains path from tool_input", () => {
+    main(JSON.stringify({ tool_name: "Write", session_id: "fc3", tool_input: { file_path: "src/auth.py" } }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    const fc = events.find(e => e.type === "file_change");
+    expect(fc.path).toBe("src/auth.py");
+  });
+
+  test("Bash does NOT write file_change event", () => {
+    main(JSON.stringify({ tool_name: "Bash", session_id: "fc4", tool_input: { command: "ls" } }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    expect(events.filter(e => e.type === "file_change")).toHaveLength(0);
+  });
+
+  test("Read does NOT write file_change event", () => {
+    main(JSON.stringify({ tool_name: "Read", session_id: "fc5" }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    expect(events.filter(e => e.type === "file_change")).toHaveLength(0);
+  });
+});

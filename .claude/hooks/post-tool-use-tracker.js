@@ -2,6 +2,27 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const { WEIGHTS, appendSessionEvent } = require("./session-utils");
+
+function loadSessionCache(cwd, sessionId) {
+  try {
+    const p = path.join(cwd, ".claude", "cache", `session-${sessionId}.json`);
+    return JSON.parse(fs.readFileSync(p, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function saveSessionCache(cwd, sessionId, data) {
+  try {
+    const cacheDir = path.join(cwd, ".claude", "cache");
+    fs.mkdirSync(cacheDir, { recursive: true });
+    const p = path.join(cacheDir, `session-${sessionId}.json`);
+    let existing = {};
+    try { existing = JSON.parse(fs.readFileSync(p, "utf8")); } catch { }
+    fs.writeFileSync(p, JSON.stringify({ ...existing, ...data }, null, 2), "utf8");
+  } catch { }
+}
 
 function main(inputStr, cwd) {
   let input = {};
@@ -23,7 +44,35 @@ function main(inputStr, cwd) {
       is_error: isError,
     });
     fs.appendFileSync(path.join(logsDir, "tool-usage.jsonl"), entry + "\n", "utf8");
-  } catch { /* logging is non-critical */ }
+  } catch { }
+
+  try {
+    const cache = loadSessionCache(cwd, sessionId);
+
+    if (!cache.session_initialized) {
+      appendSessionEvent(cwd, sessionId, {
+        type: "session_start",
+        session_id: sessionId,
+        repo,
+        platform: process.platform,
+        timestamp: new Date().toISOString(),
+      });
+      saveSessionCache(cwd, sessionId, { session_initialized: true });
+    }
+
+    const weight = (cache.weight || 0) + (WEIGHTS[toolName] || 0);
+    saveSessionCache(cwd, sessionId, { weight });
+
+    if (toolName === "Write" || toolName === "Edit") {
+      const filePath = ((input.tool_input || {}).file_path || (input.tool_input || {}).path) || null;
+      appendSessionEvent(cwd, sessionId, {
+        type: "file_change",
+        tool: toolName,
+        path: filePath,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  } catch { }
 
   return { continue: true };
 }
