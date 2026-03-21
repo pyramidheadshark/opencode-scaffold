@@ -131,3 +131,20 @@ describe("deleteOldSessionLogs", () => {
     expect(fs.existsSync(path.join(dir, "tool-usage.jsonl"))).toBe(true);
   });
 });
+
+describe("appendSessionEvent — JSONL newline safety (T0-3)", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("file path with newlines produces exactly one JSONL line", () => {
+    const filePath = "file\nwith\nnewlines.py";
+    appendSessionEvent(tmpDir, "sess1", { type: "file_change", path: filePath });
+    const sessDir = path.join(tmpDir, ".claude", "logs", "sessions");
+    const files = fs.readdirSync(sessDir);
+    const content = fs.readFileSync(path.join(sessDir, files[0]), "utf8");
+    const lines = content.split("\n").filter(Boolean);
+    expect(lines).toHaveLength(1);
+    expect(JSON.parse(lines[0]).path).toBe(filePath);
+  });
+});

@@ -20,35 +20,55 @@ Published on npm, deployed to 14 repos. Now focused on organic discovery and com
 
 ---
 
-## Current State — v1.4.0-dev (2026-03-21)
+## Current State — v1.4.0 (2026-03-22)
 
-- npm@1.3.1 published, ~500 downloads, main @ `3421a31` (v1.4 in progress)
+- npm@1.3.1 published, ~500 downloads, main @ uncommitted (v1.4.0 ready to tag+publish)
 - 18 skills, 8 agents, 4 commands, 6 hooks (all .js) + session-utils.js
-- **333 Jest + 48 Python tests (all green)**
-- **v1.4 Session Safety — COMPLETE (uncommitted)**:
-  - `destructive-patterns.json` — CRITICAL/MODERATE/SAFE command classification
-  - `session-utils.js` — shared WEIGHTS, JSONL path, appendSessionEvent, log rotation
-  - `session-safety.js` — PreToolUse hook: git snapshot on first CRITICAL op
+- **350 Jest + 48 Python tests (all green)**
+- **v1.4 Session Safety — COMPLETE (Tier 0 hardened, uncommitted)**:
+  - `destructive-patterns.json` — CRITICAL/MODERATE/SAFE + curl|bash CRITICAL + --force-with-lease MODERATE
+  - `session-utils.js` — sanitizeSessionId + WEIGHTS, JSONL path, appendSessionEvent, log rotation
+  - `session-safety.js` — PreToolUse: PATTERNS IIFE, per-command snapshot_count, pending_notification, isSafeTarget boundary check, sanitizeSessionId, timeout=5000
   - `post-tool-use-tracker.js` — weight accumulation + session JSONL init + file_change events
-  - `skill-activation-prompt.js` — weight-based context refresh (threshold=30)
+  - `skill-activation-prompt.js` — weight-based context refresh + pending_notification inject+clear
   - `python-quality-check.js` — session_end JSONL event + log rotation
   - `lib/commands/session-logs.js` + `bin/cli.js` — `npx claude-scaffold session-logs`
   - `lib/deploy/copy.js` — PreToolUse hook registration
+  - `package.json` — v1.4.0, author, homepage, repository, bugs
+  - `docs/CHANGELOG.md` — v1.2.0–v1.4.0 entries added
+  - `README.md` — badges (350 Jest), Session Safety section, 6 hooks
+  - `llms.txt` — Session Safety section
+  - `.gitignore` — dev/*.html, dev/media/
 - Demo GIF: `docs/demo.gif` (Catppuccin Mocha, VHS via yc-ctrl, WindowBar Colorful)
-- `dev/posting-guide.html` — полный гайд по дистрибуции
-- `dev/media/social-card.html` — 1200×630 social card для Twitter/LinkedIn
 - 6 PRs поданы в awesome-листы (все открыты)
 
 ---
 
 ## Active Tasks
 
-See `dev/tasks.md` for the current task list.
+**v1.4.0** — всё готово к коммиту и публикации:
+- [x] T0-1: Cache destructive-patterns.json at module init (PATTERNS IIFE)
+- [x] T0-2: sanitizeSessionId (path traversal + unify "unknown" default)
+- [x] T0-3: JSONL newline — confirmed safe, test added
+- [x] T0-4: Per-CRITICAL snapshots (snapshot_count + pending_notification)
+- [x] T0-5: isSafeTarget boundary check
+- [x] T0-6: curl|bash CRITICAL, --force-with-lease MODERATE patterns
+- [x] T0-7: README/CHANGELOG/package.json/llms.txt docs
+- [x] T0-8: dev/*.html out of .gitignore
+- [ ] Commit + `git tag v1.4.0 && git push origin v1.4.0`
+
+**v1.4.1 Tier 1** (после publish):
+- Python infra тесты для session-safety.js + destructive-patterns.json
+- Error path тесты (~25% gap)
+- Bash weight 0.3 → 0.1
+- Magic string константы
+- session-logs --list enhanced (duration, event count, snapshot indicator)
 
 ---
 
 ## Backlog
 
+- [ ] **Multi-agent critique workflow** — before any architectural decision or phase, launch 3–5 subagents with different analytical lenses (security, DX, performance, standards, user behavior). Subagents get explicit hostile framing to avoid cheerleading. Results are surfaced and conflicting findings are explicitly resolved. Should be a reusable `/critique` command or documented workflow in CLAUDE.md dev workflow section. Motivated by v1.4 post-hoc critique session (2026-03-22).
 - [ ] Add CI to existing repos: regional-budget (minimal), nalog-parser (minimal), TechCon (fastapi-db), sbera (ml-heavy)
 - [ ] phs_calorie_app: history rewrite to remove .claude/ from git (commit 359761f)
 - [ ] Clean deployed-repos.json: remove ~25 temp test entries + duplicate TechCon_Passports
@@ -101,4 +121,4 @@ VHS зависает из-за oh-my-posh в .bashrc (Set Shell bash) или Chr
 
 ---
 
-*Last updated: 2026-03-21*
+*Last updated: 2026-03-22*

@@ -9,6 +9,10 @@
 - [Integration Guide](https://github.com/pyramidheadshark/claude-scaffold/blob/main/docs/INTEGRATION.md): Step-by-step setup for existing repos
 - [Architecture](https://github.com/pyramidheadshark/claude-scaffold/blob/main/docs/ARCHITECTURE.md): How skill auto-loading, hooks lifecycle, and session caching work
 
+## Session Safety (v1.4.0)
+
+Every Bash command Claude runs is classified as CRITICAL, MODERATE, or SAFE. On CRITICAL operations (git reset --hard, rm -rf, DROP TABLE, curl | bash), a git tag recovery point is created automatically before the command runs. Multiple CRITICAL commands per session produce multiple tags: claude/s-{session8}, claude/s-{session8}-2, etc. The notification with the tag and restore command (git reset --hard <tag>) is injected at the top of the next prompt. All tool calls are logged to JSONL audit files in .claude/logs/sessions/. View logs with: npx claude-scaffold session-logs --list, --tail N, or --session <id>.
+
 ## Optional
 
 - [Changelog](https://github.com/pyramidheadshark/claude-scaffold/blob/main/docs/CHANGELOG.md): Release history

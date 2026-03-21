@@ -1,6 +1,6 @@
 {
   "name": "claude-scaffold",
-  "version": "1.3.1",
+  "version": "1.4.0",
   "description": "Claude Code infrastructure for ML and AI engineers — skills, hooks, agents, and CI profiles.",
   "bin": {
     "claude-scaffold": "bin/cli.js"
@@ -43,7 +43,15 @@
     "automation",
     "prompt-engineering"
   ],
-  "author": "",
+  "author": "pyramidheadshark",
+  "homepage": "https://github.com/pyramidheadshark/claude-scaffold",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pyramidheadshark/claude-scaffold.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pyramidheadshark/claude-scaffold/issues"
+  },
   "license": "MIT",
   "engines": {
     "node": ">=18"
