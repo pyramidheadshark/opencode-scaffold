@@ -8,6 +8,7 @@ const { updateOne, updateAll } = require('../lib/commands/update');
 const { printStatusReport } = require('../lib/commands/status');
 const { addSkill } = require('../lib/commands/add-skill');
 const { runMetrics } = require('../lib/commands/metrics');
+const { run: runSessionLogs } = require('../lib/commands/session-logs');
 const { runWizard } = require('../lib/ui/wizard');
 const { listOrgProfiles, updateOrgProfile, loadOrgProfile } = require('../lib/commands/org-profile');
 const { DEFAULT_REGISTRY_PATH } = require('../lib/deploy/registry');
@@ -160,6 +161,17 @@ program
   .description('Show skill load frequency report from .claude/logs/skill-metrics.jsonl')
   .action(() => {
     runMetrics(process.cwd());
+  });
+
+program
+  .command('session-logs [target-path]')
+  .description('View session audit logs from .claude/logs/sessions/')
+  .option('--list', 'List available sessions')
+  .option('--session <id>', 'Show events for a specific session ID')
+  .option('--tail <n>', 'Show last N events', parseInt)
+  .action((targetPath, opts) => {
+    const resolved = path.resolve(targetPath || process.cwd());
+    runSessionLogs(resolved, opts);
   });
 
 program
