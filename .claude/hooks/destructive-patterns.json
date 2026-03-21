@@ -7,7 +7,9 @@
     "DROP\\s+(TABLE|DATABASE|INDEX|SCHEMA)",
     "TRUNCATE",
     "git\\s+push.*--force(?![\\w-])",
-    "shutil\\.rmtree"
+    "shutil\\.rmtree",
+    "curl\\s+.+\\|\\s*(bash|sh|zsh|python|node)",
+    "wget\\s+.+\\|\\s*(bash|sh|zsh|python|node)"
   ],
   "moderate": [
     "rm\\s+[^-]",

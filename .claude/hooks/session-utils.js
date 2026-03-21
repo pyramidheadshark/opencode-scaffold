@@ -4,9 +4,13 @@ const path = require("path");
 
 const WEIGHTS = { Write: 2, Edit: 1, Bash: 0.3, Read: 0 };
 
+function sanitizeSessionId(raw) {
+  return (raw || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32);
+}
+
 function getSessionJsonlPath(cwd, sessionId, dateStr) {
   const d = dateStr || new Date().toISOString().slice(0, 10);
-  const idShort = (sessionId || "unknown").slice(0, 8);
+  const idShort = sanitizeSessionId(sessionId).slice(0, 8);
   return path.join(cwd, ".claude", "logs", "sessions", `session-${d}-${idShort}.jsonl`);
 }
 
@@ -31,4 +35,4 @@ function deleteOldSessionLogs(logsDir, maxFiles) {
   } catch { }
 }
 
-module.exports = { WEIGHTS, getSessionJsonlPath, appendSessionEvent, deleteOldSessionLogs };
+module.exports = { WEIGHTS, sanitizeSessionId, getSessionJsonlPath, appendSessionEvent, deleteOldSessionLogs };

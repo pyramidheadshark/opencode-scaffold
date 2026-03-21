@@ -7,7 +7,7 @@ Clone once. Deploy to any project in one command. Update all projects whenever y
 [![CI](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
-![Jest Tests](https://img.shields.io/badge/Jest-226%20tests-brightgreen)
+![Jest Tests](https://img.shields.io/badge/Jest-350%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-48%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-18-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
@@ -153,15 +153,36 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 
 `/init-design-doc` · `/new-project` · `/review` · `/dev-status`
 
-### 5 Hooks
+### 6 Hooks
 
 | Hook | Event | Action |
 |---|---|---|
 | `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills + plan-mode reminder |
+| `session-safety.js` | PreToolUse | Classify Bash commands (CRITICAL/MODERATE/SAFE), create git snapshots |
 | `session-start.js` | SessionStart | Detect platform (win32/unix), inject Windows rules, onboarding |
 | `session-checkpoint.js` | PostToolUse | Auto-checkpoint at plan approval or every 50 tool calls |
 | `post-tool-use-tracker.js` | PostToolUse | Log tool calls to `.claude/logs/` |
 | `python-quality-check.js` | Stop | Run ruff + mypy at session end |
+
+### Session Safety
+
+`session-safety.js` watches every Bash command Claude executes and classifies it as CRITICAL, MODERATE, or SAFE based on patterns in `destructive-patterns.json`.
+
+On every **CRITICAL** command (`git reset --hard`, `rm -rf`, `DROP TABLE`, `curl | bash`, etc.) the hook creates a **git tag recovery point** before the operation runs:
+
+- First snapshot: `claude/s-{session8}`
+- Second snapshot in same session: `claude/s-{session8}-2`
+- Restore: `git reset --hard claude/s-{session8}`
+
+The notification appears at the top of your next prompt. You can view the audit trail at any time:
+
+```bash
+npx claude-scaffold session-logs --tail 20   # last 20 events
+npx claude-scaffold session-logs --list       # all sessions
+npx claude-scaffold session-logs --session abc12345
+```
+
+JSONL logs are written to `.claude/logs/sessions/` (gitignored) and auto-rotated after 30 files.
 
 ---
 
@@ -281,7 +302,7 @@ claude-scaffold/
 ## Running Tests
 
 ```bash
-npm test                          # 198 Jest + 45 Python
+npm test                          # 350 Jest + 48 Python
 npm run test:hook                 # hook tests only
 npm run check:budget              # verify all skills under 300 lines
 npm run metrics                   # skill load frequency report

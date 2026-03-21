@@ -3,18 +3,23 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const { sanitizeSessionId } = require("./session-utils");
 
-function loadPatterns() {
+const PATTERNS = (() => {
   try {
     return JSON.parse(fs.readFileSync(path.join(__dirname, "destructive-patterns.json"), "utf8"));
   } catch {
     return { critical: [], moderate: [], safe_targets: [] };
   }
-}
+})();
 
 function isSafeTarget(command, safeTargets) {
   const normalized = command.replace(/\\/g, "/");
-  return safeTargets.some(t => normalized.includes(t));
+  return safeTargets.some(t => {
+    if (t.startsWith("/")) return normalized.includes(t);
+    const esc = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(^|[\\s/])${esc}([/\\s]|$)`).test(normalized);
+  });
 }
 
 function classifyCommand(command, patterns) {
@@ -62,11 +67,12 @@ function saveSessionCache(cwd, sessionId, data) {
   } catch { }
 }
 
-function createSnapshot(cwd, sessionId) {
-  const idShort = sessionId.slice(0, 8);
-  const tagName = `claude/s-${idShort}`;
-  const result = spawnSync("git", ["tag", tagName, "HEAD"], { cwd, encoding: "utf8" });
-  if (result.status !== 0) return null;
+function createSnapshot(cwd, sessionId, count) {
+  const idShort = sanitizeSessionId(sessionId).slice(0, 8);
+  const tagName = count === 1 ? `claude/s-${idShort}` : `claude/s-${idShort}-${count}`;
+  const result = spawnSync("git", ["tag", tagName, "HEAD"],
+    { cwd, encoding: "utf8", timeout: 5000 });
+  if (result.status !== 0 || result.error) return null;
   return tagName;
 }
 
@@ -75,20 +81,30 @@ function main(inputStr, cwd) {
   try { input = JSON.parse(inputStr); } catch { }
 
   const command = ((input.tool_input || {}).command || "").trim();
-  const sessionId = input.session_id || "default";
+  const sessionId = sanitizeSessionId(input.session_id || "unknown");
 
   if (isOutOfCwd(command, cwd)) {
     return { action: "block", reason: "Blocked: operation targets location outside project directory. Run manually if intended." };
   }
 
-  const patterns = loadPatterns();
-  const level = classifyCommand(command, patterns);
+  const level = classifyCommand(command, PATTERNS);
 
   if (level === "CRITICAL") {
     const cache = loadSessionCache(cwd, sessionId);
-    if (!cache.snapshot_taken) {
-      const tag = createSnapshot(cwd, sessionId);
-      saveSessionCache(cwd, sessionId, { snapshot_taken: true, snapshot_tag: tag });
+    const existingCount = cache.snapshot_count !== undefined
+      ? cache.snapshot_count
+      : (cache.snapshot_taken ? 1 : 0);
+    const count = existingCount + 1;
+    const tag = createSnapshot(cwd, sessionId, count);
+    if (tag) {
+      const notification = count === 1
+        ? `## [SAFETY SNAPSHOT]\nRecovery point created before destructive command.\nTag: \`${tag}\`  →  restore: \`git reset --hard ${tag}\``
+        : `## [SAFETY SNAPSHOT ${count}]\nAdditional recovery point created.\nTag: \`${tag}\`  →  restore: \`git reset --hard ${tag}\``;
+      saveSessionCache(cwd, sessionId, {
+        snapshot_count: count,
+        snapshot_tag: tag,
+        pending_notification: notification,
+      });
     }
   }
 

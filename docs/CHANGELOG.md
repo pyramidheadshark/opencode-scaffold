@@ -5,6 +5,76 @@ Format: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v1.4.0 — 2026-03-22
+
+### Added
+- **Session Safety** — `session-safety.js` PreToolUse hook: classifies every Bash command (CRITICAL/MODERATE/SAFE) against `destructive-patterns.json`
+- **Per-command git snapshots** — CRITICAL commands trigger `git tag claude/s-{session8}` before execution; subsequent CRITICALs create `-2`, `-3`, ... tags in the same session
+- **Pending notification** — snapshot tag + restore instructions injected at the top of next prompt via `pending_notification` in session cache
+- **JSONL audit log** — every tool call logged to `.claude/logs/sessions/session-{date}-{id8}.jsonl` with auto-rotation at 30 files
+- **Context refresh at weight=30** — `skill-activation-prompt.js` reinjects core rules after long sessions
+- **`session-logs` CLI command** — `npx claude-scaffold session-logs --list/--tail/--session`
+- **curl|bash CRITICAL patterns** — `curl ... | bash` and `wget ... | sh` classified as CRITICAL
+- **`--force-with-lease` MODERATE** — added to `destructive-patterns.json`
+- **`sanitizeSessionId`** — path traversal prevention in JSONL filenames and git tag names
+- **`isSafeTarget` boundary check** — `rm -rf /node_modules_backup` no longer classified SAFE
+- **PATTERNS IIFE** — `destructive-patterns.json` cached at module init, not per-invocation
+
+### Changed
+- `session-utils.js` — exports `sanitizeSessionId`; `getSessionJsonlPath` uses it
+- `skill-activation-prompt.js` — reads and clears `pending_notification` from session cache on next UserPromptSubmit
+- Session cache uses `snapshot_count: int` instead of `snapshot_taken: bool` (backwards compatible)
+- `package.json` — version 1.4.0, author, homepage, repository, bugs fields added
+
+### Tests
+- 350 Jest + 48 Python (all green)
+
+---
+
+## v1.3.1 — 2026-03-20
+
+### Added
+- `docs/demo.gif` — Catppuccin Mocha GIF, rendered via VHS on yc-ctrl VM
+- `demo.tape` — VHS tape for reproduction
+- `llms.txt` — AI agent discoverability file
+
+---
+
+## v1.3.0 — 2026-03-18
+
+### Added
+- **Org profiles** — `org-profiles/<org>/` team-specific CLAUDE.md templates, gitignored
+- `lib/commands/org-profile.js` — `loadOrgProfile`, `deployOrgTemplate`, `writeScaffoldMeta`, `listOrgProfiles`, `updateOrgProfile`
+- `--org-profile` / `--org-type` flags on `init` command
+- `list-org-profiles` and `update-org-profile` CLI commands
+- `org-profiles/techcon-ml/` — 4 project types × 2 languages = 8 templates
+- 28 new tests in `tests/cli/org-profile.test.js`
+
+---
+
+## v1.2.3 — 2026-03-17
+
+### Changed
+- README badges updated, test count 198 → 226
+
+---
+
+## v1.2.2 — 2026-03-16
+
+### Fixed
+- Isolate registry writes in CLI tests (no cross-test contamination of `deployed-repos.json`)
+
+---
+
+## v1.2.0 — 2026-03-15
+
+### Added
+- Interactive `init` wizard (no-args mode)
+- `--dry-run` flag for `init` command
+- `add-skill` CLI command — add a skill to an existing deployed project
+
+---
+
 ## v1.1.0 — 2026-03-15
 
 ### Added

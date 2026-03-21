@@ -15,3 +15,7 @@ deployed-repos.json
 
 # Org-specific profiles (internal, not for public repo)
 org-profiles/techcon-ml/
+
+# Dev artifacts (HTML/media generated during distribution work)
+dev/*.html
+dev/media/

@@ -25,7 +25,7 @@ function saveSessionCache(sessionId, cache) {
 
 const input = JSON.parse(fs.readFileSync(0, "utf8"));
 const prompt = input.prompt || "";
-const sessionId = input.session_id || "default";
+const sessionId = input.session_id || "unknown";
 const cwd = process.cwd();
 
 const rulesPath = path.join(cwd, ".claude/skills/skill-rules.json");
@@ -52,6 +52,13 @@ const sessionContext = {
   lastStatusHash: cache.last_status_hash || null,
 };
 
+if (cache.pending_notification) {
+  try {
+    const updatedCache = { ...cache, pending_notification: null };
+    saveSessionCache(sessionId, updatedCache);
+  } catch { }
+}
+
 const WEIGHT_REFRESH_THRESHOLD = 30;
 const CONTEXT_REFRESH_BLOCK =
   "## [CONTEXT REFRESH]\n" +
@@ -63,6 +70,9 @@ const CONTEXT_REFRESH_BLOCK =
 const needsRefresh = (cache.weight || 0) > WEIGHT_REFRESH_THRESHOLD;
 
 const { injections, matchedSkills, statusHash } = buildInjections(fs, path, cwd, prompt, changedFiles, rules, sessionContext);
+if (cache.pending_notification) {
+  injections.unshift(cache.pending_notification);
+}
 if (needsRefresh) {
   injections.push(CONTEXT_REFRESH_BLOCK);
 }
