@@ -507,5 +507,23 @@ class TestOrgProfilesStructure(unittest.TestCase):
             self.assertIn(func, content, f"Function '{func}' not found in org-profile.js")
 
 
+class TestRegistryHealth(unittest.TestCase):
+    REGISTRY_PATH = INFRA_ROOT / "deployed-repos.json"
+    TEMP_PATTERNS = ["cs-test-", "AppData\\Local\\Temp", "/tmp/cs-test"]
+
+    def test_registry_has_no_stale_temp_entries(self):
+        if not self.REGISTRY_PATH.exists():
+            self.skipTest("deployed-repos.json not found (gitignored, may not exist)")
+        registry = json.loads(self.REGISTRY_PATH.read_text(encoding="utf-8"))
+        stale = [
+            e["path"] for e in registry.get("deployed", [])
+            if any(pat in e.get("path", "") for pat in self.TEMP_PATTERNS)
+        ]
+        self.assertEqual(
+            stale, [],
+            f"deployed-repos.json contains {len(stale)} stale temp entries: {stale[:3]}..."
+        )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

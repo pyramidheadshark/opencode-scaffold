@@ -26,7 +26,7 @@ afterEach(() => {
 
 describe('update — updateOne', () => {
   test('updates .claude/ in registered repo', () => {
-    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'] });
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
 
     const registry = {
       deployed: [{
@@ -52,7 +52,7 @@ describe('update — updateOne', () => {
   });
 
   test('updateOne actually rewrites hooks content (not just counters)', () => {
-    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'] });
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
     const hookPath = path.join(tmpDir, '.claude', 'hooks', 'skill-activation-prompt.js');
     fs.writeFileSync(hookPath, '// outdated', 'utf8');
 
@@ -73,7 +73,7 @@ describe('update — updateOne', () => {
   });
 
   test('does not overwrite CI workflows', () => {
-    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'] });
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
 
     const workflowsDir = path.join(tmpDir, '.github', 'workflows');
     fs.mkdirSync(workflowsDir, { recursive: true });
@@ -169,7 +169,7 @@ describe('update — updateAll', () => {
   });
 
   test('updates outdated repos', () => {
-    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'] });
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
 
     const versionFile = path.join(tmpDir, '.claude', 'infra-version');
     fs.writeFileSync(versionFile, 'old_sha_abc', 'utf8');
