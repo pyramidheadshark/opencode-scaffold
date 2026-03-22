@@ -174,22 +174,28 @@ SSH deployment proposed before staging validation.
 
 ---
 
-## Summary: Role Coverage Map
+## Summary: Role Coverage Map (v1.1 — 8 roles)
 
-| Failure Pattern | Security | Perf | DA | Crutch | Strategy | ML |
-|----------------|----------|------|----|--------|----------|----|
-| K=3000, no timer | — | ✓ | ✓ | — | — | ✓ |
-| Wrong bottleneck | — | — | ✓ | — | ✓ | ✓ |
-| Gold-plating | — | — | ✓ | ✓ | ✓ | — |
-| No artifact registry | — | ✓ | — | — | — | ✓ |
-| Hung processes | — | ✓ | — | — | — | ✓ |
-| Tokens in chat | ✓ | — | — | — | — | — |
-| Terraform -auto-approve | ✓ | — | ✓ | — | ✓ | — |
-| Secrets lock-out | ✓ | — | ✓ | — | ✓ | — |
-| Scope creep | — | — | ✓ | ✓ | — | — |
-| Missing service contract | — | — | ✓ | ✓ | ✓ | — |
-| Test-after deploy | ✓ | — | ✓ | — | — | — |
+| Failure Pattern | Security | Perf | DA | Crutch | Strategy | ML | TestCov | Obs |
+|----------------|----------|------|----|--------|----------|----|---------|-----|
+| K=3000, no timer | — | ✓ | ✓ | — | — | ✓ | — | ✓ |
+| Wrong bottleneck | — | ✓ | ✓ | — | ✓ | ✓ | — | — |
+| Gold-plating | — | ✓ | ✓ | ✓ | ✓ | — | — | — |
+| No artifact registry | — | ✓ | — | — | ✓ | ✓ | — | ✓ |
+| Hung processes | — | ✓ | — | — | — | ✓ | — | ✓ |
+| Tokens in chat | ✓ | — | — | — | — | — | — | — |
+| Terraform -auto-approve | ✓ | — | ✓ | — | ✓ | — | — | ✓ |
+| Secrets lock-out | ✓ | — | ✓ | — | ✓ | — | — | — |
+| Scope creep | — | — | ✓ | ✓ | — | — | — | — |
+| Missing service contract | — | — | ✓ | ✓ | ✓ | — | — | ✓ |
+| Test-after deploy | ✓ | — | ✓ | — | — | — | ✓ | — |
 
-**Security and DA** combined would have prevented 9 of 11 patterns.
-**ML Auditor** would have prevented all 5 defectoscopy patterns.
-No single role catches everything — all 6 are required.
+**Corrections from v1.0:**
+- FP-D2 (Wrong bottleneck): [Perf] added — it should ask "is this the bottleneck?"
+- FP-D3 (Gold-plating): [ML] removed (not applicable), [Perf] added — "don't build infra for 1 file"
+- FP-D4 (No artifact registry): [Strategy] added — DX debt that compounds
+- New roles: [TestCov] catches FP-H6 (test-after deploy); [Obs] catches FP-D1, FP-D4, FP-D5, FP-H3, FP-H5
+
+**Security and DA** combined catch 8 of 11 patterns.
+**ML Auditor** catches 4 of 5 defectoscopy patterns (FP-D3 Gold-plating is not ML-relevant).
+**No single role catches everything — all 8 are required for full coverage.**

@@ -8,12 +8,23 @@ Based on: arxiv 2603.15916 (autonomous ML experiment design), project history an
 ## Plateau Detection Algorithm
 
 ```
-delta_recent = mean(metric[-1], metric[-2], metric[-3]) - metric[-4]
-if abs(delta_recent) < PLATEAU_THRESHOLD:
+delta_abs = mean(metric[-1], metric[-2], metric[-3]) - metric[-4]
+delta_rel = abs(delta_abs) / abs(metric[-4])
+if abs(delta_abs) < PLATEAU_ABS_THRESHOLD and delta_rel < PLATEAU_REL_THRESHOLD:
     status = PLATEAU
 ```
 
-**PLATEAU_THRESHOLD = 2%** (relative improvement).
+**PLATEAU_ABS_THRESHOLD = 0.01** (1 percentage point absolute change)
+**PLATEAU_REL_THRESHOLD = 0.05** (5% relative change from current metric)
+**Rule: plateau only if BOTH conditions are met** (conservative — prevents false positives)
+
+Examples:
+- metric=0.65, new=0.659 → abs=0.009, rel=1.4% → **PLATEAU** (both below threshold)
+- metric=0.65, new=0.670 → abs=0.020, rel=3.1% → **NOT plateau** (abs exceeds 0.01)
+- metric=0.90, new=0.895 → abs=0.005, rel=0.6% → **PLATEAU** (high-precision regime)
+
+**Statistical note:** Single-run delta is unreliable due to random seed / data shuffle variance.
+Use median of 3 runs before declaring plateau. If only 1 run available — emit WARN, not BLOCK.
 
 When plateau detected:
 1. STOP current experiment direction

@@ -541,7 +541,7 @@ class TestCriticalAnalysisSkill(unittest.TestCase):
         self.assertIn("critical-analysis", names, "critical-analysis not in skill-rules.json")
         entry = next(r for r in rules["rules"] if r["skill"] == "critical-analysis")
         self.assertGreaterEqual(
-            entry.get("priority", 0), 1, "critical-analysis priority must be set"
+            entry.get("priority", -1), 0, "critical-analysis priority must be >= 0 (0 = highest)"
         )
         triggers = entry.get("triggers", {})
         self.assertGreater(

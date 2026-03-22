@@ -1,8 +1,8 @@
 {
-  "version": "1.0.0",
-  "updated": "2026-03-22",
-  "size_lines": 145,
-  "description": "Auto-analytics by default: 6-role SPP critique for ML experiments and architecture",
+  "version": "1.1.0",
+  "updated": "2026-03-23",
+  "size_lines": 161,
+  "description": "Auto-analytics by default: 8-role SPP critique for ML experiments and architecture",
   "resources": [
     {
       "file": "resources/role-prompts.md",
