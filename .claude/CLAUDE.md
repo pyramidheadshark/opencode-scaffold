@@ -149,6 +149,8 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 | `design-doc-creator` | New project start, design-doc.md (meta, optional) |
 | `skill-developer` | .claude/skills/, skill-rules.json (meta, optional) |
 | `critical-analysis` | hypothesis, experiment, architecture, рефакторинг, critique, bottleneck (≥2 keywords) |
+| `database-migration-safety` | alembic/, migrations/, .sql, schema.py, ALTER TABLE (≥2 keywords) |
+| `supply-chain-auditor` | requirements.txt, pyproject.toml, package.json, CVE, dependency (≥2 keywords) |
 
 ## Agent Inventory
 

@@ -5,6 +5,26 @@ Format: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v1.4.1 — 2026-03-23
+
+### Added
+- **`critical-analysis` skill v1.1** — 8-role SPP auto-critique (Security, Perf, DA, Crutch, Strategy, ML, TestCov, Obs); anti-collapse enforcement; PLATEAU dual-threshold (abs < 0.01 AND rel < 5%); Strategic Horizon falsifiability gate; design-doc check; 37 keywords (EN + RU prefixes); `priority=0`
+- **`database-migration-safety` skill v1.0** — pre-migration checklist, reversibility enforcement, Alembic `--autogenerate` caveats, non-locking ops guidance
+- **`supply-chain-auditor` skill v1.0** — dependency pinning rules, CVE audit commands, maintenance signal, anti-patterns for pip/npm/uv
+
+### Changed
+- `skill-activation-logic.js` — `matchSkills` now sorts rules by priority (ascending) before iterating; `always_load` skills guaranteed first slot; `priority=0` (critical-analysis) wins non-always slot competition
+- `skill-rules.json` — critical-analysis: 37 keywords (up from 6), priority 0; +2 new entries (database-migration-safety p=19, supply-chain-auditor p=20)
+- `CLAUDE.md` — Skill Inventory updated: +database-migration-safety, +supply-chain-auditor
+- `README.md` — badges updated (20 skills, 57 Python tests), skill table updated
+
+### Tests
+- 350 Jest + 57 Python (all green)
+- `TestCriticalAnalysisSkill`: +3 tests (keyword count ≥30, role count =8, trigger simulation via isolated subprocess)
+- Trigger simulation uses temp git repo to avoid cwd contamination
+
+---
+
 ## v1.4.0 — 2026-03-22
 
 ### Added

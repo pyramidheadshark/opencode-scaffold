@@ -575,6 +575,58 @@ class TestCriticalAnalysisSkill(unittest.TestCase):
             content = res_path.read_text(encoding="utf-8")
             self.assertGreater(len(content), 100, f"{res_name} appears empty")
 
+    def test_critical_analysis_keyword_count(self):
+        rules = load_skill_rules()
+        entry = next(r for r in rules["rules"] if r["skill"] == "critical-analysis")
+        keywords = entry.get("triggers", {}).get("keywords", [])
+        self.assertGreaterEqual(
+            len(keywords), 30,
+            f"critical-analysis has only {len(keywords)} keywords, need >= 30 for good coverage"
+        )
+
+    def test_critical_analysis_skill_md_has_8_roles(self):
+        content = self.SKILL_MD.read_text(encoding="utf-8")
+        roles = re.findall(r"\|\s*\*\*\[", content)
+        self.assertEqual(
+            len(roles), 8,
+            f"SKILL.md should have exactly 8 role rows in table, found {len(roles)}"
+        )
+
+    def test_critical_analysis_trigger_simulation(self):
+        import subprocess
+        import tempfile
+        import shutil
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            claude_skills = tmp_path / ".claude" / "skills"
+            claude_skills.mkdir(parents=True)
+            skill_rules_src = SKILLS_DIR / "skill-rules.json"
+            shutil.copy(skill_rules_src, claude_skills / "skill-rules.json")
+            shutil.copytree(
+                SKILLS_DIR / "critical-analysis",
+                claude_skills / "critical-analysis",
+            )
+            shutil.copytree(
+                SKILLS_DIR / "python-project-standards",
+                claude_skills / "python-project-standards",
+            )
+            subprocess.run(["git", "init"], cwd=tmp, capture_output=True)
+
+            result = subprocess.run(
+                ["node", str(HOOKS_DIR / "skill-activation-prompt.js")],
+                input='{"prompt":"проверим подход и качество параметров"}',
+                capture_output=True,
+                encoding="utf-8",
+                timeout=15,
+                cwd=tmp,
+            )
+        self.assertIn(
+            "critical-analysis",
+            result.stdout,
+            "skill-activation-prompt.js did not inject critical-analysis for prompt with 2+ keywords"
+        )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

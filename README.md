@@ -8,8 +8,8 @@ Clone once. Deploy to any project in one command. Update all projects whenever y
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
 ![Jest Tests](https://img.shields.io/badge/Jest-350%20tests-brightgreen)
-![Python Tests](https://img.shields.io/badge/Python-48%20tests-blue)
-![Skills](https://img.shields.io/badge/skills-18-orange)
+![Python Tests](https://img.shields.io/badge/Python-57%20tests-blue)
+![Skills](https://img.shields.io/badge/skills-20-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
@@ -113,7 +113,7 @@ Org profiles live in `org-profiles/<org-name>/` in the scaffold repo. They are g
 On every Claude Code prompt, the hook automatically:
 1. Injects `dev/status.md` — your project's current state and next steps
 2. Detects planning intent and reminds to enter plan mode
-3. Matches the prompt against 18 skill rules (keywords + changed files)
+3. Matches the prompt against 20 skill rules (keywords + changed files)
 4. Injects up to 2 additional relevant skills into `system_prompt_addition`
 
 Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs, CI/CD configs, test-first workflow — injected only when needed, compressed if large.
@@ -122,11 +122,12 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 
 ## Components
 
-### 18 Skills
+### 20 Skills
 
 | Skill | Triggers On |
 |---|---|
 | `python-project-standards` | **Always loaded** (always_load: true) |
+| `critical-analysis` | hypothesis, experiment, bottleneck, рефактор, подход, метрик (≥2 keywords, priority=0) |
 | `fastapi-patterns` | FastAPI, routers, endpoints, Pydantic |
 | `htmx-frontend` | HTMX, Jinja2 templates, server-side rendering |
 | `ml-data-handling` | pickle, ONNX, Parquet, S3, artifacts |
@@ -142,6 +143,8 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 | `github-actions` | `.github/workflows/*.yml`, CI/CD jobs |
 | `claude-api-patterns` | anthropic SDK, tool_use, MessageCreate |
 | `prompt-engineering` | system_prompt, few_shot, chain-of-thought, eval |
+| `database-migration-safety` | alembic, migration, schema, upgrade/downgrade (≥2 keywords) |
+| `supply-chain-auditor` | dependency, CVE, audit, pip install, vulnerable (≥2 keywords) |
 | `design-doc-creator` | *Meta — manual only, not auto-loaded* |
 | `skill-developer` | *Meta — manual only, not auto-loaded* |
 

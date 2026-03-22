@@ -485,6 +485,64 @@
         "always_load": false
       },
       "priority": 0
+    },
+    {
+      "skill": "database-migration-safety",
+      "triggers": {
+        "files": [
+          "alembic/*.py",
+          "migrations/*.py",
+          "*.sql",
+          "**/schema.py",
+          "alembic.ini"
+        ],
+        "keywords": [
+          "alembic",
+          "migration",
+          "schema",
+          "upgrade",
+          "downgrade",
+          "revision",
+          "rollback",
+          "foreign key",
+          "constraint",
+          "ALTER TABLE",
+          "миграц",
+          "схем"
+        ],
+        "min_keyword_matches": 2,
+        "always_load": false
+      },
+      "priority": 19
+    },
+    {
+      "skill": "supply-chain-auditor",
+      "triggers": {
+        "files": [
+          "requirements.txt",
+          "pyproject.toml",
+          "package.json",
+          "Gemfile",
+          "go.mod",
+          "Cargo.toml"
+        ],
+        "keywords": [
+          "dependency",
+          "package",
+          "install",
+          "pip install",
+          "npm install",
+          "vulnerable",
+          "CVE",
+          "audit",
+          "зависимост",
+          "пакет",
+          "уязвимост"
+        ],
+        "min_keyword_matches": 2,
+        "always_load": false
+      },
+      "priority": 20
     }
   ],
   "context_management": {

@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-03-23",
+  "size_lines": 73,
+  "description": "Migration safety checklist: reversibility, staging, non-locking ops, Alembic --autogenerate caveats"
+}

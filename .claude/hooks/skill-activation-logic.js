@@ -23,7 +23,15 @@ function matchSkills(rules, prompt, changedFiles, maxSkills, alreadyLoaded = [])
   const promptLower = prompt.toLowerCase();
   const matched = [];
 
-  for (const rule of rules) {
+  // always_load skills guaranteed first; remaining sorted by priority (lower = higher priority)
+  const sortedRules = [...rules].sort((a, b) => {
+    const aAlways = a.triggers && a.triggers.always_load ? 0 : 1;
+    const bAlways = b.triggers && b.triggers.always_load ? 0 : 1;
+    if (aAlways !== bAlways) return aAlways - bAlways;
+    return (a.priority != null ? a.priority : 99) - (b.priority != null ? b.priority : 99);
+  });
+
+  for (const rule of sortedRules) {
     if (matched.length >= maxSkills) break;
     if (rule.optional) continue;
     if (alreadyLoaded.includes(rule.skill)) continue;

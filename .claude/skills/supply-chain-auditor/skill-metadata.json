@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-03-23",
+  "size_lines": 72,
+  "description": "Dependency hygiene checklist: pinning, CVE audit, maintenance signal, anti-patterns for pip/npm/uv"
+}
