@@ -700,12 +700,13 @@
     },
     "expected": {
       "skills": [
+        "critical-analysis",
         "python-project-standards"
       ],
       "plan_mode": true,
       "security_injection": false
     },
-    "note": "RU keyword: оптимизир"
+    "note": "RU keywords: оптимиз + пайплайн → triggers critical-analysis (priority=0) + python-project-standards (always_load)"
   },
   {
     "id": "plan-ru-005",
