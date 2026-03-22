@@ -19,3 +19,15 @@ org-profiles/techcon-ml/
 # Dev artifacts (HTML/media generated during distribution work)
 dev/*.html
 dev/media/
+dev/active/
+dev/tasks.md
+
+# IDE
+.vscode/
+
+# Local Claude Code settings (machine-specific permissions)
+.claude/settings.local.json
+
+# Untracked demo GIFs (use docs/demo.gif as canonical)
+docs/demo-v1-*.gif
+docs/demo-v2-*.gif
