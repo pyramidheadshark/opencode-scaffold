@@ -31,3 +31,8 @@ dev/tasks.md
 # Untracked demo GIFs (use docs/demo.gif as canonical)
 docs/demo-v1-*.gif
 docs/demo-v2-*.gif
+
+# Build artifacts
+*.tgz
+*.tape
+*.cast
