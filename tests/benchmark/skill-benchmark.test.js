@@ -20,8 +20,9 @@ const PLAN_MODE_KEYWORDS = [
 
 const QUESTION_PREFIXES = [
   'what', 'how', 'why', 'explain', 'show', 'describe', 'tell me', 'can you explain',
+  'can ', 'could ', 'would ', 'should ', 'is it ', 'are there ', 'do we ',
   'что ', 'как ', 'почему', 'зачем', 'объясни', 'расскажи', 'покажи', 'в чём',
-  'можешь', 'можно',
+  'можешь ', 'можно ', 'а как ', 'а что ', 'скажи ', 'подскажи',
 ];
 
 const SECURITY_PATTERNS = [

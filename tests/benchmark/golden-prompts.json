@@ -899,6 +899,74 @@
     "note": "RU question prefix 'можно' suppresses plan_mode"
   },
   {
+    "id": "question-suppress-006",
+    "prompt": "can you refactor the auth module?",
+    "changed_files": [],
+    "session_context": {
+      "alreadyLoadedSkills": [],
+      "lastStatusHash": null
+    },
+    "expected": {
+      "skills": [
+        "python-project-standards"
+      ],
+      "plan_mode": false,
+      "security_injection": false
+    },
+    "note": "EN question prefix 'can ' suppresses plan_mode despite 'refactor' keyword"
+  },
+  {
+    "id": "question-suppress-007",
+    "prompt": "could you rewrite this migration script?",
+    "changed_files": [],
+    "session_context": {
+      "alreadyLoadedSkills": [],
+      "lastStatusHash": null
+    },
+    "expected": {
+      "skills": [
+        "python-project-standards"
+      ],
+      "plan_mode": false,
+      "security_injection": false
+    },
+    "note": "EN question prefix 'could ' suppresses plan_mode despite 'rewrite' and 'migration'"
+  },
+  {
+    "id": "question-suppress-008",
+    "prompt": "should we migrate to a new database?",
+    "changed_files": [],
+    "session_context": {
+      "alreadyLoadedSkills": [],
+      "lastStatusHash": null
+    },
+    "expected": {
+      "skills": [
+        "python-project-standards"
+      ],
+      "plan_mode": false,
+      "security_injection": false
+    },
+    "note": "EN question prefix 'should ' suppresses plan_mode despite 'migrate' keyword"
+  },
+  {
+    "id": "question-suppress-009",
+    "prompt": "подскажи как рефакторинг тут лучше сделать",
+    "changed_files": [],
+    "session_context": {
+      "alreadyLoadedSkills": [],
+      "lastStatusHash": null
+    },
+    "expected": {
+      "skills": [
+        "python-project-standards"
+      ],
+      "plan_mode": false,
+      "security_injection": false
+    },
+    "note": "RU question prefix 'подскажи' suppresses plan_mode despite рефакторинг"
+  },
+  {
     "id": "cap-001",
     "prompt": "use qdrant embedding for a fastapi rag endpoint with langgraph agent nodes",
     "changed_files": [],
