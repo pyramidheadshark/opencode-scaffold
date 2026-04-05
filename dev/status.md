@@ -14,18 +14,17 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 
 ## Current Phase
 
-**Active**: Phase 7.1 — v1.6.0 Implementation (delayed release)
+**Active**: Phase 8 — v2.0.0 Ecosystem (2026-04-06) — CODE COMPLETE
 
-Implementing 5 features: dynamic skill budget, windows-developer skill, hub/task-hub profiles, QA workflow enforcement, skill registry. Code now, npm publish in 2-3 days.
+4 ecosystem features implemented: deps.yaml, INFRA.yaml, agent extensions, PITFALLS.md. Both v1.6.0 and v2.0.0 committed, npm publish pending user command.
 
 ---
 
-## Current State — v1.6.0 code complete + reviewed (2026-04-05)
+## Current State — v2.0.0 code complete (2026-04-06)
 
-- **v1.6.0 code complete**, critical review done, delayed release (npm publish only by user command)
-- 515 tests (398 Jest + 60 benchmark + 57 Python), 0 failed
-- **5 features + security fixes**: dynamic skill budget, windows-developer, hub/task-hub profiles, QA workflow, skill registry
-- **Post-review fixes**: path traversal validation, URL validation, trust level validation, injectable platform, mockFs normalization
+- **v2.0.0 code complete**, npm publish only by explicit user command
+- 541 tests (424 Jest + 60 benchmark + 57 Python), 0 failed
+- **4 ecosystem features**: deps.yaml + CLI, INFRA.yaml + /infra command, agent extensions, PITFALLS.md (contextual)
 - **PRs:** 1 MERGED (awesome-claude-code-toolkit#79), 1 CLOSED (awesome-vibe-coding#100), 4 OPEN
 
 ### v1.4.1 содержание (всё завершено):
@@ -88,6 +87,29 @@ All 5 features implemented, 509 tests green. Publish via `git tag v1.6.0 && git 
 - **hub + task-hub Profiles**: for knowledge hubs and task repos
 - **QA Workflow**: soft enforcement with QA block before plan-mode + write/edit warning
 - **Skill Registry**: 22 verified skills, CLI commands (search/install/list/update/add-source), sha256 verification, community source support
+
+---
+
+## Active Tasks — v2.0.0 "Ecosystem"
+
+### Feature 1: deps.yaml — DONE
+- [x] templates/deps.yaml + minimal YAML parser (no npm deps)
+- [x] buildDepsBlock in session-start.js + blocker reminder in checkpoint.js
+- [x] CLI: deps status/update-blocker/add/remove + 6 tests
+
+### Feature 2: INFRA.yaml — DONE
+- [x] templates/INFRA.yaml + buildInfraBlock in session-start.js
+- [x] .claude/commands/infra.md slash command
+
+### Feature 3: Agent Extensions — DONE
+- [x] agent-extensions/ dir + .gitkeep in deploy
+- [x] mergeAgentExtensions (base + extension concatenation)
+- [x] 3 new init tests (dir creation, PITFALLS copy, no-overwrite)
+
+### Feature 4: PITFALLS.md — DONE
+- [x] templates/PITFALLS.md (5 categories: Docker, Terraform, Auth, DB, Deploy)
+- [x] extractRelevantPitfalls in logic.js + inject in prompt.js
+- [x] 5 unit tests for pitfalls matching
 
 ### Roadmap (after v1.6.0)
 - **v2.0.0** (1-2 weeks): deps.yaml, agent extensions, INFRA.yaml, CLAUDE.md split + PITFALLS.md

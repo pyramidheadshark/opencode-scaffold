@@ -374,6 +374,29 @@ describe('init — deployCore', () => {
     expect(skillNames).toHaveLength(2);
   });
 
+  test('deployCore creates agent-extensions directory with .gitkeep', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const extDir = path.join(tmpDir, '.claude', 'agent-extensions');
+    expect(fs.existsSync(extDir)).toBe(true);
+    expect(fs.existsSync(path.join(extDir, '.gitkeep'))).toBe(true);
+  });
+
+  test('deployCore copies PITFALLS.md template', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const pitfalls = path.join(tmpDir, '.claude', 'PITFALLS.md');
+    expect(fs.existsSync(pitfalls)).toBe(true);
+    const content = fs.readFileSync(pitfalls, 'utf8');
+    expect(content).toContain('Known Pitfalls');
+  });
+
+  test('deployCore does not overwrite existing PITFALLS.md', () => {
+    const pitfalls = path.join(tmpDir, '.claude', 'PITFALLS.md');
+    fs.mkdirSync(path.dirname(pitfalls), { recursive: true });
+    fs.writeFileSync(pitfalls, '# My custom pitfalls', 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    expect(fs.readFileSync(pitfalls, 'utf8')).toBe('# My custom pitfalls');
+  });
+
   test('deployCore overwrites scaffold hook events with current definition', () => {
     const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
     fs.mkdirSync(path.dirname(settingsPath), { recursive: true });

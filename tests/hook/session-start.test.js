@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -203,5 +203,89 @@ describe("main — edge cases", () => {
 
   test("handles invalid JSON input gracefully", () => {
     expect(() => main("{invalid}", tmpDir, "win32", () => "python")).not.toThrow();
+  });
+});
+
+describe("parseSimpleYaml", () => {
+  test("parses flat key-value pairs", () => {
+    const result = parseSimpleYaml("project: my-project\nversion: 1.0");
+    expect(result.project).toBe("my-project");
+    expect(result.version).toBe("1.0");
+  });
+
+  test("parses list of objects", () => {
+    const yaml = `depends_on:\n  - repo: hub\n    type: knowledge\n  - repo: infra\n    type: infrastructure`;
+    const result = parseSimpleYaml(yaml);
+    expect(result.depends_on).toHaveLength(2);
+    expect(result.depends_on[0].repo).toBe("hub");
+    expect(result.depends_on[1].type).toBe("infrastructure");
+  });
+
+  test("parses list of strings (rules)", () => {
+    const yaml = `rules:\n  - "Never do X"\n  - "Always do Y"`;
+    const result = parseSimpleYaml(yaml);
+    expect(result.rules).toHaveLength(2);
+    expect(result.rules[0]).toBe("Never do X");
+  });
+
+  test("ignores comments", () => {
+    const result = parseSimpleYaml("# comment\nproject: test");
+    expect(result.project).toBe("test");
+  });
+});
+
+describe("buildDepsBlock", () => {
+  test("returns null when no deps.yaml", () => {
+    const mockFs = { existsSync: () => false };
+    expect(buildDepsBlock(mockFs, "/tmp")).toBeNull();
+  });
+
+  test("returns deps block when deps.yaml exists", () => {
+    const yaml = `project: test\ndepends_on:\n  - repo: hub\n    type: knowledge\n    description: "KB"\nblockers:\n  - id: B1\n    description: "Issue"\n    status: open\n    since: "2026-01-01"`;
+    const mockFs = {
+      existsSync: () => true,
+      readFileSync: () => yaml,
+    };
+    const result = buildDepsBlock(mockFs, "/tmp");
+    expect(result).toContain("DEPENDENCIES");
+    expect(result).toContain("hub");
+    expect(result).toContain("B1");
+    expect(result).toContain("Open Blockers");
+  });
+});
+
+describe("buildInfraBlock", () => {
+  test("returns null when no INFRA.yaml", () => {
+    const mockFs = { existsSync: () => false };
+    expect(buildInfraBlock(mockFs, "/tmp")).toBeNull();
+  });
+
+  test("returns infra block with rules", () => {
+    const yaml = `rules:\n  - "Never use public IP"\n  - "Verify VPC IP"`;
+    const mockFs = {
+      existsSync: (p) => p.includes("INFRA.yaml"),
+      readFileSync: () => yaml,
+    };
+    const result = buildInfraBlock(mockFs, "/tmp");
+    expect(result).toContain("INFRASTRUCTURE");
+    expect(result).toContain("Never use public IP");
+  });
+});
+
+describe("main — deps/infra injection", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("injects deps block when deps.yaml exists", () => {
+    fs.writeFileSync(path.join(tmpDir, "deps.yaml"), "project: test\ndepends_on:\n  - repo: hub\n    type: knowledge\n    description: KB", "utf8");
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.system_prompt_addition).toContain("DEPENDENCIES");
+    expect(result.system_prompt_addition).toContain("hub");
+  });
+
+  test("does not inject deps when no deps.yaml", () => {
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.system_prompt_addition).not.toContain("DEPENDENCIES");
   });
 });
