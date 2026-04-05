@@ -36,7 +36,7 @@ claude-scaffold  ← редактируешь один раз
 При каждом промпте в Claude Code хук автоматически:
 1. Внедряет `dev/status.md` — текущее состояние и следующие шаги проекта
 2. Определяет намерение планирования и напоминает войти в plan mode
-3. Сопоставляет промпт с 14 правилами скиллов (ключевые слова + изменённые файлы)
+3. Сопоставляет промпт с 22 правилами скиллов (ключевые слова + изменённые файлы + триггеры платформы)
 4. Внедряет до 2 релевантных скиллов в `system_prompt_addition`
 
 Скиллы привносят доменные знания: паттерны FastAPI, RAG-пайплайны, графы LangGraph, конфиги CI/CD, test-first воркфлоу — только когда нужно.
@@ -110,9 +110,9 @@ python scripts/deploy.py --update-all
 ## Запуск тестов
 
 ```bash
-npm run test:hook         # 89 Jest-тестов (unit + E2E + session-start)
-npm run test:cli          # 29 Jest-тестов (CLI команды)
-python tests/infra/test_infra.py  # 43 Python-теста (инфра-контракты)
+npm run test:hook         # Jest-тесты хуков (unit + E2E + session-start)
+npm run test:cli          # Jest-тесты CLI (init, registry, deps)
+python tests/infra/test_infra.py  # 57 Python-тестов (инфра-контракты)
 npm run check:budget      # проверить что все скиллы < 300 строк
 npm run metrics           # отчёт по частоте загрузки скиллов
 ```

@@ -70,52 +70,28 @@ Platform is win32. Apply to ALL generated code and terminal instructions:
    - Never use bare \`open()\` without encoding — Windows defaults to cp1251/cp1252 which corrupts UTF-8 files
 4. Terminal encoding: run \`chcp 65001\` before starting Claude Code in CMD/PowerShell, or add to PowerShell profile: \`[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\`. Recommended: launch Claude Code from Git Bash to avoid encoding issues entirely.`;
 
-function parseSimpleYaml(text) {
+function resolveYamlParser() {
+  try {
+    const parserPath = path.join(__dirname, "..", "..", "lib", "yaml-parser.js");
+    if (fs.existsSync(parserPath)) return require(parserPath).parseSimpleYaml;
+  } catch {}
+  return null;
+}
+
+function parseSimpleYamlFallback(text) {
   const result = {};
-  let currentKey = null;
-  let currentList = null;
-  let currentObj = null;
-  for (const line of text.split("\n")) {
+  for (const line of text.replace(/\r\n/g, "\n").split("\n")) {
     if (line.startsWith("#") || line.trim() === "") continue;
-    const topMatch = line.match(/^(\w[\w_-]*):\s*(.*)$/);
-    if (topMatch) {
-      if (currentObj && currentKey && currentList) {
-        currentList.push(currentObj);
-        currentObj = null;
-      }
-      currentKey = topMatch[1];
-      const val = topMatch[2].trim();
-      if (val && val !== "" && !val.startsWith("#")) {
-        result[currentKey] = val.replace(/^["']|["']$/g, "");
-      } else {
-        result[currentKey] = [];
-        currentList = result[currentKey];
-        currentObj = null;
-      }
-      continue;
-    }
-    if (Array.isArray(result[currentKey])) {
-      const itemMatch = line.match(/^\s+-\s+(\w[\w_-]*):\s*(.+)$/);
-      const plainItem = line.match(/^\s+-\s+"?([^"]+)"?\s*$/);
-      if (itemMatch) {
-        if (itemMatch[1] === "repo" || itemMatch[1] === "id" || itemMatch[1] === "name") {
-          if (currentObj) currentList.push(currentObj);
-          currentObj = {};
-        }
-        if (currentObj) currentObj[itemMatch[1]] = itemMatch[2].replace(/^["']|["']$/g, "").trim();
-      } else if (plainItem) {
-        if (currentObj) { currentList.push(currentObj); currentObj = null; }
-        currentList.push(plainItem[1].trim());
-      } else {
-        const kvMatch = line.match(/^\s+(\w[\w_-]*):\s*(.+)$/);
-        if (kvMatch && currentObj) {
-          currentObj[kvMatch[1]] = kvMatch[2].replace(/^["']|["']$/g, "").trim();
-        }
-      }
-    }
+    const m = line.match(/^(\w[\w_-]*):\s*(.+)$/);
+    if (m) result[m[1]] = m[2].replace(/^["']|["']$/g, "").trim();
   }
-  if (currentObj && currentKey && Array.isArray(result[currentKey])) result[currentKey].push(currentObj);
   return result;
+}
+
+function parseSimpleYaml(text) {
+  const sharedParser = resolveYamlParser();
+  if (sharedParser) return sharedParser(text);
+  return parseSimpleYamlFallback(text);
 }
 
 function buildDepsBlock(fsModule, cwd) {

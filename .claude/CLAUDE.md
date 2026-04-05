@@ -175,6 +175,7 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 | `/review` | Runs code-reviewer agent on changed files |
 | `/security-review` | Built-in: scans for SQL injection, XSS, auth flaws, insecure data handling, dependency vulnerabilities. Run before push on security-sensitive code. |
 | `/dev-status` | Updates dev/status.md before session end |
+| `/infra` | Display full INFRA.yaml infrastructure manifest |
 
 ## What You Never Do
 

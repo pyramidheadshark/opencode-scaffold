@@ -69,37 +69,33 @@ function main(inputStr, cwd) {
         const depsPath = path.join(cwd, "deps.yaml");
         if (fs.existsSync(depsPath)) {
           const raw = fs.readFileSync(depsPath, "utf8");
-          const openBlockers = [];
-          let inBlockers = false;
-          let currentBlocker = null;
-          for (const line of raw.split("\n")) {
-            if (line.match(/^blockers:/)) { inBlockers = true; continue; }
-            if (inBlockers && line.match(/^\w/)) { inBlockers = false; }
-            if (inBlockers) {
-              const idMatch = line.match(/^\s+-\s+id:\s*(.+)/);
-              const descMatch = line.match(/^\s+description:\s*"?(.+?)"?\s*$/);
-              const statusMatch = line.match(/^\s+status:\s*(\w+)/);
-              if (idMatch) { if (currentBlocker) openBlockers.push(currentBlocker); currentBlocker = { id: idMatch[1].trim() }; }
-              if (descMatch && currentBlocker) currentBlocker.description = descMatch[1];
-              if (statusMatch && currentBlocker) currentBlocker.status = statusMatch[1];
-            }
+          let parseBlockers;
+          try {
+            parseBlockers = require(path.join(cwd, "..", "lib", "yaml-parser.js")).parseBlockers;
+          } catch {
+            parseBlockers = null;
           }
-          if (currentBlocker) openBlockers.push(currentBlocker);
-          const open = openBlockers.filter(b => b.status === "open");
+          let open = [];
+          if (parseBlockers) {
+            open = parseBlockers(raw).filter(b => b.status === "open");
+          }
           if (open.length > 0) {
             triggered = true;
             checkpointBlock = "## [OPEN BLOCKERS REMINDER]\n" +
               open.map(b => `- [${b.id}] ${b.description || "no description"}`).join("\n") +
               "\nConsider addressing these blockers or updating their status.";
-            cache.last_deps_reminder_count = cache.tool_call_count;
           }
         }
       } catch (e) { process.stderr.write(`[session-checkpoint] deps blocker: ${e.message}\n`); }
     }
   }
 
-  if (triggered && !checkpointBlock?.includes("BLOCKER")) {
-    cache.last_checkpoint_count = cache.tool_call_count;
+  if (triggered) {
+    if (checkpointBlock && checkpointBlock.includes("BLOCKER")) {
+      cache.last_deps_reminder_count = cache.tool_call_count;
+    } else {
+      cache.last_checkpoint_count = cache.tool_call_count;
+    }
   }
 
   saveCache(cacheDir, sessionId, cache);

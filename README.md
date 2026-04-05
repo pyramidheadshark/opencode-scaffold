@@ -123,7 +123,7 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 
 ## Components
 
-### 20 Skills
+### 22 Skills
 
 | Skill | Triggers On |
 |---|---|
@@ -219,6 +219,64 @@ Trust levels: `verified` (auto-install), `community` (confirmation required), `u
 
 ---
 
+## Ecosystem Features (v2.0.0+)
+
+### Cross-Repo Dependencies
+
+Declare dependencies between projects with `deps.yaml` in project root:
+
+```yaml
+project: my-project
+depends_on:
+  - repo: my-hub
+    type: knowledge
+blockers:
+  - id: BLK-001
+    description: "Latency issue"
+    status: open
+```
+
+```bash
+npx claude-scaffold deps status                          # show dependency graph
+npx claude-scaffold deps add my-hub --type knowledge     # add dependency
+npx claude-scaffold deps update-blocker BLK-001 --status resolved
+```
+
+Dependencies are injected at session start. Open blockers trigger periodic reminders.
+
+### Infrastructure Manifest
+
+Create `INFRA.yaml` to prevent IP/hostname hallucinations:
+
+```yaml
+vms:
+  my-server:
+    vpc_ip: "192.168.0.10"
+    public_ip: "1.2.3.4"
+    role: app-server
+rules:
+  - "NEVER use public IP for intra-host communication"
+```
+
+Summary injected at session start. Full manifest via `/infra` command.
+
+### Agent Extensions
+
+Extend base agents with project-specific instructions:
+
+```
+.claude/agent-extensions/code-reviewer.md   # appended to base code-reviewer
+.claude/agent-extensions/my-agent.md        # fully custom agent
+```
+
+Extensions are concatenated with base agents during deploy/update. User extensions are never overwritten.
+
+### Contextual PITFALLS.md
+
+`.claude/PITFALLS.md` contains known pitfalls organized by category (Docker, Terraform, Auth, etc.). Only relevant sections are injected based on changed files and prompt keywords.
+
+---
+
 ## Deploy Options
 
 ### Option A — NPX (no clone needed)
@@ -297,17 +355,17 @@ On a 200K context window: < 3% overhead per prompt.
 claude-scaffold/
 ├── .claude/
 │   ├── skills/          # 22 skill modules (SKILL.md + resources/ + skill-metadata.json)
-│   ├── hooks/           # lifecycle automation (5 hooks)
+│   ├── hooks/           # lifecycle automation (6 hooks)
 │   ├── agents/          # 8 sub-agents
-│   ├── commands/        # 4 slash commands
+│   ├── commands/        # 5 slash commands
 │   └── CLAUDE.md        # core profile + interaction principles
 ├── scripts/
 │   ├── deploy.py        # cross-platform deploy wizard (--status, --update, --update-all)
 │   └── metrics-report.js
 ├── templates/           # pyproject.toml, Dockerfile, docker-compose, GitHub Actions profiles
 ├── tests/
-│   ├── hook/            # Jest tests (198 total)
-│   ├── infra/           # Python tests (45 total)
+│   ├── hook/            # Jest hook tests
+│   ├── infra/           # Python tests (57 total)
 │   └── fixtures/        # mock project for E2E
 ├── docs/
 │   ├── INTEGRATION.md   # deploy guide (EN)
