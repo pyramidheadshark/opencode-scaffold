@@ -7,7 +7,7 @@ Clone once. Deploy to any project in one command. Update all projects whenever y
 [![CI](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
-![Jest Tests](https://img.shields.io/badge/Jest-398%20tests-brightgreen)
+![Jest Tests](https://img.shields.io/badge/Jest-424%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-57%20tests-blue)
 ![Benchmark](https://img.shields.io/badge/Benchmark-60%20tests-blueviolet)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
@@ -324,7 +324,7 @@ claude-scaffold/
 ## Running Tests
 
 ```bash
-npm test                          # 398 Jest + 57 Python
+npm test                          # 424 Jest + 57 Python
 npm run test:hook                 # hook tests only
 npm run check:budget              # verify all skills under 300 lines
 npm run metrics                   # skill load frequency report

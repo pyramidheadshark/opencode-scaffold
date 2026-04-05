@@ -70,6 +70,106 @@ Platform is win32. Apply to ALL generated code and terminal instructions:
    - Never use bare \`open()\` without encoding — Windows defaults to cp1251/cp1252 which corrupts UTF-8 files
 4. Terminal encoding: run \`chcp 65001\` before starting Claude Code in CMD/PowerShell, or add to PowerShell profile: \`[Console]::OutputEncoding = [System.Text.Encoding]::UTF8\`. Recommended: launch Claude Code from Git Bash to avoid encoding issues entirely.`;
 
+function parseSimpleYaml(text) {
+  const result = {};
+  let currentKey = null;
+  let currentList = null;
+  let currentObj = null;
+  for (const line of text.split("\n")) {
+    if (line.startsWith("#") || line.trim() === "") continue;
+    const topMatch = line.match(/^(\w[\w_-]*):\s*(.*)$/);
+    if (topMatch) {
+      if (currentObj && currentKey && currentList) {
+        currentList.push(currentObj);
+        currentObj = null;
+      }
+      currentKey = topMatch[1];
+      const val = topMatch[2].trim();
+      if (val && val !== "" && !val.startsWith("#")) {
+        result[currentKey] = val.replace(/^["']|["']$/g, "");
+      } else {
+        result[currentKey] = [];
+        currentList = result[currentKey];
+        currentObj = null;
+      }
+      continue;
+    }
+    if (Array.isArray(result[currentKey])) {
+      const itemMatch = line.match(/^\s+-\s+(\w[\w_-]*):\s*(.+)$/);
+      const plainItem = line.match(/^\s+-\s+"?([^"]+)"?\s*$/);
+      if (itemMatch) {
+        if (itemMatch[1] === "repo" || itemMatch[1] === "id" || itemMatch[1] === "name") {
+          if (currentObj) currentList.push(currentObj);
+          currentObj = {};
+        }
+        if (currentObj) currentObj[itemMatch[1]] = itemMatch[2].replace(/^["']|["']$/g, "").trim();
+      } else if (plainItem) {
+        if (currentObj) { currentList.push(currentObj); currentObj = null; }
+        currentList.push(plainItem[1].trim());
+      } else {
+        const kvMatch = line.match(/^\s+(\w[\w_-]*):\s*(.+)$/);
+        if (kvMatch && currentObj) {
+          currentObj[kvMatch[1]] = kvMatch[2].replace(/^["']|["']$/g, "").trim();
+        }
+      }
+    }
+  }
+  if (currentObj && currentKey && Array.isArray(result[currentKey])) result[currentKey].push(currentObj);
+  return result;
+}
+
+function buildDepsBlock(fsModule, cwd) {
+  const depsPath = path.join(cwd, "deps.yaml");
+  if (!fsModule.existsSync(depsPath)) return null;
+  try {
+    const raw = fsModule.readFileSync(depsPath, "utf8");
+    const deps = parseSimpleYaml(raw);
+    const lines = [];
+    if (deps.project) lines.push(`Project: ${deps.project}`);
+    if (Array.isArray(deps.depends_on) && deps.depends_on.length > 0) {
+      lines.push("Dependencies:");
+      for (const d of deps.depends_on) {
+        if (typeof d === "object") lines.push(`  - ${d.repo} (${d.type || "unknown"}): ${d.description || ""}`);
+      }
+    }
+    if (Array.isArray(deps.blockers) && deps.blockers.length > 0) {
+      const open = deps.blockers.filter(b => typeof b === "object" && b.status === "open");
+      if (open.length > 0) {
+        lines.push(`Open Blockers (${open.length}):`);
+        for (const b of open) lines.push(`  - [${b.id}] ${b.description} (since ${b.since || "?"})`);
+      }
+    }
+    return lines.length > 1 ? "## [DEPENDENCIES]\n" + lines.join("\n") : null;
+  } catch (e) {
+    process.stderr.write(`[session-start] deps.yaml: ${e.message}\n`);
+    return null;
+  }
+}
+
+function buildInfraBlock(fsModule, cwd) {
+  for (const candidate of ["INFRA.yaml", ".claude/INFRA.yaml"]) {
+    const p = path.join(cwd, candidate);
+    if (!fsModule.existsSync(p)) continue;
+    try {
+      const raw = fsModule.readFileSync(p, "utf8");
+      const infra = parseSimpleYaml(raw);
+      const vmCount = Array.isArray(infra.vms) ? infra.vms.length : (typeof infra.vms === "object" ? Object.keys(infra.vms).length : 0);
+      const svcCount = Array.isArray(infra.services) ? infra.services.length : (typeof infra.services === "object" ? Object.keys(infra.services).length : 0);
+      const rules = Array.isArray(infra.rules) ? infra.rules.filter(r => typeof r === "string") : [];
+      const lines = [`## [INFRASTRUCTURE]`, `${vmCount} VM(s), ${svcCount} service(s). Full manifest: use /infra command.`];
+      if (rules.length > 0) {
+        lines.push("Rules:");
+        for (const r of rules) lines.push(`  - ${r}`);
+      }
+      return lines.join("\n");
+    } catch (e) {
+      process.stderr.write(`[session-start] INFRA.yaml: ${e.message}\n`);
+      return null;
+    }
+  }
+  return null;
+}
+
 const COMMIT_RULES_REMINDER_BLOCK = `## Commit Rules Reminder (periodic)
 One commit = one logical stage. Key rules:
 - Subject line only, ≤72 chars. No body unless "why" is non-obvious.
@@ -123,6 +223,10 @@ function main(inputStr, cwd, platform, detectPython) {
   if (isFirstRun) additions.push(blocks.onboarding);
   if (effectivePlatform === "win32") additions.push(blocks.windows);
   if (sessionCount > 1 && sessionCount % 10 === 0) additions.push(COMMIT_RULES_REMINDER_BLOCK);
+  const depsBlock = buildDepsBlock(fs, effectiveCwd);
+  if (depsBlock) additions.push(depsBlock);
+  const infraBlock = buildInfraBlock(fs, effectiveCwd);
+  if (infraBlock) additions.push(infraBlock);
 
   return {
     continue: true,
@@ -136,4 +240,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks };

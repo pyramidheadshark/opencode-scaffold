@@ -1,5 +1,5 @@
 const path = require("path");
-const { simpleHash, loadSkillRules, loadStatusContent, getSkillSize, matchSkills, loadSkillContent, buildInjections, buildOutput } = require("../../.claude/hooks/skill-activation-logic");
+const { simpleHash, loadSkillRules, loadStatusContent, getSkillSize, matchSkills, loadSkillContent, extractRelevantPitfalls, buildInjections, buildOutput } = require("../../.claude/hooks/skill-activation-logic");
 
 const FIXTURE_WITH_STATUS = path.join(__dirname, "../fixtures/project-with-status");
 
@@ -537,5 +537,50 @@ describe("matchSkills — platform_trigger", () => {
     } else {
       expect(matched).not.toContain("windows-developer");
     }
+  });
+});
+
+describe("extractRelevantPitfalls", () => {
+  const PITFALLS = `# Known Pitfalls
+
+## Docker
+- Use docker compose v2
+- Never bind-mount node_modules
+
+## Authentication
+- Always validate JWT expiry server-side
+- Rate-limit login endpoints
+
+## Terraform
+- Use prevent_destroy on production
+`;
+
+  test("returns matching section when changed file matches header", () => {
+    const result = extractRelevantPitfalls(PITFALLS, ["Dockerfile", "docker-compose.yml"], "build the app");
+    expect(result).toContain("docker compose v2");
+    expect(result).not.toContain("JWT");
+    expect(result).not.toContain("Terraform");
+  });
+
+  test("returns matching section when prompt matches header", () => {
+    const result = extractRelevantPitfalls(PITFALLS, [], "fix the authentication flow");
+    expect(result).toContain("JWT");
+    expect(result).not.toContain("docker");
+  });
+
+  test("returns multiple matching sections", () => {
+    const result = extractRelevantPitfalls(PITFALLS, ["Dockerfile"], "fix authentication");
+    expect(result).toContain("docker compose");
+    expect(result).toContain("JWT");
+  });
+
+  test("returns null when nothing matches", () => {
+    const result = extractRelevantPitfalls(PITFALLS, ["readme.md"], "update docs");
+    expect(result).toBeNull();
+  });
+
+  test("returns null for empty content", () => {
+    expect(extractRelevantPitfalls("", [], "anything")).toBeNull();
+    expect(extractRelevantPitfalls(null, [], "anything")).toBeNull();
   });
 });

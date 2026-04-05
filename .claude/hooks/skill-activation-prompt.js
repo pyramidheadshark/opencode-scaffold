@@ -3,7 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
-const { loadSkillRules, buildInjections, buildOutput } = require("./skill-activation-logic");
+const { loadSkillRules, buildInjections, buildOutput, extractRelevantPitfalls } = require("./skill-activation-logic");
 
 const CACHE_DIR = path.join(process.cwd(), ".claude/cache");
 
@@ -71,6 +71,16 @@ const CONTEXT_REFRESH_BLOCK =
 const needsRefresh = (cache.weight || 0) > WEIGHT_REFRESH_THRESHOLD;
 
 const { injections, matchedSkills, statusHash } = buildInjections(fs, path, cwd, prompt, changedFiles, rules, sessionContext);
+
+const pitfallsPath = path.join(cwd, ".claude/PITFALLS.md");
+if (fs.existsSync(pitfallsPath)) {
+  try {
+    const pitfallsContent = fs.readFileSync(pitfallsPath, "utf8");
+    const relevant = extractRelevantPitfalls(pitfallsContent, changedFiles, prompt);
+    if (relevant) injections.push("## [PITFALLS — Relevant]\n\n" + relevant);
+  } catch (e) { process.stderr.write(`[skill-activation] pitfalls: ${e.message}\n`); }
+}
+
 if (cache.pending_notification) {
   injections.unshift(cache.pending_notification);
 }

@@ -13,6 +13,7 @@ const { runWizard } = require('../lib/ui/wizard');
 const { listOrgProfiles, updateOrgProfile, loadOrgProfile } = require('../lib/commands/org-profile');
 const { DEFAULT_REGISTRY_PATH } = require('../lib/deploy/registry');
 const { runRegistrySearch, runRegistryInstall, runRegistryList, runRegistryUpdate, runRegistryAddSource } = require('../lib/commands/registry');
+const { runDepsStatus, runDepsUpdateBlocker, runDepsAdd, runDepsRemove } = require('../lib/commands/deps');
 const PROFILES = require('../lib/profiles');
 
 const INFRA_DIR = path.join(__dirname, '..');
@@ -232,6 +233,39 @@ program
       }
     }
     console.log();
+  });
+
+const deps = program.command('deps').description('Cross-repo dependency management');
+
+deps
+  .command('status')
+  .description('Show dependency graph and blockers')
+  .action(() => {
+    runDepsStatus(process.cwd());
+  });
+
+deps
+  .command('update-blocker <id>')
+  .description('Update blocker status')
+  .requiredOption('--status <status>', 'New status (open, resolved)')
+  .action((id, opts) => {
+    runDepsUpdateBlocker(process.cwd(), id, opts);
+  });
+
+deps
+  .command('add <repo>')
+  .description('Add a dependency')
+  .option('--type <type>', 'Dependency type', 'knowledge')
+  .option('--description <desc>', 'Description')
+  .action((repo, opts) => {
+    runDepsAdd(process.cwd(), repo, opts);
+  });
+
+deps
+  .command('remove <repo>')
+  .description('Remove a dependency')
+  .action((repo) => {
+    runDepsRemove(process.cwd(), repo);
   });
 
 const registry = program.command('registry').description('Skill registry: search, install, and manage skill sources');

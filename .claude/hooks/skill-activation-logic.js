@@ -157,6 +157,33 @@ function buildInjections(fs, path, cwd, prompt, changedFiles, rules, sessionCont
   return { injections, matchedSkills, statusHash };
 }
 
+function extractRelevantPitfalls(pitfallsContent, changedFiles, prompt) {
+  if (!pitfallsContent) return null;
+  const sections = [];
+  let current = null;
+  for (const line of pitfallsContent.split("\n")) {
+    if (line.startsWith("## ")) {
+      if (current) sections.push(current);
+      current = { header: line.slice(3).trim(), headerLower: line.slice(3).trim().toLowerCase(), lines: [line] };
+    } else if (current) {
+      current.lines.push(line);
+    }
+  }
+  if (current) sections.push(current);
+
+  const promptLower = (prompt || "").toLowerCase();
+  const filesLower = (changedFiles || []).map(f => f.toLowerCase());
+
+  const matched = sections.filter(s => {
+    const kw = s.headerLower;
+    if (promptLower.includes(kw)) return true;
+    return filesLower.some(f => f.includes(kw));
+  });
+
+  if (matched.length === 0) return null;
+  return matched.map(s => s.lines.join("\n")).join("\n\n");
+}
+
 function buildOutput(injections) {
   if (injections.length === 0) {
     return { continue: true };
@@ -174,6 +201,7 @@ module.exports = {
   getSkillSize,
   matchSkills,
   loadSkillContent,
+  extractRelevantPitfalls,
   buildInjections,
   buildOutput,
 };
