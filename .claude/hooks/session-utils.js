@@ -1,11 +1,16 @@
 "use strict";
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
 const WEIGHTS = { Write: 2, Edit: 1, Bash: 0.3, Read: 0 };
 
 function sanitizeSessionId(raw) {
-  return (raw || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_").slice(0, 32);
+  const cleaned = (raw || "unknown").replace(/[^a-zA-Z0-9_-]/g, "_");
+  if (cleaned.length > 32) {
+    return crypto.createHash("md5").update(raw).digest("hex").slice(0, 16);
+  }
+  return cleaned;
 }
 
 function getSessionJsonlPath(cwd, sessionId, dateStr) {
@@ -19,7 +24,7 @@ function appendSessionEvent(cwd, sessionId, event) {
     const filePath = getSessionJsonlPath(cwd, sessionId);
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.appendFileSync(filePath, JSON.stringify(event) + "\n", "utf8");
-  } catch { }
+  } catch (e) { process.stderr.write(`[session-utils] appendEvent: ${e.message}\n`); }
 }
 
 function deleteOldSessionLogs(logsDir, maxFiles) {
@@ -30,9 +35,9 @@ function deleteOldSessionLogs(logsDir, maxFiles) {
       .sort();
     while (files.length > maxFiles) {
       const oldest = files.shift();
-      try { fs.unlinkSync(path.join(logsDir, oldest)); } catch { }
+      try { fs.unlinkSync(path.join(logsDir, oldest)); } catch (e) { process.stderr.write(`[session-utils] deleteLog: ${e.message}\n`); }
     }
-  } catch { }
+  } catch (e) { process.stderr.write(`[session-utils] deleteOldLogs: ${e.message}\n`); }
 }
 
 module.exports = { WEIGHTS, sanitizeSessionId, getSessionJsonlPath, appendSessionEvent, deleteOldSessionLogs };

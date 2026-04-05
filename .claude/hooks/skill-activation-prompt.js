@@ -56,10 +56,11 @@ if (cache.pending_notification) {
   try {
     const updatedCache = { ...cache, pending_notification: null };
     saveSessionCache(sessionId, updatedCache);
-  } catch { }
+  } catch (e) { process.stderr.write(`[skill-activation] clearNotification: ${e.message}\n`); }
 }
 
 const WEIGHT_REFRESH_THRESHOLD = 30;
+const PROMPT_WEIGHT = 1;
 const CONTEXT_REFRESH_BLOCK =
   "## [CONTEXT REFRESH]\n" +
   "Long session detected. Core rules reminder:\n" +
@@ -94,8 +95,9 @@ const PLAN_MODE_KEYWORDS = [
 // Informational/question prompts: skip plan-mode even if keywords present
 const QUESTION_PREFIXES = [
   "what", "how", "why", "explain", "show", "describe", "tell me", "can you explain",
-  "что ", "как ", "почему", "зачем", "объясни", "расскажи", "покажи", "в чём",
-  "можешь", "можно",
+  "can ", "could ", "would ", "should ", "is it ", "are there ", "do we ",
+  "что ", "как ", "почему", "зачем", "объясни", "расскажи", "покажи", "�� чё��",
+  "можешь ", "можно ", "а как ", "а что ", "скажи ", "подскажи",
 ];
 const promptLower = prompt.toLowerCase();
 const isQuestion = QUESTION_PREFIXES.some((q) => promptLower.startsWith(q));
@@ -153,10 +155,9 @@ try {
     loaded_skills: updatedLoadedSkills,
     last_status_hash: statusHash,
     prompt_count: (cache.prompt_count || 0) + 1,
-    weight: needsRefresh ? 0 : (cache.weight || 0),
+    weight: needsRefresh ? 0 : (cache.weight || 0) + PROMPT_WEIGHT,
   });
-} catch {
-}
+} catch (e) { process.stderr.write(`[skill-activation] saveCache: ${e.message}\n`); }
 
 const logsDir = path.join(cwd, ".claude/logs");
 try {
@@ -173,7 +174,6 @@ try {
     status_injected: injections.some((i) => i.startsWith("## Project Status")),
   });
   fs.appendFileSync(path.join(logsDir, "skill-metrics.jsonl"), entry + "\n", "utf8");
-} catch {
-}
+} catch (e) { process.stderr.write(`[skill-activation] metrics: ${e.message}\n`); }
 
 process.stdout.write(JSON.stringify(buildOutput(injections)));

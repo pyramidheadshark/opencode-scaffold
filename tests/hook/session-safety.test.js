@@ -50,8 +50,21 @@ describe("sanitizeSessionId", () => {
     expect(sanitizeSessionId(undefined)).toBe("unknown");
   });
 
-  test("truncates to 32 chars", () => {
-    expect(sanitizeSessionId("a".repeat(50))).toHaveLength(32);
+  test("hashes long IDs to 16-char hex", () => {
+    const result = sanitizeSessionId("a".repeat(50));
+    expect(result).toHaveLength(16);
+    expect(result).toMatch(/^[0-9a-f]{16}$/);
+  });
+
+  test("different long IDs produce different hashes", () => {
+    const a = sanitizeSessionId("my-long-session-id-experiment-version-1");
+    const b = sanitizeSessionId("my-long-session-id-experiment-version-2");
+    expect(a).not.toBe(b);
+  });
+
+  test("short IDs pass through without hashing", () => {
+    expect(sanitizeSessionId("short-id")).toBe("short-id");
+    expect(sanitizeSessionId("exactly-32-chars-long-session-id")).toHaveLength(32);
   });
 
   test("valid UUID-like id passes through", () => {
@@ -146,8 +159,16 @@ describe("classifyCommand", () => {
     expect(classifyCommand("git push origin main --force", PATTERNS)).toBe("CRITICAL");
   });
 
-  test("git push --force-with-lease → MODERATE", () => {
+  test("git push --force-with-lease → MODERATE (not CRITICAL)", () => {
     expect(classifyCommand("git push --force-with-lease", PATTERNS)).toBe("MODERATE");
+  });
+
+  test("git push origin main --force-with-lease → MODERATE (not CRITICAL)", () => {
+    expect(classifyCommand("git push origin main --force-with-lease", PATTERNS)).toBe("MODERATE");
+  });
+
+  test("git push --forcefully → SAFE (not a known flag)", () => {
+    expect(classifyCommand("git push --forcefully", PATTERNS)).toBe("SAFE");
   });
 
   test("git rebase main → CRITICAL", () => {

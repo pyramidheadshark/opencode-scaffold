@@ -14,58 +14,68 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 
 ## Current Phase
 
-**Active**: Phase 6 — Distribution & Growth
+**Active**: Phase 7 — Stability & Ecosystem (v1.5.0 → v2.0.0)
 
-Published on npm, deployed to 22 repos. Now focused on organic discovery and community presence.
-
----
-
-## Current State — v1.4.0 (2026-03-22)
-
-- npm@1.3.1 published, ~500 downloads, main @ `d41f14f`
-- **19 skills** (16 auto + 2 meta + 1 new: `critical-analysis`), 8 agents, 4 commands, 6 hooks + session-utils.js
-- **350 Jest + 54 Python tests (all green)**
-- v1.4.0 code committed (`b661ac3`), awaiting real-world testing before tag+publish
-- All 22 repos updated; defectoscopy + hub have critical-analysis skill deployed
-
-### v1.4.0 Session Safety (complete):
-- `session-safety.js` — PATTERNS IIFE, per-command `snapshot_count`, `pending_notification`, `isSafeTarget` boundary check, `sanitizeSessionId`, timeout=5000
-- `session-utils.js` — `sanitizeSessionId` exported, used in JSONL path
-- `destructive-patterns.json` — curl|bash CRITICAL, --force-with-lease MODERATE
-- `skill-activation-prompt.js` — `pending_notification` inject+clear on UserPromptSubmit
-- `lib/commands/session-logs.js` + `bin/cli.js` — `npx claude-scaffold session-logs`
-- `package.json` v1.4.0, author/homepage/repository/bugs fields
-- README (350 Jest badge, Session Safety section, 6 hooks), CHANGELOG (v1.2.0–v1.4.0), llms.txt
-
-### Bug fixed this session (`e11c0f4`):
-- `update.test.js` — 4 `deployCore` calls без `registryPath` писали в реальный `deployed-repos.json`
-- 70 stale `cs-test-*` записей удалены из реестра
-- `TestRegistryHealth` в `test_infra.py` — guard от рецидива
-- `scripts/clean-registry.js` — утилита ручной очистки
+Field feedback from TechCon (371 logs) and RGS (22 repos) ecosystems. Fixing confirmed bugs, adding skill registry, ecosystem features.
 
 ---
 
-## Active Tasks
+## Current State — v1.5.0 ready to tag (2026-04-05)
 
-**Ожидание реального тестирования:**
-- [ ] Протестировать Session Safety в реальных репо (день-другой)
-- [ ] `git tag v1.4.0 && git push origin v1.4.0` → publish.yml запустится автоматически
+- **v1.5.0 code complete**, all 469 tests green (242 hook + 114 CLI + 56 benchmark + 57 Python)
+- **6 hook bugfixes**, 5 skill trigger fixes, CI template updates
+- **PRs:** 1 MERGED (awesome-claude-code-toolkit#79), 1 CLOSED (awesome-vibe-coding#100), 4 OPEN
 
-**v1.4.1 Tier 1** (после publish):
-- Python infra тесты для session-safety.js + destructive-patterns.json
-- Error path тесты (~25% gap)
-- Bash weight 0.3 → 0.1
-- Magic string константы
-- session-logs --list enhanced (duration, event count, snapshot indicator)
+### v1.4.1 содержание (всё завершено):
+- `critical-analysis` skill v1.1 — 8 ролей, anti-collapse, PLATEAU dual-threshold, 37 keywords, `priority=0`
+- `database-migration-safety` skill v1.0 — Alembic checklist, reversibility enforcement
+- `supply-chain-auditor` skill v1.0 — dependency hygiene, CVE awareness, pip-audit/npm audit
+- `skill-activation-logic.js` — `matchSkills()` теперь сортирует по priority (always_load сначала, затем ascending)
+- `batch_deploy_skill.py` — batch deploy critical-analysis + 2 новых скилла в 22 репо
+- +3 Python теста: keyword count ≥30, role count =8, trigger simulation (isolated temp git repo)
+- README: badges 57 tests / 20 skills; новые строки в таблице скиллов
+- `docs/demo.gif` — github-dark theme, показывает critical-analysis skill injection
+
+### Приоритетный фикс (matchSkills sort):
+`priority=0` для critical-analysis не работал — правила итерировались в порядке вставки. Теперь: `always_load=true` → гарантированный первый слот; остальные сортируются по priority ascending. Benchmark golden dataset обновлён: `plan-ru-004` теперь ожидает `["critical-analysis", "python-project-standards"]`.
+
+---
+
+## Active Tasks — v1.5.0 "Stability"
+
+### Hook Bugfixes (P0) — ALL DONE
+- [x] Fix A: `--force-with-lease` false positive — regex updated
+- [x] Fix B: Plan-mode false positives — expanded QUESTION_PREFIXES (13→21 prefixes)
+- [x] Fix C: Weight increment — PROMPT_WEIGHT=1 added
+- [x] Fix D: Empty catch blocks — 14+ catches now log to stderr
+- [x] Fix E: Session ID collision — hash long IDs (md5 → 16 hex chars)
+- [x] Fix F: Regex validation at pattern load time
+
+### Skill Trigger Fixes (P1) — ALL DONE
+- [x] design-doc-creator: +3 keywords (user story, specification, требовани)
+- [x] data-validation: +4 keywords (pydantic, validator, field_validator), min_keyword_matches=2
+- [x] prompt-engineering: +3 keywords (system message, instructions, prompt design), +prompts/*.py
+- [x] multimodal-router: priority 5→21, min_keyword_matches=2, +2 keywords
+- [x] experiment-tracking: +4 keywords (tracking_uri, compare runs, registered model)
+
+### CI & Tests — PARTIAL
+- [x] uv sync --all-groups in all 4 CI templates
+- [ ] actions/checkout@v4 → v5, setup-node@v4 → v5 (deferred to v1.6.0 — v5 not yet stable)
+- [x] Jest tests: +6 new tests (session ID hash, force-with-lease, question prefixes)
+- [ ] Python infra error path tests (deferred to v1.5.1)
+
+### Roadmap (after v1.5.0)
+- **v1.6.0** (2-3 days): Skill registry (official+community), dynamic budget, QA workflow, windows-developer skill, hub/task-hub profiles
+- **v2.0.0** (1-2 weeks): deps.yaml, agent extensions, INFRA.yaml, CLAUDE.md split + PITFALLS.md
 
 ---
 
 ## Backlog
 
-- [x] **`critical-analysis` skill** — 6-role SPP critique (Security, Perf, DA, Crutch, Strategy, ML Auditor). Auto-default behavior. Deployed to defectoscopy + hub. Commit `d41f14f`.
 - [ ] Add CI to existing repos: regional-budget (minimal), nalog-parser (minimal), TechCon (fastapi-db), sbera (ml-heavy)
 - [ ] phs_calorie_app: history rewrite to remove .claude/ from git (commit 359761f)
 - [ ] v1.5.0: "safe artifact cleanup" for hooks during update (hash-based, skip if user-modified)
+- [ ] coris-landing-site: кастомный скилл `astro-frontend` — перенести в инфру или задокументировать
 
 ---
 
@@ -73,10 +83,16 @@ Published on npm, deployed to 22 repos. Now focused on organic discovery and com
 
 ### VHS не работает на Windows
 VHS зависает из-за oh-my-posh в .bashrc (Set Shell bash) или Chrome sandbox.
-**Решение**: рендерить через `ssh yc-ctrl`. Зависимости на VM: vhs 0.11.0 + ttyd 1.7.7 + chromium + nodejs + claude-scaffold (sudo). Фикс permissions: `sudo chmod 666 /usr/lib/node_modules/claude-scaffold/deployed-repos.json`.
+**Решение**: рендерить через `ssh yc-ctrl`. Зависимости на VM: vhs 0.11.0 + ttyd 1.7.7 + chromium + nodejs + claude-scaffold (sudo). Фикс permissions: `sudo chmod 666 /usr/lib/node_modules/claude-scaffold/deployed-repos.json`. Helper script `/tmp/show-skills.sh` для сложных Type команд в tape.
 
-### Python infra tests UnicodeDecodeError on Windows
-`read_text()` uses cp1251 by default. Fix: `encoding="utf-8"` everywhere in `test_infra.py`.
+### Python infra tests UnicodeDecodeError на Windows
+`read_text()` использует cp1251 по умолчанию. Фикс: `encoding="utf-8"` везде в `test_infra.py`.
+
+### Trigger simulation test — cwd contamination
+Тест запуска hook в INFRA_ROOT захватывал modified test files → `test-first-patterns` заполнял слот раньше critical-analysis. Фикс: запускать в `tempfile.TemporaryDirectory()` с копией только нужных скиллов + `git init`.
+
+### matchSkills priority sort не работал до v1.4.1
+`priority=0` не давал преимущества — правила шли в порядке insertion. Фикс в `skill-activation-logic.js`: sort by always_load first, then priority ascending.
 
 ---
 
@@ -87,9 +103,11 @@ VHS зависает из-за oh-my-posh в .bashrc (Set Shell bash) или Chr
 | Hook architecture | Pure JS modules (no npm deps) for portability | 2026-03-02 |
 | Skill compression | LLMLingua-2 strategy — header extraction + first 50 lines | 2026-03-02 |
 | Model routing | Explicit via `multimodal-router` skill, no auto-escalation | 2026-03-02 |
-| Test strategy | Jest for hook logic, Python unittest for infra contracts | 2026-03-02 |
+| Test strategy | Jest for hook logic, Python unittest для infra contracts | 2026-03-02 |
 | GIF generation | agg (no browser needed) over VHS (Chrome required) | 2026-03-20 |
 | Registry isolation | deployCore always requires explicit registryPath in tests | 2026-03-22 |
+| Batch deploy via script | `batch_deploy_skill.py` вместо `add-skill` CLI — CLI не сохраняет `priority=0` | 2026-03-23 |
+| Priority sort in matchSkills | always_load guaranteed first, then ascending priority — critical-analysis priority=0 wins | 2026-03-23 |
 
 ---
 
@@ -97,22 +115,36 @@ VHS зависает из-за oh-my-posh в .bashrc (Set Shell bash) или Chr
 
 | File | Purpose |
 |---|---|
-| `.claude/hooks/skill-activation-logic.js` | Core hook logic (testable, no Node deps) |
+| `.claude/hooks/skill-activation-logic.js` | Core hook logic — matchSkills с priority sort |
 | `.claude/hooks/skill-activation-prompt.js` | UserPromptSubmit: skill injection + pending_notification |
 | `.claude/hooks/session-safety.js` | PreToolUse (Bash): classifyCommand, git snapshot, sanitizeSessionId |
 | `.claude/hooks/session-utils.js` | Shared: WEIGHTS, sanitizeSessionId, JSONL path, appendSessionEvent |
 | `.claude/hooks/destructive-patterns.json` | CRITICAL/MODERATE patterns + safe_targets |
 | `.claude/hooks/post-tool-use-tracker.js` | PostToolUse: weight accumulation + JSONL session events |
 | `.claude/hooks/session-start.js` | SessionStart hook — platform detection + onboarding |
-| `.claude/skills/skill-rules.json` | Trigger rules for all 19 skills |
-| `.claude/skills/critical-analysis/SKILL.md` | 6-role auto-critique: SPP Quick Mode + ML Audit Protocol |
-| `scripts/extract_user_messages.py` | Extract user-only messages from Claude JSONL history |
+| `.claude/skills/skill-rules.json` | Trigger rules для 20 скиллов |
+| `.claude/skills/critical-analysis/SKILL.md` | 8-role SPP auto-critique, priority=0 |
+| `.claude/skills/database-migration-safety/SKILL.md` | Alembic migration checklist |
+| `.claude/skills/supply-chain-auditor/SKILL.md` | Dependency hygiene + CVE checklist |
+| `scripts/batch_deploy_skill.py` | Batch deploy скиллов в все активные репо (сохраняет priority=0) |
 | `lib/commands/session-logs.js` | CLI: list/view JSONL session audit logs |
 | `lib/commands/init.js` | deployCore — file ops only, no registry write |
 | `lib/deploy/registry.js` | loadRegistry / registerDeploy — called by CLI only |
-| `tests/infra/test_infra.py` | Python infra contract tests (49 tests) |
-| `scripts/clean-registry.js` | One-shot utility to purge stale cs-test-* entries |
+| `tests/infra/test_infra.py` | Python infra contract tests (57 tests) |
 
 ---
 
-*Last updated: 2026-03-22*
+## Open PRs (публичные репо)
+
+| Repo | PR | Status | Notes |
+|---|---|---|---|
+| rohitg00/awesome-claude-code-toolkit | #79 | **MERGED** 2026-03-30 | First accepted PR |
+| filipecalegario/awesome-vibe-coding | #100 | **CLOSED** 2026-03-29 | "Too early, need community signals" — resubmit after v1.6.0 |
+| Prat011/awesome-llm-skills | #56 | open | No comments, 16 days — ping after v1.5.0 |
+| ComposioHQ/awesome-claude-plugins | #66 | open | No comments — ping after v1.5.0 |
+| thedaviddias/llms-txt-hub | #787 | open | Vercel auth pending |
+| jamesmurdza/awesome-ai-devtools | #326 | open | No comments — ping after v1.5.0 |
+
+---
+
+*Last updated: 2026-04-05*

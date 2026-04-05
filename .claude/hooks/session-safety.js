@@ -7,8 +7,20 @@ const { sanitizeSessionId } = require("./session-utils");
 
 const PATTERNS = (() => {
   try {
-    return JSON.parse(fs.readFileSync(path.join(__dirname, "destructive-patterns.json"), "utf8"));
-  } catch {
+    const raw = JSON.parse(fs.readFileSync(path.join(__dirname, "destructive-patterns.json"), "utf8"));
+    const validate = (arr, label) => (arr || []).filter(p => {
+      try { new RegExp(p, "i"); return true; } catch (e) {
+        process.stderr.write(`[session-safety] invalid ${label} regex "${p}": ${e.message}\n`);
+        return false;
+      }
+    });
+    return {
+      critical: validate(raw.critical, "critical"),
+      moderate: validate(raw.moderate, "moderate"),
+      safe_targets: raw.safe_targets || [],
+    };
+  } catch (e) {
+    process.stderr.write(`[session-safety] patterns load: ${e.message}\n`);
     return { critical: [], moderate: [], safe_targets: [] };
   }
 })();
@@ -51,7 +63,7 @@ function loadSessionCache(cwd, sessionId) {
   try {
     const p = path.join(cwd, ".claude", "cache", `session-${sessionId}.json`);
     return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {
+  } catch (e) {
     return {};
   }
 }
@@ -62,9 +74,9 @@ function saveSessionCache(cwd, sessionId, data) {
     fs.mkdirSync(cacheDir, { recursive: true });
     const p = path.join(cacheDir, `session-${sessionId}.json`);
     let existing = {};
-    try { existing = JSON.parse(fs.readFileSync(p, "utf8")); } catch { }
+    try { existing = JSON.parse(fs.readFileSync(p, "utf8")); } catch (e) { /* first write */ }
     fs.writeFileSync(p, JSON.stringify({ ...existing, ...data }, null, 2), "utf8");
-  } catch { }
+  } catch (e) { process.stderr.write(`[session-safety] saveCache: ${e.message}\n`); }
 }
 
 function createSnapshot(cwd, sessionId, count) {

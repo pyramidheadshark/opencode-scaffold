@@ -127,6 +127,30 @@ describe("E2E — hook process output", () => {
       expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
     }
   });
+
+  test("does not inject plan mode for EN question prefixes: can, could, should", () => {
+    const cases = [
+      "can you refactor the auth module?",
+      "could you rewrite this function?",
+      "should we migrate to a new database?",
+      "would it make sense to redesign this?",
+    ];
+    for (const prompt of cases) {
+      const output = runHook(prompt);
+      expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
+    }
+  });
+
+  test("does not inject plan mode for RU question prefixes: подскажи, а как", () => {
+    const cases = [
+      "подскажи как рефакторинг тут лучше сделать",
+      "а как мигрировать эту базу?",
+    ];
+    for (const prompt of cases) {
+      const output = runHook(prompt);
+      expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
+    }
+  });
 });
 
 describe("E2E — commit rules injection", () => {

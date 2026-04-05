@@ -116,11 +116,14 @@
           "multimodal",
           "gemini",
           "openrouter",
-          "large document"
+          "large document",
+          "extract text",
+          "parse document"
         ],
+        "min_keyword_matches": 2,
         "always_load": false
       },
-      "priority": 5
+      "priority": 21
     },
     {
       "skill": "langgraph-patterns",
@@ -243,10 +246,13 @@
           "design document",
           "design doc",
           "requirements",
-          "dizayn",
-          "ttz",
+          "user story",
+          "specification",
           "functional requirements",
-          "nfr"
+          "nfr",
+          "техзадание",
+          "требовани",
+          "спецификац"
         ],
         "always_load": false
       },
@@ -373,7 +379,8 @@
       "triggers": {
         "files": [
           "prompts/*.md",
-          "prompts/*.txt"
+          "prompts/*.txt",
+          "prompts/*.py"
         ],
         "keywords": [
           "system_prompt",
@@ -384,7 +391,10 @@
           "промпт",
           "system prompt",
           "eval",
-          "few-shot"
+          "few-shot",
+          "system message",
+          "instructions",
+          "prompt design"
         ]
       },
       "priority": 16
@@ -407,7 +417,11 @@
           "tracking",
           "log_metric",
           "log_params",
-          "autolog"
+          "autolog",
+          "tracking_uri",
+          "compare runs",
+          "registered model",
+          "эксперимент mlflow"
         ],
         "min_keyword_matches": 2,
         "always_load": false
@@ -420,7 +434,8 @@
         "files": [
           "schemas/*.py",
           "validation/*.py",
-          "contracts/*.py"
+          "contracts/*.py",
+          "models/*.py"
         ],
         "keywords": [
           "pandera",
@@ -430,9 +445,14 @@
           "data contract",
           "DataFrameModel",
           "validate",
+          "pydantic",
+          "validator",
+          "field_validator",
+          "model_validator",
           "валидац данных",
           "качество данных"
         ],
+        "min_keyword_matches": 2,
         "always_load": false
       },
       "priority": 18

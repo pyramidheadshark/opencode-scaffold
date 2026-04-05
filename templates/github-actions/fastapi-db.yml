@@ -22,7 +22,7 @@ jobs:
           version: "latest"
 
       - run: uv python install
-      - run: uv sync --dev
+      - run: uv sync --all-groups
       - run: uv run ruff check . --output-format=github
       - run: uv run ruff format --check .
 
@@ -37,7 +37,7 @@ jobs:
           version: "latest"
 
       - run: uv python install
-      - run: uv sync --dev
+      - run: uv sync --all-groups
       - run: uv run mypy src/
 
   test:
@@ -65,7 +65,7 @@ jobs:
           version: "latest"
 
       - run: uv python install
-      - run: uv sync --dev
+      - run: uv sync --all-groups
 
       - name: Run tests
         env:
@@ -105,7 +105,7 @@ jobs:
           version: "latest"
 
       - run: uv python install
-      - run: uv sync --dev
+      - run: uv sync --all-groups
 
       - name: Apply migrations
         env:

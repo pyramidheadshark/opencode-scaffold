@@ -6,7 +6,7 @@
     "git\\s+rebase",
     "DROP\\s+(TABLE|DATABASE|INDEX|SCHEMA)",
     "TRUNCATE",
-    "git\\s+push.*--force(?![\\w-])",
+    "git\\s+push.*--force(?!-with-lease)(?![\\w-])",
     "shutil\\.rmtree",
     "curl\\s+.+\\|\\s*(bash|sh|zsh|python|node)",
     "wget\\s+.+\\|\\s*(bash|sh|zsh|python|node)"

@@ -10,7 +10,7 @@ function resolveI18n() {
   try {
     const i18nPath = path.join(__dirname, "..", "..", "lib", "i18n.js");
     if (fs.existsSync(i18nPath)) return require(i18nPath);
-  } catch {}
+  } catch (e) { process.stderr.write(`[session-start] i18n: ${e.message}\n`); }
   return null;
 }
 
@@ -19,7 +19,7 @@ function detectPythonCmd(plat) {
   try {
     execSync("python3 --version", { stdio: "ignore" });
     return "python3";
-  } catch {
+  } catch (e) {
     return "python";
   }
 }
@@ -35,7 +35,8 @@ function loadConfig(cwd) {
   if (!fs.existsSync(configPath)) return null;
   try {
     return JSON.parse(fs.readFileSync(configPath, "utf8"));
-  } catch {
+  } catch (e) {
+    process.stderr.write(`[session-start] config parse: ${e.message}\n`);
     return null;
   }
 }

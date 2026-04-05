@@ -34,7 +34,7 @@ function saveCache(cacheDir, sessionId, cache) {
     fs.mkdirSync(cacheDir, { recursive: true });
     const cachePath = path.join(cacheDir, `checkpoint-${sessionId}.json`);
     fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2), "utf8");
-  } catch { /* non-critical */ }
+  } catch (e) { process.stderr.write(`[session-checkpoint] saveCache: ${e.message}\n`); }
 }
 
 function main(inputStr, cwd) {

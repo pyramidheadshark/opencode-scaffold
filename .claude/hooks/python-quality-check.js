@@ -91,7 +91,7 @@ function main(inputStr, cwd) {
       const logsDir = path.join(cwd, ".claude", "logs", "sessions");
       deleteOldSessionLogs(logsDir, 30);
     }
-  } catch { }
+  } catch (e) { process.stderr.write(`[quality-check] sessionEnd: ${e.message}\n`); }
 
   return { continue: true };
 }

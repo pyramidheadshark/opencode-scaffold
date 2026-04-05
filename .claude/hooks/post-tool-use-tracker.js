@@ -8,7 +8,7 @@ function loadSessionCache(cwd, sessionId) {
   try {
     const p = path.join(cwd, ".claude", "cache", `session-${sessionId}.json`);
     return JSON.parse(fs.readFileSync(p, "utf8"));
-  } catch {
+  } catch (e) {
     return {};
   }
 }
@@ -19,9 +19,9 @@ function saveSessionCache(cwd, sessionId, data) {
     fs.mkdirSync(cacheDir, { recursive: true });
     const p = path.join(cacheDir, `session-${sessionId}.json`);
     let existing = {};
-    try { existing = JSON.parse(fs.readFileSync(p, "utf8")); } catch { }
+    try { existing = JSON.parse(fs.readFileSync(p, "utf8")); } catch (e) { /* first write */ }
     fs.writeFileSync(p, JSON.stringify({ ...existing, ...data }, null, 2), "utf8");
-  } catch { }
+  } catch (e) { process.stderr.write(`[post-tool-use] saveCache: ${e.message}\n`); }
 }
 
 function main(inputStr, cwd) {
@@ -44,7 +44,7 @@ function main(inputStr, cwd) {
       is_error: isError,
     });
     fs.appendFileSync(path.join(logsDir, "tool-usage.jsonl"), entry + "\n", "utf8");
-  } catch { }
+  } catch (e) { process.stderr.write(`[post-tool-use] logWrite: ${e.message}\n`); }
 
   try {
     const cache = loadSessionCache(cwd, sessionId);
@@ -72,7 +72,7 @@ function main(inputStr, cwd) {
         timestamp: new Date().toISOString(),
       });
     }
-  } catch { }
+  } catch (e) { process.stderr.write(`[post-tool-use] tracking: ${e.message}\n`); }
 
   return { continue: true };
 }
