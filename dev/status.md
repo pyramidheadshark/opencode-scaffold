@@ -20,10 +20,10 @@ Field feedback from TechCon (371 logs) and RGS (22 repos) ecosystems. Fixing con
 
 ---
 
-## Current State — v1.5.0 ready to tag (2026-04-05)
+## Current State — v1.5.0 tagged (2026-04-05)
 
-- **v1.5.0 code complete**, all 469 tests green (242 hook + 114 CLI + 56 benchmark + 57 Python)
-- **6 hook bugfixes**, 5 skill trigger fixes, CI template updates
+- **v1.5.0 published**, 473 tests green (356 Jest + 60 benchmark + 57 Python)
+- **6 hook bugfixes**, 5 skill trigger fixes, CI template updates, benchmark sync
 - **PRs:** 1 MERGED (awesome-claude-code-toolkit#79), 1 CLOSED (awesome-vibe-coding#100), 4 OPEN
 
 ### v1.4.1 содержание (всё завершено):
