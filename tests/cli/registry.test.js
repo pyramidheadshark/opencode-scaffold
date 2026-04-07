@@ -121,28 +121,44 @@ describe('verifySha256', () => {
 describe('validation', () => {
   const { runRegistryInstall, runRegistryAddSource } = require('../../lib/commands/registry');
 
+  beforeEach(() => {
+    const regDir = path.join(tmpDir, 'registry');
+    const cacheDir = path.join(regDir, 'cache');
+    fs.mkdirSync(cacheDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(regDir, 'sources.json'),
+      JSON.stringify({ version: '1.0', sources: [], cache_ttl_hours: 168 }),
+      'utf8'
+    );
+    fs.writeFileSync(
+      path.join(cacheDir, 'registry-index.json'),
+      JSON.stringify({ updated: new Date().toISOString(), skills: [] }),
+      'utf8'
+    );
+  });
+
   test('rejects skill name with path traversal', async () => {
-    await expect(runRegistryInstall('/tmp', '/tmp', '../../../etc/passwd'))
+    await expect(runRegistryInstall(tmpDir, tmpDir, '../../../etc/passwd'))
       .rejects.toThrow('Invalid skill name');
   });
 
   test('rejects skill name with slashes', async () => {
-    await expect(runRegistryInstall('/tmp', '/tmp', 'foo/bar'))
+    await expect(runRegistryInstall(tmpDir, tmpDir, 'foo/bar'))
       .rejects.toThrow('Invalid skill name');
   });
 
   test('accepts valid skill name characters', async () => {
-    await expect(runRegistryInstall('/tmp', '/tmp', 'my-valid.skill_v2'))
+    await expect(runRegistryInstall(tmpDir, tmpDir, 'my-valid.skill_v2'))
       .rejects.toThrow('not found in registry');
   });
 
   test('rejects invalid URL scheme in add-source', async () => {
-    await expect(runRegistryAddSource('/tmp', 'bad', 'file:///etc/passwd'))
+    await expect(runRegistryAddSource(tmpDir, 'bad', 'file:///etc/passwd'))
       .rejects.toThrow('Invalid URL scheme');
   });
 
   test('rejects invalid trust level', async () => {
-    await expect(runRegistryAddSource('/tmp', 'test', 'https://example.com/reg.json', { trust: 'malicious' }))
+    await expect(runRegistryAddSource(tmpDir, 'test', 'https://example.com/reg.json', { trust: 'malicious' }))
       .rejects.toThrow('Invalid trust level');
   });
 });
