@@ -3,7 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const THRESHOLD = 50;
+const DEFAULT_THRESHOLD = 40;
 const DEPS_REMINDER_INTERVAL = 20;
 
 const CHECKPOINT_PLAN =
@@ -13,20 +13,28 @@ const CHECKPOINT_PLAN =
   "- Active phase marker\n" +
   "- What is about to be implemented\n" +
   "- Key architectural decisions from the plan\n" +
-  "- Open questions / blockers";
+  "- Open questions / blockers\n\n" +
+  "## [COMPACT REQUIRED BEFORE STEP 1]\n" +
+  "Your FIRST AND ONLY action before reading or executing any plan step:\n" +
+  "Tell the user exactly: \"Before we start implementation, please run /compact in the input box. " +
+  "After that, send any message — I will re-read the plan and begin Step 1.\"\n" +
+  "Do NOT read or execute plan steps yet. Wait for the user to confirm they ran /compact.";
 
-const CHECKPOINT_THRESHOLD =
-  "## [AUTO CHECKPOINT — Activity Threshold]\n" +
-  "50+ tool calls since last checkpoint. Before your next response,\n" +
-  "update dev/status.md with current progress, decisions made, and next steps.";
+function buildThresholdBlock(threshold) {
+  return "## [AUTO CHECKPOINT — Activity Threshold]\n" +
+    `${threshold}+ tool calls since last checkpoint. Before your next response,\n` +
+    "update dev/status.md with current progress, decisions made, and next steps.\n\n" +
+    "## [CONTEXT WARNING]\n" +
+    "Context is filling up. Tell the user: \"Consider running /compact to preserve session continuity.\"";
+}
 
 function loadCache(cacheDir, sessionId) {
   const cachePath = path.join(cacheDir, `checkpoint-${sessionId}.json`);
-  if (!fs.existsSync(cachePath)) return { tool_call_count: 0, last_checkpoint_count: 0 };
+  if (!fs.existsSync(cachePath)) return { tool_call_count: 0, last_checkpoint_count: 0, compact_signal_sent: false };
   try {
     return JSON.parse(fs.readFileSync(cachePath, "utf8"));
   } catch {
-    return { tool_call_count: 0, last_checkpoint_count: 0 };
+    return { tool_call_count: 0, last_checkpoint_count: 0, compact_signal_sent: false };
   }
 }
 
@@ -38,7 +46,8 @@ function saveCache(cacheDir, sessionId, cache) {
   } catch (e) { process.stderr.write(`[session-checkpoint] saveCache: ${e.message}\n`); }
 }
 
-function main(inputStr, cwd) {
+function main(inputStr, cwd, _fs) {
+  const threshold = parseInt(process.env.SCAFFOLD_COMPACT_THRESHOLD || String(DEFAULT_THRESHOLD), 10);
   let input = {};
   try { input = JSON.parse(inputStr); } catch { input = {}; }
 
@@ -57,9 +66,14 @@ function main(inputStr, cwd) {
   if (toolName === "ExitPlanMode") {
     triggered = true;
     checkpointBlock = CHECKPOINT_PLAN;
-  } else if (cache.tool_call_count - cache.last_checkpoint_count >= THRESHOLD) {
+    cache.compact_signal_sent = false;
+  } else if (
+    !cache.compact_signal_sent &&
+    cache.tool_call_count - cache.last_checkpoint_count >= threshold
+  ) {
     triggered = true;
-    checkpointBlock = CHECKPOINT_THRESHOLD;
+    checkpointBlock = buildThresholdBlock(threshold);
+    cache.compact_signal_sent = true;
   }
 
   if (!triggered) {

@@ -397,6 +397,41 @@ describe('init — deployCore', () => {
     expect(fs.readFileSync(pitfalls, 'utf8')).toBe('# My custom pitfalls');
   });
 
+  test('settings.json gets DISABLE_1M_CONTEXT env var on fresh deploy', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.env).toBeDefined();
+    expect(settings.env.CLAUDE_CODE_DISABLE_1M_CONTEXT).toBe('1');
+  });
+
+  test('settings.json does not overwrite existing DISABLE_1M_CONTEXT', () => {
+    const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify({ env: { CLAUDE_CODE_DISABLE_1M_CONTEXT: '0' } }), 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(settings.env.CLAUDE_CODE_DISABLE_1M_CONTEXT).toBe('0');
+  });
+
+  test('settings.json gets showClearContextOnPlanAccept on fresh deploy', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.showClearContextOnPlanAccept).toBe(true);
+  });
+
+  test('settings.json does not overwrite explicit showClearContextOnPlanAccept: false', () => {
+    const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify({ showClearContextOnPlanAccept: false }), 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(settings.showClearContextOnPlanAccept).toBe(false);
+  });
+
   test('deployCore overwrites scaffold hook events with current definition', () => {
     const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
     fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
