@@ -7,6 +7,21 @@ const { loadSkillRules, buildInjections, buildOutput, extractRelevantPitfalls } 
 
 const CACHE_DIR = path.join(process.cwd(), ".claude/cache");
 
+let _i18n;
+function getI18n() {
+  if (!_i18n) {
+    try { _i18n = require("./i18n"); } catch { _i18n = null; }
+  }
+  return _i18n;
+}
+
+function loadLang(cwd) {
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(cwd, ".claude", "project-config.json"), "utf8"));
+    return config.lang || "en";
+  } catch { return "en"; }
+}
+
 function loadSessionCache(sessionId) {
   const cachePath = path.join(CACHE_DIR, `session-${sessionId}.json`);
   if (!fs.existsSync(cachePath)) return {};
@@ -27,6 +42,8 @@ const input = JSON.parse(fs.readFileSync(0, "utf8"));
 const prompt = input.prompt || "";
 const sessionId = input.session_id || "unknown";
 const cwd = process.cwd();
+const lang = loadLang(cwd);
+const i18n = getI18n();
 
 const rulesPath = path.join(cwd, ".claude/skills/skill-rules.json");
 const rules = loadSkillRules(fs, rulesPath);
@@ -61,13 +78,6 @@ if (cache.pending_notification) {
 
 const WEIGHT_REFRESH_THRESHOLD = 30;
 const PROMPT_WEIGHT = 1;
-const CONTEXT_REFRESH_BLOCK =
-  "## [CONTEXT REFRESH]\n" +
-  "Long session detected. Core rules reminder:\n" +
-  "- TDD: tests before code, never reverse\n" +
-  "- Hexagonal arch: no framework imports in core/\n" +
-  "- Commits: subject only, no AI attribution, ≤72 chars\n" +
-  "- Plan mode required for multi-file changes";
 const needsRefresh = (cache.weight || 0) > WEIGHT_REFRESH_THRESHOLD;
 
 const { injections, matchedSkills, statusHash } = buildInjections(fs, path, cwd, prompt, changedFiles, rules, sessionContext);
@@ -77,7 +87,8 @@ if (fs.existsSync(pitfallsPath)) {
   try {
     const pitfallsContent = fs.readFileSync(pitfallsPath, "utf8");
     const relevant = extractRelevantPitfalls(pitfallsContent, changedFiles, prompt);
-    if (relevant) injections.push("## [PITFALLS — Relevant]\n\n" + relevant);
+    const pitfallsTitle = (i18n && i18n.getMessages(lang).pitfalls_title) || "## [PITFALLS — Relevant]";
+    if (relevant) injections.push(`${pitfallsTitle}\n\n${relevant}`);
   } catch (e) { process.stderr.write(`[skill-activation] pitfalls: ${e.message}\n`); }
 }
 
@@ -85,7 +96,7 @@ if (cache.pending_notification) {
   injections.unshift(cache.pending_notification);
 }
 if (cache.pending_plan_warning) {
-  injections.push(
+  injections.push(i18n ? i18n.buildPlanModeRecommendedBlock(lang) :
     "## [PLAN MODE RECOMMENDED]\n" +
     "> 3+ Write/Edit calls without EnterPlanMode detected.\n" +
     "Consider entering plan mode for complex changes to maintain workflow quality."
@@ -95,7 +106,14 @@ if (cache.pending_plan_warning) {
   } catch (e) { process.stderr.write(`[skill-activation] clearPlanWarning: ${e.message}\n`); }
 }
 if (needsRefresh) {
-  injections.push(CONTEXT_REFRESH_BLOCK);
+  injections.push(i18n ? i18n.buildContextRefreshBlock(lang) :
+    "## [CONTEXT REFRESH]\n" +
+    "Long session detected. Core rules reminder:\n" +
+    "- TDD: tests before code, never reverse\n" +
+    "- Hexagonal arch: no framework imports in core/\n" +
+    "- Commits: subject only, no AI attribution, ≤72 chars\n" +
+    "- Plan mode required for multi-file changes"
+  );
 }
 
 const PLAN_MODE_KEYWORDS = [
@@ -127,7 +145,7 @@ const COMMIT_KEYWORDS = [
 ];
 const isCommitIntent = COMMIT_KEYWORDS.some((kw) => promptLower.includes(kw));
 if (isCommitIntent) {
-  injections.push(
+  injections.push(i18n ? i18n.buildCommitRulesBlock(lang) :
     "## [COMMIT RULES]\n" +
     "One stage = one commit. Subject line only (≤72 chars) — no body unless why is non-obvious.\n" +
     "NEVER add Co-Authored-By or any AI attribution. Message ends after the subject line."
@@ -143,7 +161,7 @@ const hasSecurityFiles = changedFiles.some((f) =>
   SECURITY_PATTERNS.some((p) => f.toLowerCase().includes(p))
 );
 if (hasSecurityFiles) {
-  injections.push(
+  injections.push(i18n ? i18n.buildSecurityHintBlock(lang) :
     "## [SECURITY HINT]\n" +
     "Changed files include security-sensitive code (auth/DB/API/user).\n" +
     "Run `/security-review` before committing."
@@ -151,7 +169,7 @@ if (hasSecurityFiles) {
 }
 
 if (isPlanIntent) {
-  injections.push(
+  injections.push(i18n ? i18n.buildQaBeforePlanBlock(lang) :
     "## [QA RECOMMENDED BEFORE PLAN]\n" +
     "Before entering plan mode, consider asking these clarifying questions:\n" +
     "1. Scope: which files/modules are in scope? What is explicitly OUT of scope?\n" +
@@ -160,7 +178,7 @@ if (isPlanIntent) {
     "4. Non-goals: what should we explicitly NOT do?\n" +
     "If the user's intent is already clear, proceed directly to EnterPlanMode."
   );
-  injections.push(
+  injections.push(i18n ? i18n.buildPlanModeRequiredBlock(lang) :
     "## [PLAN-MODE REQUIRED]\n" +
     "This prompt requires plan mode — do not skip this step.\n" +
     "You MUST call the EnterPlanMode tool IMMEDIATELY, before reading files, writing code, or taking any action.\n" +
