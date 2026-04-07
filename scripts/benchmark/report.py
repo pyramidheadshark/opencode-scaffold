@@ -13,8 +13,13 @@ import base64
 import io
 import json
 import os
+import sys
 from datetime import datetime
 from pathlib import Path
+
+# Fix Windows cp1251 encoding for Unicode symbols
+if sys.stdout.encoding and sys.stdout.encoding.lower() in ("cp1251", "cp1252", "ascii"):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 OUTPUT_DIR = Path(__file__).parent / "output"
 REPO_ROOT = Path(__file__).parent.parent.parent
