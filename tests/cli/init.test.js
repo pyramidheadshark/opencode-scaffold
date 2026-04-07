@@ -230,6 +230,34 @@ describe('init — deployCore', () => {
     const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     expect(settings.hooks.PreToolUse).toBeDefined();
     expect(settings.hooks.UserPromptSubmit).toBeDefined();
+    // User's custom hook must be preserved alongside scaffold hooks
+    const customEntry = settings.hooks.PreToolUse.find(e => e.matcher === '.*');
+    expect(customEntry).toBeDefined();
+    expect(customEntry.hooks[0].command).toBe('my-hook');
+    // Scaffold Bash hooks must also be present
+    const scaffoldEntry = settings.hooks.PreToolUse.find(e => e.matcher === 'Bash');
+    expect(scaffoldEntry).toBeDefined();
+    expect(scaffoldEntry.hooks.some(h => h.command.includes('session-safety.js'))).toBe(true);
+  });
+
+  test('re-deploy does not duplicate scaffold hooks', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    const preToolUse = settings.hooks.PreToolUse;
+    const bashEntries = preToolUse.filter(e => e.matcher === 'Bash');
+    expect(bashEntries).toHaveLength(1);
+  });
+
+  test('copyHooks deploys filter_rules.json alongside hook files', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const filterRulesPath = path.join(tmpDir, '.claude', 'hooks', 'filter_rules.json');
+    expect(fs.existsSync(filterRulesPath)).toBe(true);
+    const rules = JSON.parse(fs.readFileSync(filterRulesPath, 'utf8'));
+    expect(Array.isArray(rules.rules)).toBe(true);
+    expect(rules.rules.length).toBeGreaterThan(0);
   });
 
   test('generateSkillRules throws if skill-rules.json missing from infra', () => {
