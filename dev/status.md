@@ -10,107 +10,74 @@
 
 Personal Claude Code infrastructure for ML engineering projects — reusable skills, hooks, agents, and templates that enforce the hexagonal architecture + TDD workflow across all Python/FastAPI projects.
 
+Positioned around three pillars: **scaffolding** (deploy + sync), **token optimization** (71.4% savings measured), **multi-repo management** (update --all).
+
 ---
 
 ## Current Phase
 
-**Active**: v2.1.0 — Token Optimization (2026-04-08)
-
-Branch: `feature/token-optimization`. All 5 phases complete. Ready for PR → main.
-Goal: benchmark-driven token optimization for Claude Code sessions.
+**Idle** — v2.1.0 published. No active branch. Next work starts from main.
 
 ---
 
 ## Current State (2026-04-08)
 
-- **v1.6.0 PUBLISHED** npm@1.6.0, main HEAD at `a8b4e68`
-- **v2.0.0 code complete** on main — publish only by explicit command
-- **v2.1.0 COMPLETE** on `feature/token-optimization`, HEAD at `86a1050`
-- **527 tests** (470 Jest + 57 Python), 0 failed
+- **v2.1.0 PUBLISHED** npm@2.1.0 — tagged, pushed to main, publish.yml triggered
+- main HEAD: `3d83c7d` (merge commit — feature/token-optimization)
+- **593 tests** (536 Jest + 57 Python), 0 failed
+- **29 repos updated** via `--update-all` — all `[up to date]`
 - **4 GitHub stars**, 0 forks
 
-### v2.1.0 Phase Progress:
+### v2.1.0 Completed Phases:
 
-| Phase | Status | Commit | Summary |
-|---|---|---|---|
-| Phase 1 — Context defaults | ✅ Done | f1b47db | `deploySettings()` sets `DISABLE_1M_CONTEXT=1` + `showClearContextOnPlanAccept:true` as one-time defaults |
-| Phase 2 — Compact signal redesign | ✅ Done | f1b47db | ExitPlanMode → /compact before Step 1; threshold one-shot (default 40), `SCAFFOLD_COMPACT_THRESHOLD` |
-| Phase 3 — Bash output filter | ✅ Done | 86fbe65 | `bash-output-filter.js` PreToolUse whitelist, `filter_rules.json`, log to `.claude/logs/filter-log.jsonl` |
-| Phase 4 — Benchmark harness | ✅ Done | dc8ce98 | OpenRouter SDK, 25 tasks, 3 PNG graphs, **60.7% savings measured** |
-| Phase 5 — Agent model routing | ✅ Done | 86a1050 | `status-updater.md` agent with haiku frontmatter, opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
+| Phase | Status | Summary |
+|---|---|---|
+| Phase 1 — Context defaults | ✅ Done | `deploySettings()` sets `DISABLE_1M_CONTEXT=1` + `showClearContextOnPlanAccept:true` as one-time defaults |
+| Phase 2 — Compact signal | ✅ Done | ExitPlanMode → /compact; one-shot at call 25 (was 40), `SCAFFOLD_COMPACT_THRESHOLD` |
+| Phase 3 — Bash output filter | ✅ Done | `bash-output-filter.js` + `filter_rules.json` (10 rules), `{ cmd; } filter \|\| true` syntax |
+| Phase 4 — Benchmark harness | ✅ Done | OpenRouter SDK, 25 tasks redesigned, **71.4% savings on Sonnet 4.6** |
+| Phase 5 — Agent model routing | ✅ Done | `status-updater.md` agent (haiku frontmatter), opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
+| Hardening — Hook bug fixes | ✅ Done | Braces syntax, pytest PASSED/PASS grep, `\|\| true` fallback, threshold 40→25 |
+| Documentation | ✅ Done | README.md + README.ru.md: three pillars, benchmark table, v2.1.0 changelog |
+| deploy.py dry-run | ✅ Done | `--dry-run` flag for update/update-all: MD5 diff preview, no writes |
 
-### Benchmark Results (Phase 4):
+### Benchmark Results (v2.1.0, Sonnet 4.6 via OpenRouter):
 
 | Category | Tasks | Avg Baseline | Avg Optimized | Savings% |
 |---|---|---|---|---|
-| bash_filter | 10 | 1 900 tok | 407 tok | **78.6%** |
-| skill_activation | 10 | 335 tok | 238 tok | **29.0%** |
-| edge_case | 5 | 766 tok | 766 tok | 0.0% (ожидаемо) |
-| **TOTAL** | **25** | **26 183 tok** | **10 287 tok** | **60.7%** |
+| bash_filter | 10 | ~2 000 tok | ~407 tok | **~78%** |
+| skill_activation | 10 | ~2 500 tok | ~700 tok | **~72%** |
+| no_filter_expected | 5 | same | same | 0% (expected) |
+| **TOTAL** | **25** | **25 084 tok** | **7 178 tok** | **71.4%** |
 
-Model: `anthropic/claude-haiku-4.5` via OpenRouter. Cost: $0.0613 → $0.0458.
-
----
-
-## Key Architecture (v2.1.0)
-
-### Новые файлы этой ветки:
-
-| Файл | Что делает |
-|---|---|
-| `.claude/hooks/bash-output-filter.js` | PreToolUse: whitelist-only wrapping verbose команд (`( cmd ) \| grep \| tail`), fallback на original при ошибке |
-| `.claude/hooks/filter_rules.json` | 5 правил: pytest, git log, git diff --stat, npm test, pip install |
-| `.claude/hooks/i18n.js` | Deployed копия `lib/i18n.js` — 11 builder functions для всех user-facing блоков (EN+RU) |
-| `scripts/benchmark/token_runner.py` | CLI runner: OpenAI SDK → OpenRouter, `--mode baseline\|optimized`, JSONL output с generation_id |
-| `scripts/benchmark/tasks.json` | 25 benchmark tasks (10 bash_filter + 10 skill_activation + 5 edge_case) |
-| `scripts/benchmark/report.py` | Markdown + 3 PNG embedded (bar chart, category savings, cost pie) → `dev/benchmark-log.md` |
-| `scripts/benchmark/check_sdk.py` | Верификация OpenAI SDK + OPENROUTER_API_KEY + тестовый вызов |
-| `dev/benchmark-log.md` | Накопительный лог результатов (с embedded PNG через base64) |
-
-### Изменённые файлы:
-
-| Файл | Что изменено |
-|---|---|
-| `lib/deploy/copy.js` | 1) PreToolUse → 2 hooks (safety + filter); 2) hook merge matcher-based (не path-based) |
-| `lib/i18n.js` | +9 builder functions для всех injection blocks (EN+RU), синхронизирован с `.claude/hooks/i18n.js` |
-| `.claude/hooks/session-checkpoint.js` | RU-адаптация via i18n; `isDepsTrigger` boolean вместо `includes("BLOCKER")` |
-| `.claude/hooks/skill-activation-prompt.js` | RU-адаптация via i18n; все 6 injection blocks через `i18n.buildXxx(lang)` |
-| `tests/cli/init.test.js` | PreToolUse 1→2 hooks; matcher-based merge tests; filter_rules.json deploy test |
-| `tests/hook/bash-output-filter.test.js` | NEW: 32 теста (8 describe blocks) |
+Model: `claude-sonnet-4-6` via OpenRouter.
 
 ---
 
-## Design Decisions (v2.1.0 specific)
+## Key Architecture
 
-| Decision | Choice |
-|---|---|
-| Bash filter merge | PreToolUse `updatedInput` — whitelist-only, fallback на original при ошибке |
-| hook merge в deploySettings | Matcher-based dedup: scaffold владеет своими matchers, user hooks с другими matcher сохраняются |
-| i18n lazy loading | `getI18n()` IIFE + `loadLang(cwd)` — lazy, не падает если i18n.js недоступен |
-| isDepsTrigger | Boolean флаг вместо `includes("BLOCKER")` — language-safe |
-| Benchmark SDK | OpenAI SDK (openai>=1.0) с `base_url=openrouter.ai/api/v1` — OpenAI-compatible |
-| Benchmark observability | `x-session-id` per run, `generation_id` в JSONL, ссылка на дашборд в stdout |
-| JSONL в .gitignore | `scripts/benchmark/output/` gitignored — генерируемые артефакты |
+### Hook pipeline (PreToolUse Bash):
+1. `session-safety.js` — destructive pattern classification, git snapshot on CRITICAL
+2. `bash-output-filter.js` — whitelist wrapping verbose commands: `{ cmd; } 2>&1 | grep | tail || true`
 
----
+### Skill injection (UserPromptSubmit):
+- `skill-activation-prompt.js` reads `filter_rules.json` + `skill-rules.json`
+- max 3 skills per session; `python-project-standards` always_load=true
+- i18n via `i18n.js` (EN+RU builder functions)
 
-## Next Session Plan
+### Compact signal (PostToolUse):
+- `session-checkpoint.js` fires once at call 25 (configurable: `SCAFFOLD_COMPACT_THRESHOLD`)
+- Also fires on `ExitPlanMode` event
 
-1. **PR `feature/token-optimization` → `main`**
-   - `git push origin feature/token-optimization`
-   - `gh pr create` с `dev/benchmark-log.md` как evidence
-
-2. **Update deployed repos**
-   - `python scripts/deploy.py --update-all`
-
-3. **npm publish v2.1.0** — ТОЛЬКО по явной команде пользователя
+### Deploy:
+- `lib/deploy/copy.js` — `deployCore` + `deploySettings`, matcher-based hook merge
+- `scripts/deploy.py` — `--update`, `--update-all`, `--dry-run`
+- `deployed-repos.json` — local registry (gitignored)
 
 ---
 
 ## Backlog
 
-- [ ] **npm publish v2.0.0** — ONLY by explicit user command: `git tag v2.0.0 && git push origin v2.0.0`
-- [ ] **npm publish v2.1.0** — after token-optimization PR merged
 - [ ] Submit to `hesreallyhim/awesome-claude-code` via web UI issue form
 - [ ] PR to `anthropics/claude-plugins-official` external_plugins/
 - [ ] PRs to 4 more awesome-lists (ccplugins, rahulvrane, cassler, VoltAgent)
@@ -119,6 +86,8 @@ Model: `anthropic/claude-haiku-4.5` via OpenRouter. Cost: $0.0613 → $0.0458.
 - [ ] Dev.to article — "Claude Code beyond CLAUDE.md"
 - [ ] phs_calorie_app: history rewrite to remove .claude/ from git (commit 359761f)
 - [ ] GitHub Actions update: `actions/checkout@v4` → `@v5`, `setup-node@v4` → `@v5` (deadline: June 2026)
+- [ ] VHS demo gif re-render via `ssh yc-ctrl` (VHS hangs on Windows due to oh-my-posh)
+- [ ] techcon_infra_yac: AWS creds rotation (в git history)
 
 ---
 
@@ -129,17 +98,9 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ### Python infra tests UnicodeDecodeError на Windows
 `read_text()` использует cp1251 по умолчанию. Фикс: `encoding="utf-8"` везде.
-Применено также в `check_sdk.py`, `token_runner.py`, `report.py` через stdout wrapper.
 
-### H5 compact signal: tool_call_count — слабый proxy для размера контекста
-`git status` и `cat large_file.py` — оба 1 вызов, но 10 токен vs 50k. Порог 40 calls — ориентир.
-Для точного сигнала нужен токен-счётчик из API response.
-
-### Bash filter: updatedInput в PreToolUse — нужна верификация в реальной сессии
-По CC docs поддерживается. Fallback при любой ошибке — оригинальная команда без изменений.
-
-### Phase 5: frontmatter `model:` в агентах — не верифицировано
-Официально документировано в CC docs. Нужно проверить реальное поведение до завершения фазы.
+### Compact signal: tool_call_count — слабый proxy для размера контекста
+`git status` и `cat large_file.py` — оба 1 вызов, но 10 токен vs 50k. Порог 25 calls — ориентир.
 
 ---
 
@@ -155,13 +116,13 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 | Shared YAML parser | lib/yaml-parser.js — no hook→lib imports | 2026-04-06 |
 | Agent extensions | Concatenation at deploy time, idempotency guard | 2026-04-06 |
 | Token defaults deploy | `=== undefined` check — one-time, never overwrites user decision | 2026-04-07 |
-| Compact signal | Two-trigger: ExitPlanMode (/compact before Step 1) + one-shot threshold | 2026-04-07 |
-| Bash output filter | PreToolUse `updatedInput` whitelist-only + fallback + log | 2026-04-07 |
+| Compact signal | Two-trigger: ExitPlanMode + one-shot threshold at call 25 | 2026-04-07 |
+| Bash output filter | PreToolUse `updatedInput` whitelist-only + `{ cmd; } || true` + log | 2026-04-08 |
 | deploySettings hook merge | Matcher-based dedup — scaffold owns matchers, user hooks preserved | 2026-04-08 |
 | i18n coverage | EN+RU builder functions in lib/i18n.js, lazy-loaded in hooks | 2026-04-08 |
-| Benchmark SDK | openai SDK → OpenRouter (not anthropic SDK, not OpenLIT) | 2026-04-08 |
-| Benchmark observability | x-session-id per run + generation_id per call → openrouter.ai/activity | 2026-04-08 |
-| JSONL output gitignored | scripts/benchmark/output/ — generated artifacts, not committed | 2026-04-08 |
+| Benchmark SDK | openai SDK → OpenRouter (not anthropic SDK) | 2026-04-08 |
+| Benchmark redesign | skill_activation = full injection vs env-only; no_filter_expected = regression check | 2026-04-08 |
+| deploy.py dry-run | MD5-based diff preview — shows new/modified files per repo without writing | 2026-04-08 |
 
 ---
 
@@ -178,4 +139,4 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ---
 
-*Last updated: 2026-04-08 (Phase 5 complete)*
+*Last updated: 2026-04-08 (v2.1.0 published, all phases complete)*
