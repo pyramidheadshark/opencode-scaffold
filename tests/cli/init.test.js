@@ -150,15 +150,16 @@ describe('init — deployCore', () => {
     expect(hooks[1].command).toContain('session-checkpoint.js');
   });
 
-  test('PreToolUse has exactly 1 hook (session-safety.js)', () => {
+  test('PreToolUse has exactly 2 hooks (session-safety + bash-output-filter)', () => {
     deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
     const settings = JSON.parse(
       fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
     );
     expect(settings.hooks.PreToolUse).toBeDefined();
     const hooks = settings.hooks.PreToolUse[0].hooks;
-    expect(hooks).toHaveLength(1);
+    expect(hooks).toHaveLength(2);
     expect(hooks[0].command).toContain('session-safety.js');
+    expect(hooks[1].command).toContain('bash-output-filter.js');
   });
 
   test('PreToolUse matcher is Bash', () => {
@@ -229,6 +230,34 @@ describe('init — deployCore', () => {
     const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     expect(settings.hooks.PreToolUse).toBeDefined();
     expect(settings.hooks.UserPromptSubmit).toBeDefined();
+    // User's custom hook must be preserved alongside scaffold hooks
+    const customEntry = settings.hooks.PreToolUse.find(e => e.matcher === '.*');
+    expect(customEntry).toBeDefined();
+    expect(customEntry.hooks[0].command).toBe('my-hook');
+    // Scaffold Bash hooks must also be present
+    const scaffoldEntry = settings.hooks.PreToolUse.find(e => e.matcher === 'Bash');
+    expect(scaffoldEntry).toBeDefined();
+    expect(scaffoldEntry.hooks.some(h => h.command.includes('session-safety.js'))).toBe(true);
+  });
+
+  test('re-deploy does not duplicate scaffold hooks', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    const preToolUse = settings.hooks.PreToolUse;
+    const bashEntries = preToolUse.filter(e => e.matcher === 'Bash');
+    expect(bashEntries).toHaveLength(1);
+  });
+
+  test('copyHooks deploys filter_rules.json alongside hook files', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const filterRulesPath = path.join(tmpDir, '.claude', 'hooks', 'filter_rules.json');
+    expect(fs.existsSync(filterRulesPath)).toBe(true);
+    const rules = JSON.parse(fs.readFileSync(filterRulesPath, 'utf8'));
+    expect(Array.isArray(rules.rules)).toBe(true);
+    expect(rules.rules.length).toBeGreaterThan(0);
   });
 
   test('generateSkillRules throws if skill-rules.json missing from infra', () => {
@@ -395,6 +424,41 @@ describe('init — deployCore', () => {
     fs.writeFileSync(pitfalls, '# My custom pitfalls', 'utf8');
     deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
     expect(fs.readFileSync(pitfalls, 'utf8')).toBe('# My custom pitfalls');
+  });
+
+  test('settings.json gets DISABLE_1M_CONTEXT env var on fresh deploy', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.env).toBeDefined();
+    expect(settings.env.CLAUDE_CODE_DISABLE_1M_CONTEXT).toBe('1');
+  });
+
+  test('settings.json does not overwrite existing DISABLE_1M_CONTEXT', () => {
+    const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify({ env: { CLAUDE_CODE_DISABLE_1M_CONTEXT: '0' } }), 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(settings.env.CLAUDE_CODE_DISABLE_1M_CONTEXT).toBe('0');
+  });
+
+  test('settings.json gets showClearContextOnPlanAccept on fresh deploy', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.showClearContextOnPlanAccept).toBe(true);
+  });
+
+  test('settings.json does not overwrite explicit showClearContextOnPlanAccept: false', () => {
+    const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify({ showClearContextOnPlanAccept: false }), 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(settings.showClearContextOnPlanAccept).toBe(false);
   });
 
   test('deployCore overwrites scaffold hook events with current definition', () => {

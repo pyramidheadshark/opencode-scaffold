@@ -1,0 +1,862 @@
+[
+  {
+    "id": "bash-pytest-001",
+    "category": "bash_filter",
+    "name": "pytest auth tests with failures",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "run tests"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run the test suite."
+      },
+      {
+        "role": "user",
+        "content": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.1.0, pluggy-1.4.0\nrootdir: /app, configfile: pyproject.toml\ncollected 47 items\n\ntests/test_auth.py::TestLogin::test_login_success PASSED                 [  2%]\ntests/test_auth.py::TestLogin::test_login_wrong_password PASSED          [  4%]\ntests/test_auth.py::TestLogin::test_login_empty_credentials PASSED       [  6%]\ntests/test_auth.py::TestLogin::test_login_inactive_user PASSED           [  8%]\ntests/test_auth.py::TestLogin::test_login_rate_limit PASSED              [ 10%]\ntests/test_auth.py::TestLogin::test_login_sql_injection PASSED           [ 12%]\ntests/test_auth.py::TestLogin::test_login_unicode_password PASSED        [ 14%]\ntests/test_auth.py::TestLogin::test_login_case_sensitive PASSED          [ 17%]\ntests/test_auth.py::TestLogin::test_login_whitespace_trim PASSED         [ 19%]\ntests/test_auth.py::TestLogin::test_login_concurrent PASSED              [ 21%]\ntests/test_auth.py::TestRegister::test_register_success PASSED           [ 23%]\ntests/test_auth.py::TestRegister::test_register_duplicate_email PASSED   [ 25%]\ntests/test_auth.py::TestRegister::test_register_invalid_email PASSED     [ 27%]\ntests/test_auth.py::TestRegister::test_register_weak_password PASSED     [ 29%]\ntests/test_auth.py::TestRegister::test_register_missing_fields PASSED    [ 31%]\ntests/test_auth.py::TestRegister::test_register_long_username PASSED     [ 33%]\ntests/test_auth.py::TestRegister::test_register_special_chars PASSED     [ 35%]\ntests/test_auth.py::TestToken::test_token_creation PASSED                [ 38%]\ntests/test_auth.py::TestToken::test_token_payload PASSED                 [ 40%]\ntests/test_auth.py::TestToken::test_token_signature PASSED               [ 42%]\ntests/test_auth.py::TestToken::test_token_algorithm PASSED               [ 44%]\ntests/test_auth.py::TestToken::test_token_issuer PASSED                  [ 46%]\ntests/test_auth.py::TestToken::test_token_audience PASSED                [ 48%]\ntests/test_auth.py::TestToken::test_token_not_before PASSED              [ 50%]\ntests/test_auth.py::TestToken::test_token_jti PASSED                     [ 52%]\ntests/test_auth.py::TestToken::test_token_creation PASSED                [ 55%]\ntests/test_auth.py::TestToken::test_token_expiry FAILED                  [ 57%]\n\n================================= FAILURES ===================================\n________________ TestToken.test_token_expiry _________________________________\n\n    def test_token_expiry():\n>       assert token_service.is_expired(expired_token) == True\nE       AssertionError: assert False == True\nE       +  where False = is_expired('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...')\n\ntests/test_auth.py:156: AssertionError\n-------------------------------- Captured log --------------------------------\nDEBUG    auth.token:token.py:89 Checking expiry for token eyJhbGc...\nDEBUG    auth.token:token.py:91 Token exp=1714000000, now=1713999000\n\ntests/test_auth.py::TestToken::test_refresh_token FAILED                 [ 60%]\n\n________________ TestToken.test_refresh_token ________________________________\n\n    def test_refresh_token():\n        refresh = token_service.create_refresh_token(user_id=42)\n>       assert token_service.validate_refresh(refresh) is not None\nE       AssertionError: assert None is not None\nE       +  where None = validate_refresh('eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo0Mn0...')\n\ntests/test_auth.py:172: AssertionError\n\ntests/test_auth.py::TestSession::test_session_create PASSED              [ 62%]\ntests/test_auth.py::TestSession::test_session_read PASSED                [ 64%]\ntests/test_auth.py::TestSession::test_session_update PASSED              [ 67%]\ntests/test_auth.py::TestSession::test_session_delete PASSED              [ 69%]\ntests/test_auth.py::TestSession::test_session_expire PASSED              [ 71%]\ntests/test_auth.py::TestSession::test_session_invalidate FAILED          [ 74%]\n\n________________ TestSession.test_session_invalidate ________________________\n\n    def test_session_invalidate():\n        session_id = session_service.create(user_id=1)\n        session_service.invalidate(session_id)\n>       assert session_service.is_valid(session_id) == False\nE       AssertionError: assert True == False\nE       +  where True = is_valid('sess_abc123def456')\n\ntests/test_auth.py:198: AssertionError\n\ntests/test_auth.py::TestSession::test_session_list PASSED                [ 76%]\ntests/test_auth.py::TestSession::test_session_count PASSED               [ 79%]\ntests/test_auth.py::TestSession::test_session_cleanup PASSED             [ 81%]\ntests/test_auth.py::TestMiddleware::test_middleware_valid_token PASSED   [ 83%]\ntests/test_auth.py::TestMiddleware::test_middleware_invalid_token PASSED [ 85%]\ntests/test_auth.py::TestMiddleware::test_middleware_expired_token PASSED [ 87%]\ntests/test_auth.py::TestMiddleware::test_middleware_missing_token PASSED [ 90%]\ntests/test_auth.py::TestMiddleware::test_middleware_refresh_flow PASSED  [ 92%]\ntests/test_auth.py::TestMiddleware::test_middleware_cors PASSED          [ 94%]\ntests/test_auth.py::TestMiddleware::test_middleware_rate_limit PASSED    [ 96%]\ntests/test_auth.py::TestMiddleware::test_middleware_audit_log PASSED     [ 98%]\ntests/test_auth.py::TestMiddleware::test_middleware_headers PASSED       [100%]\n\n======================== 3 failed, 44 passed in 4.23s ========================"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "run tests"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run the test suite."
+      },
+      {
+        "role": "user",
+        "content": "tests/test_auth.py::TestToken::test_token_expiry FAILED                  [ 57%]\ntests/test_auth.py::TestToken::test_refresh_token FAILED                 [ 60%]\ntests/test_auth.py::TestSession::test_session_invalidate FAILED          [ 74%]\nE       AssertionError: assert False == True\nE       AssertionError: assert None is not None\nE       AssertionError: assert True == False\n======================== 3 failed, 44 passed in 4.23s ========================"
+      }
+    ],
+    "user_message": "What caused the failures?"
+  },
+  {
+    "id": "bash-pytest-002",
+    "category": "bash_filter",
+    "name": "pytest full suite verbose with long tracebacks",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "run full test suite"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run all tests with verbose output and long tracebacks."
+      },
+      {
+        "role": "user",
+        "content": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.1.0, pluggy-1.4.0\nrootdir: /app, configfile: pyproject.toml\ncollected 92 items\n\ntests/unit/test_user.py::TestUserModel::test_create PASSED               [  1%]\ntests/unit/test_user.py::TestUserModel::test_validate_email PASSED       [  2%]\ntests/unit/test_user.py::TestUserModel::test_validate_password PASSED    [  3%]\ntests/unit/test_user.py::TestUserModel::test_hash_password PASSED        [  4%]\ntests/unit/test_user.py::TestUserModel::test_check_password PASSED       [  5%]\ntests/unit/test_user.py::TestUserModel::test_to_dict PASSED              [  6%]\ntests/unit/test_user.py::TestUserModel::test_from_dict PASSED            [  7%]\ntests/unit/test_user.py::TestUserModel::test_update_fields PASSED        [  9%]\ntests/unit/test_user.py::TestUserModel::test_soft_delete PASSED          [ 10%]\ntests/unit/test_user.py::TestUserService::test_create_user PASSED        [ 11%]\ntests/unit/test_user.py::TestUserService::test_get_by_id PASSED          [ 12%]\ntests/unit/test_user.py::TestUserService::test_get_by_email PASSED       [ 13%]\ntests/unit/test_user.py::TestUserService::test_update_user PASSED        [ 14%]\ntests/unit/test_user.py::TestUserService::test_delete_user PASSED        [ 15%]\ntests/unit/test_user.py::TestUserService::test_list_users PASSED         [ 16%]\ntests/unit/test_user.py::TestUserService::test_paginate PASSED           [ 17%]\ntests/unit/test_product.py::TestProductModel::test_create PASSED         [ 18%]\ntests/unit/test_product.py::TestProductModel::test_validate_price PASSED [ 19%]\ntests/unit/test_product.py::TestProductModel::test_validate_sku PASSED   [ 20%]\ntests/unit/test_product.py::TestProductModel::test_stock_update PASSED   [ 21%]\ntests/unit/test_product.py::TestProductModel::test_discount PASSED       [ 22%]\ntests/unit/test_product.py::TestProductService::test_create PASSED       [ 23%]\ntests/unit/test_product.py::TestProductService::test_search PASSED       [ 24%]\ntests/unit/test_product.py::TestProductService::test_filter PASSED       [ 25%]\ntests/unit/test_product.py::TestProductService::test_sort PASSED         [ 26%]\ntests/unit/test_product.py::TestProductService::test_paginate PASSED     [ 27%]\ntests/integration/test_api_users.py::TestUsersAPI::test_list PASSED      [ 28%]\ntests/integration/test_api_users.py::TestUsersAPI::test_get PASSED       [ 29%]\ntests/integration/test_api_users.py::TestUsersAPI::test_create PASSED    [ 30%]\ntests/integration/test_api_users.py::TestUsersAPI::test_update PASSED    [ 32%]\ntests/integration/test_api_users.py::TestUsersAPI::test_delete PASSED    [ 33%]\ntests/integration/test_api_users.py::TestUsersAPI::test_auth_required PASSED [ 34%]\ntests/integration/test_api_products.py::TestProductsAPI::test_list PASSED [ 35%]\ntests/integration/test_api_products.py::TestProductsAPI::test_get PASSED [ 36%]\ntests/integration/test_api_products.py::TestProductsAPI::test_create PASSED [ 37%]\ntests/integration/test_api_products.py::TestProductsAPI::test_update FAILED [ 38%]\n\n================================= FAILURES ===================================\n___________ TestProductsAPI.test_update _____________________________________\n\n    def test_update(client, auth_headers, product_factory):\n        product = product_factory(name=\"old name\", price=10.0)\n        response = client.put(\n            f\"/api/products/{product.id}\",\n            json={\"name\": \"new name\", \"price\": 20.0},\n            headers=auth_headers\n        )\n>       assert response.status_code == 200\nE       AssertionError: assert 422 == 200\nE       +  where 422 = <Response [422 Unprocessable Entity]>.status_code\nE\nE       Response body: {'detail': [{'loc': ['body', 'price'], 'msg': 'value is not a valid float', 'type': 'value_error.float'}]}\n\ntests/integration/test_api_products.py:88: AssertionError\n---------------------------------- Captured log ----------------------------------\nINFO     uvicorn.access:logging.py:35 PUT /api/products/1 HTTP/1.1 422\nDEBUG    app.products:service.py:112 Validating product update payload\nWARNING  app.products:service.py:118 Validation failed: price field rejected\n\ntests/integration/test_api_products.py::TestProductsAPI::test_delete PASSED [ 39%]\ntests/integration/test_api_products.py::TestProductsAPI::test_search PASSED [ 40%]\ntests/integration/test_api_products.py::TestProductsAPI::test_filter PASSED [ 42%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_create PASSED  [ 43%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_get PASSED     [ 44%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_list PASSED    [ 45%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_cancel PASSED  [ 46%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_fulfil FAILED  [ 47%]\n\n________________ TestOrdersAPI.test_fulfil __________________________________\n\n    def test_fulfil(client, auth_headers, order_factory):\n        order = order_factory(status=\"pending\")\n        response = client.post(\n            f\"/api/orders/{order.id}/fulfil\",\n            headers=auth_headers\n        )\n>       assert response.status_code == 200\nE       AssertionError: assert 500 == 200\nE       +  where 500 = <Response [500 Internal Server Error]>.status_code\n\ntests/integration/test_api_orders.py:134: AssertionError\n---------------------------------- Captured log ----------------------------------\nERROR    app.orders:service.py:201 Unhandled exception in fulfil_order\nERROR    app.orders:service.py:202 AttributeError: 'NoneType' object has no attribute 'warehouse_id'\nTraceback (most recent call last):\n  File \"/app/src/app/orders/service.py\", line 198, in fulfil_order\n    warehouse = self.warehouse_repo.get_default()\n  File \"/app/src/app/adapters/warehouse.py\", line 45, in get_default\n    return session.query(Warehouse).filter_by(is_default=True).first()\nAttributeError: 'NoneType' object has no attribute 'warehouse_id'\n\ntests/integration/test_api_orders.py::TestOrdersAPI::test_status PASSED  [ 48%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_history PASSED [ 49%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_export PASSED  [ 50%]\ntests/unit/test_core_logic.py::TestPricing::test_base_price PASSED       [ 51%]\ntests/unit/test_core_logic.py::TestPricing::test_discount PASSED         [ 52%]\ntests/unit/test_core_logic.py::TestPricing::test_tax PASSED              [ 53%]\ntests/unit/test_core_logic.py::TestPricing::test_shipping PASSED         [ 54%]\ntests/unit/test_core_logic.py::TestPricing::test_total PASSED            [ 55%]\ntests/unit/test_core_logic.py::TestPricing::test_coupon PASSED           [ 56%]\ntests/unit/test_core_logic.py::TestPricing::test_bulk_discount PASSED    [ 57%]\ntests/unit/test_core_logic.py::TestInventory::test_reserve PASSED        [ 58%]\ntests/unit/test_core_logic.py::TestInventory::test_release PASSED        [ 59%]\ntests/unit/test_core_logic.py::TestInventory::test_commit PASSED         [ 60%]\ntests/unit/test_core_logic.py::TestInventory::test_overcommit FAILED     [ 61%]\n\n________________ TestInventory.test_overcommit ______________________________\n\n    def test_overcommit():\n        inventory = Inventory(stock=5)\n        with pytest.raises(InsufficientStockError):\n>           inventory.reserve(quantity=10)\nE       Failed: DID NOT RAISE <class 'app.core.exceptions.InsufficientStockError'>\n\ntests/unit/test_core_logic.py:234: Failed\n\ntests/unit/test_core_logic.py::TestInventory::test_reorder PASSED        [ 62%]\ntests/unit/test_core_logic.py::TestInventory::test_audit PASSED          [ 63%]\ntests/unit/test_core_logic.py::TestNotification::test_email PASSED       [ 64%]\ntests/unit/test_core_logic.py::TestNotification::test_sms PASSED         [ 65%]\ntests/unit/test_core_logic.py::TestNotification::test_push PASSED        [ 66%]\ntests/unit/test_core_logic.py::TestNotification::test_webhook PASSED     [ 67%]\ntests/unit/test_core_logic.py::TestNotification::test_batch PASSED       [ 68%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_full_flow PASSED     [ 69%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_payment_fail PASSED  [ 70%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_out_of_stock PASSED  [ 71%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_coupon PASSED        [ 72%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_guest_checkout PASSED [ 73%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_address_validation PASSED [ 74%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_multi_item PASSED    [ 75%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_subscription PASSED  [ 76%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_refund PASSED        [ 77%]\ntests/e2e/test_checkout_flow.py::TestCheckout::test_partial_refund PASSED [ 78%]\ntests/e2e/test_reports.py::TestReports::test_daily PASSED                [ 79%]\ntests/e2e/test_reports.py::TestReports::test_weekly PASSED               [ 80%]\ntests/e2e/test_reports.py::TestReports::test_monthly PASSED              [ 81%]\ntests/e2e/test_reports.py::TestReports::test_custom_range PASSED         [ 82%]\ntests/e2e/test_reports.py::TestReports::test_export_csv PASSED           [ 83%]\ntests/e2e/test_reports.py::TestReports::test_export_pdf PASSED           [ 84%]\ntests/e2e/test_reports.py::TestReports::test_dashboard PASSED            [ 85%]\ntests/e2e/test_reports.py::TestReports::test_funnel PASSED               [ 86%]\ntests/e2e/test_reports.py::TestReports::test_cohort PASSED               [ 87%]\ntests/e2e/test_reports.py::TestReports::test_realtime PASSED             [ 88%]\ntests/e2e/test_reports.py::TestReports::test_cache PASSED                [ 89%]\ntests/e2e/test_admin.py::TestAdmin::test_user_list PASSED                [ 90%]\ntests/e2e/test_admin.py::TestAdmin::test_user_ban PASSED                 [ 91%]\ntests/e2e/test_admin.py::TestAdmin::test_product_moderation PASSED       [ 92%]\ntests/e2e/test_admin.py::TestAdmin::test_order_override PASSED           [ 93%]\ntests/e2e/test_admin.py::TestAdmin::test_config_update PASSED            [ 94%]\ntests/e2e/test_admin.py::TestAdmin::test_audit_log PASSED                [ 95%]\ntests/e2e/test_admin.py::TestAdmin::test_export PASSED                   [ 96%]\ntests/e2e/test_admin.py::TestAdmin::test_bulk_action PASSED              [ 97%]\ntests/e2e/test_admin.py::TestAdmin::test_role_assignment PASSED          [ 98%]\ntests/e2e/test_admin.py::TestAdmin::test_permissions PASSED              [100%]\n\n======================== 4 failed, 88 passed in 12.47s ========================"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "run full test suite"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run all tests with verbose output and long tracebacks."
+      },
+      {
+        "role": "user",
+        "content": "tests/integration/test_api_products.py::TestProductsAPI::test_update FAILED [ 38%]\ntests/integration/test_api_orders.py::TestOrdersAPI::test_fulfil FAILED  [ 47%]\ntests/unit/test_core_logic.py::TestInventory::test_overcommit FAILED     [ 61%]\nE       AssertionError: assert 422 == 200 (price field rejected)\nE       AssertionError: assert 500 == 200 (AttributeError: NoneType.warehouse_id)\nE       Failed: DID NOT RAISE InsufficientStockError\n======================== 4 failed, 88 passed in 12.47s ========================"
+      }
+    ],
+    "user_message": "What caused the failures and how do I fix them?"
+  },
+  {
+    "id": "bash-pytest-003",
+    "category": "bash_filter",
+    "name": "pytest API tests with HTTP errors",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "run tests"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run the API tests."
+      },
+      {
+        "role": "user",
+        "content": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.1.0, pluggy-1.4.0\nrootdir: /app, configfile: pyproject.toml\ncollected 38 items\n\ntests/test_api.py::TestHealthCheck::test_health PASSED                   [  2%]\ntests/test_api.py::TestHealthCheck::test_readiness PASSED                [  5%]\ntests/test_api.py::TestHealthCheck::test_liveness PASSED                 [  7%]\ntests/test_api.py::TestRateLimiting::test_rate_limit_headers PASSED      [ 10%]\ntests/test_api.py::TestRateLimiting::test_rate_limit_exceeded PASSED     [ 13%]\ntests/test_api.py::TestRateLimiting::test_rate_limit_reset PASSED        [ 15%]\ntests/test_api.py::TestPagination::test_default_page_size PASSED         [ 18%]\ntests/test_api.py::TestPagination::test_custom_page_size PASSED          [ 21%]\ntests/test_api.py::TestPagination::test_page_navigation PASSED           [ 23%]\ntests/test_api.py::TestPagination::test_last_page PASSED                 [ 26%]\ntests/test_api.py::TestPagination::test_empty_results PASSED             [ 28%]\ntests/test_api.py::TestSorting::test_sort_asc PASSED                     [ 31%]\ntests/test_api.py::TestSorting::test_sort_desc PASSED                    [ 34%]\ntests/test_api.py::TestSorting::test_sort_invalid_field PASSED           [ 36%]\ntests/test_api.py::TestSorting::test_sort_multiple PASSED                [ 39%]\ntests/test_api.py::TestFiltering::test_filter_eq PASSED                  [ 42%]\ntests/test_api.py::TestFiltering::test_filter_range PASSED               [ 44%]\ntests/test_api.py::TestFiltering::test_filter_in PASSED                  [ 47%]\ntests/test_api.py::TestFiltering::test_filter_like PASSED                [ 50%]\ntests/test_api.py::TestFiltering::test_filter_combined FAILED            [ 52%]\n\n================================= FAILURES ===================================\n_____________ TestFiltering.test_filter_combined _____________________________\n\n    def test_filter_combined(client):\n        response = client.get(\n            \"/api/items\",\n            params={\"status\": \"active\", \"price_min\": 10, \"price_max\": 100}\n        )\n>       assert response.status_code == 200\nE       AssertionError: assert 400 == 200\nE       +  where 400 = <Response [400 Bad Request]>.status_code\nE\nE       Response body: {\"detail\": \"Cannot combine status filter with price range filter\"}\n\ntests/test_api.py:203: AssertionError\n\ntests/test_api.py::TestFiltering::test_filter_null PASSED                [ 55%]\ntests/test_api.py::TestFiltering::test_filter_boolean PASSED             [ 57%]\ntests/test_api.py::TestErrorHandling::test_404 PASSED                    [ 60%]\ntests/test_api.py::TestErrorHandling::test_422 PASSED                    [ 63%]\ntests/test_api.py::TestErrorHandling::test_500 PASSED                    [ 65%]\ntests/test_api.py::TestErrorHandling::test_error_format PASSED           [ 68%]\ntests/test_api.py::TestErrorHandling::test_request_id_in_error PASSED    [ 71%]\ntests/test_api.py::TestCORS::test_cors_headers PASSED                    [ 73%]\ntests/test_api.py::TestCORS::test_cors_preflight PASSED                  [ 76%]\ntests/test_api.py::TestCORS::test_cors_origin PASSED                     [ 78%]\ntests/test_api.py::TestVersioning::test_v1_prefix PASSED                 [ 81%]\ntests/test_api.py::TestVersioning::test_v2_prefix PASSED                 [ 84%]\ntests/test_api.py::TestVersioning::test_version_header PASSED            [ 86%]\ntests/test_api.py::TestVersioning::test_deprecated_v0 PASSED             [ 89%]\ntests/test_api.py::TestOpenAPI::test_schema_valid PASSED                 [ 92%]\ntests/test_api.py::TestOpenAPI::test_docs_accessible PASSED              [ 94%]\ntests/test_api.py::TestOpenAPI::test_redoc_accessible PASSED             [ 97%]\ntests/test_api.py::TestOpenAPI::test_openapi_json PASSED                 [100%]\n\n======================== 1 failed, 37 passed in 2.89s ========================"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "run tests"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run the API tests."
+      },
+      {
+        "role": "user",
+        "content": "tests/test_api.py::TestFiltering::test_filter_combined FAILED            [ 52%]\nE       AssertionError: assert 400 == 200\nE       Response body: {\"detail\": \"Cannot combine status filter with price range filter\"}\n======================== 1 failed, 37 passed in 2.89s ========================"
+      }
+    ],
+    "user_message": "What caused the failure and how should I fix the filter logic?"
+  },
+  {
+    "id": "bash-pytest-004",
+    "category": "bash_filter",
+    "name": "pytest with coverage report term-missing",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "check test coverage"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run pytest with coverage report."
+      },
+      {
+        "role": "user",
+        "content": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.1.0, pluggy-1.4.0\nrootdir: /app, configfile: pyproject.toml\nplugins: cov-5.0.0, anyio-4.3.0, asyncio-0.23.6\ncollected 54 items\n\ntests/test_core.py::TestDomainModel::test_create PASSED                  [  1%]\ntests/test_core.py::TestDomainModel::test_validate PASSED                [  3%]\ntests/test_core.py::TestDomainModel::test_serialize PASSED               [  5%]\ntests/test_core.py::TestDomainModel::test_deserialize PASSED             [  7%]\ntests/test_core.py::TestDomainModel::test_equality PASSED                [  9%]\ntests/test_core.py::TestDomainModel::test_hash PASSED                    [ 11%]\ntests/test_core.py::TestService::test_create PASSED                      [ 13%]\ntests/test_core.py::TestService::test_read PASSED                        [ 16%]\ntests/test_core.py::TestService::test_update PASSED                      [ 18%]\ntests/test_core.py::TestService::test_delete PASSED                      [ 20%]\ntests/test_core.py::TestService::test_list PASSED                        [ 22%]\ntests/test_core.py::TestService::test_search PASSED                      [ 24%]\ntests/test_core.py::TestAdapter::test_db_read PASSED                     [ 26%]\ntests/test_core.py::TestAdapter::test_db_write PASSED                    [ 29%]\ntests/test_core.py::TestAdapter::test_db_transaction PASSED              [ 31%]\ntests/test_core.py::TestAdapter::test_cache_hit PASSED                   [ 33%]\ntests/test_core.py::TestAdapter::test_cache_miss PASSED                  [ 35%]\ntests/test_core.py::TestAdapter::test_cache_invalidate PASSED            [ 37%]\ntests/test_core.py::TestAdapter::test_external_api PASSED                [ 40%]\ntests/test_core.py::TestAdapter::test_external_api_retry PASSED          [ 42%]\ntests/test_core.py::TestAdapter::test_external_api_timeout PASSED        [ 44%]\ntests/test_core.py::TestAdapter::test_external_api_circuit_break PASSED  [ 46%]\ntests/test_core.py::TestAdapter::test_external_api_fallback PASSED       [ 48%]\ntests/test_core.py::TestAdapter::test_s3_upload PASSED                   [ 51%]\ntests/test_core.py::TestAdapter::test_s3_download PASSED                 [ 53%]\ntests/test_core.py::TestAdapter::test_s3_delete PASSED                   [ 55%]\ntests/test_core.py::TestAdapter::test_s3_presigned PASSED                [ 57%]\ntests/test_core.py::TestAdapter::test_queue_publish PASSED               [ 59%]\ntests/test_core.py::TestAdapter::test_queue_consume PASSED               [ 61%]\ntests/test_core.py::TestAdapter::test_queue_dlq PASSED                   [ 64%]\ntests/test_core.py::TestAdapter::test_metrics_increment PASSED           [ 66%]\ntests/test_core.py::TestAdapter::test_metrics_gauge PASSED               [ 68%]\ntests/test_core.py::TestAdapter::test_metrics_histogram PASSED           [ 70%]\ntests/test_core.py::TestAdapter::test_tracing_span PASSED                [ 72%]\ntests/test_core.py::TestAdapter::test_tracing_context PASSED             [ 74%]\ntests/test_core.py::TestAdapter::test_tracing_error PASSED               [ 77%]\ntests/test_core.py::TestAdapter::test_log_structured PASSED              [ 79%]\ntests/test_core.py::TestAdapter::test_log_correlation_id PASSED          [ 81%]\ntests/test_core.py::TestAdapter::test_config_load PASSED                 [ 83%]\ntests/test_core.py::TestAdapter::test_config_env_override PASSED         [ 85%]\ntests/test_core.py::TestAdapter::test_config_validation PASSED           [ 87%]\ntests/test_core.py::TestAdapter::test_config_reload PASSED               [ 90%]\ntests/test_core.py::TestAdapter::test_feature_flag PASSED                [ 92%]\ntests/test_core.py::TestAdapter::test_feature_flag_rollout PASSED        [ 94%]\ntests/test_core.py::TestAdapter::test_health_check PASSED                [ 96%]\ntests/test_core.py::TestAdapter::test_graceful_shutdown PASSED           [ 98%]\ntests/test_core.py::TestAdapter::test_startup_hook PASSED                [100%]\n\n---------- coverage: platform linux, python 3.11.9-final-0 ----------\nName                                 Stmts   Miss  Cover   Missing\n------------------------------------------------------------------\nsrc/app/__init__.py                      4      0   100%\nsrc/app/main.py                         32      2    93%   45, 67\nsrc/app/core/__init__.py                 2      0   100%\nsrc/app/core/domain.py                  78      5    93%   112-116\nsrc/app/core/exceptions.py              14      0   100%\nsrc/app/core/interfaces.py              22      0   100%\nsrc/app/core/value_objects.py           34      3    91%   78, 90, 102\nsrc/app/services/__init__.py             2      0   100%\nsrc/app/services/user_service.py        89     12    86%   201-212\nsrc/app/services/product_service.py     67      8    88%   145-152\nsrc/app/services/order_service.py      112     23    79%   178-200\nsrc/app/services/payment_service.py     94     31    67%   89-120\nsrc/app/adapters/__init__.py             2      0   100%\nsrc/app/adapters/db.py                  56      4    92%   98-101\nsrc/app/adapters/cache.py               41      2    95%   67, 71\nsrc/app/adapters/s3.py                  38      6    84%   55-60\nsrc/app/adapters/queue.py               47      5    89%   89-93\nsrc/app/adapters/external_api.py        63      9    85%   112-120\nsrc/app/api/__init__.py                  2      0   100%\nsrc/app/api/users.py                    45      3    93%   78-80\nsrc/app/api/products.py                 38      2    94%   67, 70\nsrc/app/api/orders.py                   52      7    86%   90-96\nsrc/app/api/payments.py                 44      9    79%   78-86\nsrc/app/models/__init__.py               2      0   100%\nsrc/app/models/user.py                  28      0   100%\nsrc/app/models/product.py               24      0   100%\nsrc/app/models/order.py                 31      2    93%   67, 70\nsrc/app/models/payment.py               26      3    88%   45-47\n------------------------------------------------------------------\nTOTAL                                 1088    136    87%\n\n======================== 47 passed in 8.34s ========================"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "check test coverage"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run pytest with coverage report."
+      },
+      {
+        "role": "user",
+        "content": "src/app/services/payment_service.py     94     31    67%   89-120\nsrc/app/api/payments.py                 44      9    79%   78-86\nsrc/app/services/order_service.py      112     23    79%   178-200\nTOTAL                                 1088    136    87%\n======================== 47 passed in 8.34s ========================"
+      }
+    ],
+    "user_message": "Which modules need more test coverage and why is payment_service so low?"
+  },
+  {
+    "id": "bash-pytest-005",
+    "category": "bash_filter",
+    "name": "pytest fail-fast unit tests",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "run unit tests with fail-fast"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run the unit tests stopping on first failure."
+      },
+      {
+        "role": "user",
+        "content": "============================= test session starts ==============================\nplatform linux -- Python 3.11.9, pytest-8.1.0, pluggy-1.4.0\nrootdir: /app, configfile: pyproject.toml\ncollected 35 items\n\ntests/unit/test_domain.py::TestEntity::test_id_generation PASSED         [  2%]\ntests/unit/test_domain.py::TestEntity::test_id_uniqueness PASSED         [  5%]\ntests/unit/test_domain.py::TestEntity::test_created_at PASSED            [  8%]\ntests/unit/test_domain.py::TestEntity::test_updated_at PASSED            [ 11%]\ntests/unit/test_domain.py::TestEntity::test_equality_by_id PASSED        [ 14%]\ntests/unit/test_domain.py::TestEntity::test_hash PASSED                  [ 17%]\ntests/unit/test_domain.py::TestValueObject::test_immutable PASSED        [ 20%]\ntests/unit/test_domain.py::TestValueObject::test_equality_by_value PASSED [ 22%]\ntests/unit/test_domain.py::TestValueObject::test_hash_by_value PASSED    [ 25%]\ntests/unit/test_domain.py::TestValueObject::test_copy_with PASSED        [ 28%]\ntests/unit/test_domain.py::TestAggregateRoot::test_domain_events PASSED  [ 31%]\ntests/unit/test_domain.py::TestAggregateRoot::test_clear_events PASSED   [ 34%]\ntests/unit/test_domain.py::TestAggregateRoot::test_version PASSED        [ 37%]\ntests/unit/test_domain.py::TestAggregateRoot::test_optimistic_lock FAILED [ 40%]\n\n!!!!!!!!!!!!!!!!!!!! stopping after 1 failure !!!!!!!!!!!!!!!!!!!\n\n================================= FAILURES ===================================\n_________ TestAggregateRoot.test_optimistic_lock ____________________________\n\n    def test_optimistic_lock():\n        root = AggregateRoot()\n        root.version = 1\n        with pytest.raises(OptimisticLockError):\n>           root.apply_event(event, expected_version=0)\nE       Failed: DID NOT RAISE <class 'app.core.exceptions.OptimisticLockError'>\n\ntests/unit/test_domain.py:289: Failed\n\n======================== 1 failed, 13 passed in 0.67s ========================"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "run unit tests with fail-fast"
+      },
+      {
+        "role": "assistant",
+        "content": "I'll run the unit tests stopping on first failure."
+      },
+      {
+        "role": "user",
+        "content": "tests/unit/test_domain.py::TestAggregateRoot::test_optimistic_lock FAILED [ 40%]\nE       Failed: DID NOT RAISE OptimisticLockError\n======================== 1 failed, 13 passed in 0.67s ========================"
+      }
+    ],
+    "user_message": "How do I implement OptimisticLockError in the aggregate root?"
+  },
+  {
+    "id": "bash-gitlog-001",
+    "category": "bash_filter",
+    "name": "git log graph all branches",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "show recent history"
+      },
+      {
+        "role": "assistant",
+        "content": "Here is the git log."
+      },
+      {
+        "role": "user",
+        "content": "* a3f1b2c (HEAD -> main, origin/main) fix: correct payment timeout handling\n* 7d8e9f0 feat: add stripe webhook endpoint\n* 2c4b5a6 test: add webhook integration tests\n* 1e3d7f8 refactor: extract payment adapter interface\n*   0f9a1b2 Merge branch 'feature/payments'\n|\\  \n| * 3b5c7d9 feat: implement stripe charge flow\n| * 8e2f4a6 feat: add payment service skeleton\n| * 5d1c3e7 test: write failing payment tests\n|/  \n* 4a6b8c0 feat: add order service\n* 9f2e4a8 test: order service BDD scenarios\n* 6c8d0e2 refactor: split order domain model\n* 1b3e5f7 fix: order status transition guard\n* 8d0c2a4 docs: update API reference\n* 7e1f3b5 chore: upgrade fastapi to 0.111.0\n* 4c6a8d0 fix: memory leak in connection pool\n* 2b4e6f8 feat: add product search endpoint\n* 9a1c3e5 test: product search E2E scenarios\n* 6f8b0d2 refactor: extract search adapter\n* 3e5a7c9 feat: add elasticsearch integration\n* 0d2f4b6 chore: update dependencies\n* 8c0e2a4 feat: add user profile endpoint\n* 5b7d9f1 test: profile endpoint coverage\n* 2a4c6e8 fix: profile image upload validation\n* 9f1b3d5 feat: add S3 adapter for file uploads\n* 6e8c0a2 chore: add S3 mock for tests\n* 3d5f7b9 feat: add notification service\n* 0c2e4f6 test: notification service unit tests\n* 7b9d1f3 fix: email template rendering bug\n* 4a6c8e0 feat: implement email adapter\n* 1f3b5d7 chore: configure SendGrid credentials\n* 8e0c2a4 feat: add audit log model\n* 5d7f9b1 test: audit log write/read\n* 2c4e6f8 feat: implement audit log adapter\n* 9b1d3f5 refactor: move audit to core domain\n* 6a8c0e2 fix: audit log overflow on high traffic\n* 3f5b7d9 feat: add rate limiting middleware\n* 0e2c4a6 test: rate limit tests\n* 7d9f1b3 fix: rate limit bypass via header spoofing\n* 4c6e8a0 feat: CORS configuration\n* 1b3d5f7 chore: update CORS origins for staging\n* 8a0c2e4 feat: add request ID middleware\n* 5f7b9d1 fix: request ID not propagated to logs\n* 2e4a6c8 feat: structured logging setup\n* 9d1f3b5 chore: configure log levels per env\n* 6c8e0a2 feat: health check endpoints\n* 3b5d7f9 test: health check scenarios\n* 0a2c4e6 infra: add docker-compose for local dev\n* 7f9b1d3 infra: add Dockerfile\n* 4e6c8a0 infra: add pyproject.toml\n* 1d3f5b7 feat: initial hexagonal architecture scaffold\n* 8c0e2a4 init: initial commit\n"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "show recent history"
+      },
+      {
+        "role": "assistant",
+        "content": "Here is the git log."
+      },
+      {
+        "role": "user",
+        "content": "* a3f1b2c (HEAD -> main, origin/main) fix: correct payment timeout handling\n* 7d8e9f0 feat: add stripe webhook endpoint\n* 2c4b5a6 test: add webhook integration tests\n* 1e3d7f8 refactor: extract payment adapter interface\n*   0f9a1b2 Merge branch 'feature/payments'\n| * 3b5c7d9 feat: implement stripe charge flow\n| * 8e2f4a6 feat: add payment service skeleton\n| * 5d1c3e7 test: write failing payment tests\n* 4a6b8c0 feat: add order service\n* 9f2e4a8 test: order service BDD scenarios\n* 6c8d0e2 refactor: split order domain model\n* 1b3e5f7 fix: order status transition guard\n* 8d0c2a4 docs: update API reference\n* 7e1f3b5 chore: upgrade fastapi to 0.111.0\n* 4c6a8d0 fix: memory leak in connection pool\n* 2b4e6f8 feat: add product search endpoint\n* 9a1c3e5 test: product search E2E scenarios\n* 6f8b0d2 refactor: extract search adapter\n* 3e5a7c9 feat: add elasticsearch integration\n* 0d2f4b6 chore: update dependencies\n* 8c0e2a4 feat: add user profile endpoint\n* 5b7d9f1 test: profile endpoint coverage\n* 2a4c6e8 fix: profile image upload validation\n* 9f1b3d5 feat: add S3 adapter for file uploads\n* 6e8c0a2 chore: add S3 mock for tests\n* 3d5f7b9 feat: add notification service\n* 0c2e4f6 test: notification service unit tests\n* 7b9d1f3 fix: email template rendering bug\n* 4a6c8e0 feat: implement email adapter\n* 1f3b5d7 chore: configure SendGrid credentials"
+      }
+    ],
+    "user_message": "When was the last successful deploy?"
+  },
+  {
+    "id": "bash-gitlog-002",
+    "category": "bash_filter",
+    "name": "git log with timestamps format",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "show recent commits with timestamps"
+      },
+      {
+        "role": "assistant",
+        "content": "Here is the git log with timestamps."
+      },
+      {
+        "role": "user",
+        "content": "a3f1b2c 2026-04-07 14:32:11 +0300 fix: correct payment timeout handling\n7d8e9f0 2026-04-07 11:15:43 +0300 feat: add stripe webhook endpoint\n2c4b5a6 2026-04-07 10:08:22 +0300 test: add webhook integration tests\n1e3d7f8 2026-04-06 18:55:07 +0300 refactor: extract payment adapter interface\n0f9a1b2 2026-04-06 17:30:00 +0300 Merge branch 'feature/payments'\n3b5c7d9 2026-04-06 16:22:41 +0300 feat: implement stripe charge flow\n8e2f4a6 2026-04-06 14:11:05 +0300 feat: add payment service skeleton\n5d1c3e7 2026-04-06 12:00:33 +0300 test: write failing payment tests\n4a6b8c0 2026-04-05 20:45:19 +0300 feat: add order service\n9f2e4a8 2026-04-05 18:30:07 +0300 test: order service BDD scenarios\n6c8d0e2 2026-04-05 16:15:44 +0300 refactor: split order domain model\n1b3e5f7 2026-04-05 14:00:28 +0300 fix: order status transition guard\n8d0c2a4 2026-04-05 11:45:13 +0300 docs: update API reference\n7e1f3b5 2026-04-04 19:30:52 +0300 chore: upgrade fastapi to 0.111.0\n4c6a8d0 2026-04-04 17:15:39 +0300 fix: memory leak in connection pool\n2b4e6f8 2026-04-04 15:00:25 +0300 feat: add product search endpoint\n9a1c3e5 2026-04-04 12:45:12 +0300 test: product search E2E scenarios\n6f8b0d2 2026-04-04 10:30:58 +0300 refactor: extract search adapter\n3e5a7c9 2026-04-03 20:15:44 +0300 feat: add elasticsearch integration\n0d2f4b6 2026-04-03 18:00:31 +0300 chore: update dependencies\n8c0e2a4 2026-04-03 15:45:17 +0300 feat: add user profile endpoint\n5b7d9f1 2026-04-03 13:30:03 +0300 test: profile endpoint coverage\n2a4c6e8 2026-04-03 11:14:49 +0300 fix: profile image upload validation\n9f1b3d5 2026-04-02 21:00:36 +0300 feat: add S3 adapter for file uploads\n6e8c0a2 2026-04-02 18:45:22 +0300 chore: add S3 mock for tests\n3d5f7b9 2026-04-02 16:30:08 +0300 feat: add notification service\n0c2e4f6 2026-04-02 14:14:54 +0300 test: notification service unit tests\n7b9d1f3 2026-04-02 11:59:41 +0300 fix: email template rendering bug\n4a6c8e0 2026-04-01 20:45:27 +0300 feat: implement email adapter\n1f3b5d7 2026-04-01 18:30:13 +0300 chore: configure SendGrid credentials\n8e0c2a4 2026-04-01 16:14:59 +0300 feat: add audit log model\n5d7f9b1 2026-04-01 13:59:46 +0300 test: audit log write/read\n2c4e6f8 2026-04-01 11:44:32 +0300 feat: implement audit log adapter\n9b1d3f5 2026-03-31 22:30:18 +0300 refactor: move audit to core domain\n6a8c0e2 2026-03-31 20:15:04 +0300 fix: audit log overflow on high traffic\n3f5b7d9 2026-03-31 17:59:51 +0300 feat: add rate limiting middleware\n0e2c4a6 2026-03-31 15:44:37 +0300 test: rate limit tests\n7d9f1b3 2026-03-31 13:29:23 +0300 fix: rate limit bypass via header spoofing\n4c6e8a0 2026-03-30 21:15:10 +0300 feat: CORS configuration\n1b3d5f7 2026-03-30 19:00:56 +0300 chore: update CORS origins for staging\n8a0c2e4 2026-03-30 16:45:42 +0300 feat: add request ID middleware\n5f7b9d1 2026-03-30 14:30:28 +0300 fix: request ID not propagated to logs\n2e4a6c8 2026-03-30 12:15:14 +0300 feat: structured logging setup\n9d1f3b5 2026-03-29 22:00:01 +0300 chore: configure log levels per env\n6c8e0a2 2026-03-29 19:45:47 +0300 feat: health check endpoints\n3b5d7f9 2026-03-29 17:30:33 +0300 test: health check scenarios\n0a2c4e6 2026-03-29 15:15:19 +0300 infra: add docker-compose for local dev\n7f9b1d3 2026-03-29 13:00:05 +0300 infra: add Dockerfile\n4e6c8a0 2026-03-28 21:45:52 +0300 infra: add pyproject.toml\n1d3f5b7 2026-03-28 19:30:38 +0300 feat: initial hexagonal architecture scaffold\n8c0e2a4 2026-03-28 12:00:00 +0300 init: initial commit\n"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "show recent commits with timestamps"
+      },
+      {
+        "role": "assistant",
+        "content": "Here is the git log with timestamps."
+      },
+      {
+        "role": "user",
+        "content": "a3f1b2c 2026-04-07 14:32:11 +0300 fix: correct payment timeout handling\n7d8e9f0 2026-04-07 11:15:43 +0300 feat: add stripe webhook endpoint\n2c4b5a6 2026-04-07 10:08:22 +0300 test: add webhook integration tests\n1e3d7f8 2026-04-06 18:55:07 +0300 refactor: extract payment adapter interface\n0f9a1b2 2026-04-06 17:30:00 +0300 Merge branch 'feature/payments'\n3b5c7d9 2026-04-06 16:22:41 +0300 feat: implement stripe charge flow\n8e2f4a6 2026-04-06 14:11:05 +0300 feat: add payment service skeleton\n5d1c3e7 2026-04-06 12:00:33 +0300 test: write failing payment tests\n4a6b8c0 2026-04-05 20:45:19 +0300 feat: add order service\n9f2e4a8 2026-04-05 18:30:07 +0300 test: order service BDD scenarios\n6c8d0e2 2026-04-05 16:15:44 +0300 refactor: split order domain model\n1b3e5f7 2026-04-05 14:00:28 +0300 fix: order status transition guard\n8d0c2a4 2026-04-05 11:45:13 +0300 docs: update API reference\n7e1f3b5 2026-04-04 19:30:52 +0300 chore: upgrade fastapi to 0.111.0\n4c6a8d0 2026-04-04 17:15:39 +0300 fix: memory leak in connection pool\n2b4e6f8 2026-04-04 15:00:25 +0300 feat: add product search endpoint\n9a1c3e5 2026-04-04 12:45:12 +0300 test: product search E2E scenarios\n6f8b0d2 2026-04-04 10:30:58 +0300 refactor: extract search adapter\n3e5a7c9 2026-04-03 20:15:44 +0300 feat: add elasticsearch integration\n0d2f4b6 2026-04-03 18:00:31 +0300 chore: update dependencies\n8c0e2a4 2026-04-03 15:45:17 +0300 feat: add user profile endpoint\n5b7d9f1 2026-04-03 13:30:03 +0300 test: profile endpoint coverage\n2a4c6e8 2026-04-03 11:14:49 +0300 fix: profile image upload validation\n9f1b3d5 2026-04-02 21:00:36 +0300 feat: add S3 adapter for file uploads\n6e8c0a2 2026-04-02 18:45:22 +0300 chore: add S3 mock for tests\n3d5f7b9 2026-04-02 16:30:08 +0300 feat: add notification service\n0c2e4f6 2026-04-02 14:14:54 +0300 test: notification service unit tests\n7b9d1f3 2026-04-02 11:59:41 +0300 fix: email template rendering bug\n4a6c8e0 2026-04-01 20:45:27 +0300 feat: implement email adapter\n1f3b5d7 2026-04-01 18:30:13 +0300 chore: configure SendGrid credentials"
+      }
+    ],
+    "user_message": "When was the last payment-related commit?"
+  },
+  {
+    "id": "bash-gitlog-003",
+    "category": "bash_filter",
+    "name": "git log stat showing file changes",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "show what files changed in recent commits"
+      },
+      {
+        "role": "assistant",
+        "content": "Here is the git log with file stats."
+      },
+      {
+        "role": "user",
+        "content": "commit a3f1b2c\nAuthor: dev <dev@example.com>\nDate:   Mon Apr 7 14:32:11 2026 +0300\n\n    fix: correct payment timeout handling\n\n src/app/adapters/stripe.py         |  12 +++++++-----\n src/app/services/payment_service.py |   8 +++++---\n tests/test_payments.py             |  15 +++++++++++++++\n 3 files changed, 27 insertions(+), 8 deletions(-)\n\ncommit 7d8e9f0\nAuthor: dev <dev@example.com>\nDate:   Mon Apr 7 11:15:43 2026 +0300\n\n    feat: add stripe webhook endpoint\n\n src/app/api/payments.py             |  34 ++++++++++++++++++++++++++++++++\n src/app/adapters/stripe.py          |  28 ++++++++++++++++++++++++\n tests/integration/test_webhooks.py  |  45 ++++++++++++++++++++++++++++++++++++++\n 3 files changed, 107 insertions(+)\n\ncommit 2c4b5a6\nAuthor: dev <dev@example.com>\nDate:   Mon Apr 7 10:08:22 2026 +0300\n\n    test: add webhook integration tests\n\n tests/integration/test_webhooks.py | 45 ++++++++++++++++++++++++\n tests/conftest.py                  |  8 +++++\n 2 files changed, 53 insertions(+)\n\ncommit 1e3d7f8\nAuthor: dev <dev@example.com>\nDate:   Sun Apr 6 18:55:07 2026 +0300\n\n    refactor: extract payment adapter interface\n\n src/app/core/interfaces.py         |  22 +++++++++++++\n src/app/adapters/stripe.py         | -18 ------------------\n src/app/adapters/paypal.py         |  18 ++++++++++++++++++\n 3 files changed, 40 insertions(+), 18 deletions(-)\n\ncommit 0f9a1b2\nAuthor: dev <dev@example.com>\nDate:   Sun Apr 6 17:30:00 2026 +0300\n\n    Merge branch 'feature/payments'\n\n 0 files changed\n\ncommit 3b5c7d9\nAuthor: dev <dev@example.com>\nDate:   Sun Apr 6 16:22:41 2026 +0300\n\n    feat: implement stripe charge flow\n\n src/app/adapters/stripe.py          |  67 ++++++++++++++++++++++++++++++++++\n src/app/services/payment_service.py |  45 ++++++++++++++++++++\n tests/unit/test_stripe_adapter.py   |  38 ++++++++++++++++\n 3 files changed, 150 insertions(+)\n\ncommit 8e2f4a6\nAuthor: dev <dev@example.com>\nDate:   Sun Apr 6 14:11:05 2026 +0300\n\n    feat: add payment service skeleton\n\n src/app/services/payment_service.py |  32 ++++++++++++++++\n src/app/core/domain.py              |  18 +++++++++\n src/app/models/payment.py           |  24 ++++++++++++\n 3 files changed, 74 insertions(+)\n\ncommit 5d1c3e7\nAuthor: dev <dev@example.com>\nDate:   Sun Apr 6 12:00:33 2026 +0300\n\n    test: write failing payment tests\n\n tests/unit/test_payment_service.py   |  55 ++++++++++++++++++++++\n tests/integration/test_payment_api.py |  33 ++++++++++++\n 2 files changed, 88 insertions(+)\n\ncommit 4a6b8c0\nAuthor: dev <dev@example.com>\nDate:   Sat Apr 5 20:45:19 2026 +0300\n\n    feat: add order service\n\n src/app/services/order_service.py  |  89 +++++++++++++++++++++++++++++++++++++\n src/app/core/domain.py             |  34 ++++++++++++++\n src/app/models/order.py            |  28 ++++++++++++\n 3 files changed, 151 insertions(+)\n\ncommit 9f2e4a8\nAuthor: dev <dev@example.com>\nDate:   Sat Apr 5 18:30:07 2026 +0300\n\n    test: order service BDD scenarios\n\n tests/features/order.feature        |  67 +++++++++++++++++++++++++\n tests/step_defs/test_order_steps.py |  89 +++++++++++++++++++++++++++++++\n 2 files changed, 156 insertions(+)\n\ncommit 6c8d0e2\nAuthor: dev <dev@example.com>\nDate:   Sat Apr 5 16:15:44 2026 +0300\n\n    refactor: split order domain model\n\n src/app/core/domain.py  | -45 -----------------------------------------------\n src/app/core/order.py   |  45 +++++++++++++++++++++++++++++++++++++++++++++\n src/app/core/product.py |  38 ++++++++++++++++++++++++++++++++++++++\n 3 files changed, 83 insertions(+), 45 deletions(-)\n\ncommit 1b3e5f7\nAuthor: dev <dev@example.com>\nDate:   Sat Apr 5 14:00:28 2026 +0300\n\n    fix: order status transition guard\n\n src/app/core/order.py  |  12 ++++++++----\n tests/unit/test_order.py |   8 ++++++++\n 2 files changed, 20 insertions(+), 4 deletions(-)\n"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "show what files changed in recent commits"
+      },
+      {
+        "role": "assistant",
+        "content": "Here is the git log with file stats."
+      },
+      {
+        "role": "user",
+        "content": "a3f1b2c fix: correct payment timeout handling\n  stripe.py +12-5, payment_service.py +8-3, tests +15\n7d8e9f0 feat: add stripe webhook endpoint\n  api/payments.py +34, adapters/stripe.py +28, tests +45\n2c4b5a6 test: add webhook integration tests\n  test_webhooks.py +45, conftest.py +8\n1e3d7f8 refactor: extract payment adapter interface\n  core/interfaces.py +22, stripe.py -18, adapters/paypal.py +18\n3b5c7d9 feat: implement stripe charge flow\n  adapters/stripe.py +67, payment_service.py +45, tests +38\n8e2f4a6 feat: add payment service skeleton\n  payment_service.py +32, core/domain.py +18, models/payment.py +24\n5d1c3e7 test: write failing payment tests\n  test_payment_service.py +55, test_payment_api.py +33\n4a6b8c0 feat: add order service\n  services/order_service.py +89, core/domain.py +34, models/order.py +28\n9f2e4a8 test: order service BDD scenarios\n  order.feature +67, test_order_steps.py +89\n6c8d0e2 refactor: split order domain model\n  core/domain.py -45, core/order.py +45, core/product.py +38\n1b3e5f7 fix: order status transition guard\n  core/order.py +12-4, tests +8"
+      }
+    ],
+    "user_message": "Which commit introduced the most new code and what changed?"
+  },
+  {
+    "id": "bash-pip-001",
+    "category": "bash_filter",
+    "name": "pip install requirements verbose output",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "install deps"
+      },
+      {
+        "role": "assistant",
+        "content": "Installing dependencies from requirements.txt."
+      },
+      {
+        "role": "user",
+        "content": "Collecting fastapi==0.111.0\n  Downloading fastapi-0.111.0-py3-none-any.whl (92 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 92.0/92.0 kB 1.2 MB/s eta 0:00:00\nCollecting uvicorn[standard]==0.29.0\n  Downloading uvicorn-0.29.0-py3-none-any.whl (60 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 60.0/60.0 kB 2.1 MB/s eta 0:00:00\nCollecting pydantic==2.7.1\n  Downloading pydantic-2.7.1-cp311-cp311-manylinux_2_17_x86_64.whl (2.6 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.6/2.6 MB 4.3 MB/s eta 0:00:00\nCollecting sqlalchemy==2.0.30\n  Downloading SQLAlchemy-2.0.30-cp311-cp311-manylinux_2_17_x86_64.whl (3.1 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 5.2 MB/s eta 0:00:00\nCollecting alembic==1.13.1\n  Downloading alembic-1.13.1-py3-none-any.whl (235 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 235.0/235.0 kB 3.4 MB/s eta 0:00:00\nCollecting psycopg2-binary==2.9.9\n  Downloading psycopg2_binary-2.9.9-cp311-cp311-manylinux_2_17_x86_64.whl (3.0 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.0/3.0 MB 4.8 MB/s eta 0:00:00\nCollecting redis==5.0.4\n  Downloading redis-5.0.4-py3-none-any.whl (251 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 251.0/251.0 kB 3.1 MB/s eta 0:00:00\nCollecting celery==5.4.0\n  Downloading celery-5.4.0-py3-none-any.whl (425 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 425.0/425.0 kB 2.9 MB/s eta 0:00:00\nCollecting boto3==1.34.89\n  Downloading boto3-1.34.89-py3-none-any.whl (139 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 139.0/139.0 kB 3.5 MB/s eta 0:00:00\nCollecting httpx==0.27.0\n  Downloading httpx-0.27.0-py3-none-any.whl (75 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 75.0/75.0 kB 2.8 MB/s eta 0:00:00\nCollecting pytest==8.1.0\n  Downloading pytest-8.1.0-py3-none-any.whl (342 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 342.0/342.0 kB 3.7 MB/s eta 0:00:00\nCollecting pytest-asyncio==0.23.6\n  Downloading pytest_asyncio-0.23.6-py3-none-any.whl (41 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 41.0/41.0 kB 2.4 MB/s eta 0:00:00\nCollecting pytest-cov==5.0.0\n  Downloading pytest_cov-5.0.0-py3-none-any.whl (31 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 31.0/31.0 kB 2.1 MB/s eta 0:00:00\nCollecting starlette==0.37.2\n  Downloading starlette-0.37.2-py3-none-any.whl (71 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 71.0/71.0 kB 2.7 MB/s eta 0:00:00\nCollecting anyio==4.3.0\n  Downloading anyio-4.3.0-py3-none-any.whl (85 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 85.0/85.0 kB 3.0 MB/s eta 0:00:00\nCollecting typing-extensions==4.11.0\n  Downloading typing_extensions-4.11.0-py3-none-any.whl (34 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 34.0/34.0 kB 2.5 MB/s eta 0:00:00\nCollecting annotated-types==0.6.0\n  Downloading annotated_types-0.6.0-py3-none-any.whl (16 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.0/16.0 kB 1.8 MB/s eta 0:00:00\nCollecting pydantic-core==2.18.2\n  Downloading pydantic_core-2.18.2-cp311-cp311-manylinux_2_17_x86_64.whl (2.1 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 5.1 MB/s eta 0:00:00\nCollecting greenlet==3.0.3\n  Downloading greenlet-3.0.3-cp311-cp311-manylinux_2_24_x86_64.whl (613 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 613.0/613.0 kB 4.2 MB/s eta 0:00:00\nCollecting botocore==1.34.89\n  Downloading botocore-1.34.89-py3-none-any.whl (12.3 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.3/12.3 MB 6.1 MB/s eta 0:00:00\nWARNING: pip is configured with locations that require TLS/SSL, however the ssl module in Python is not available.\nInstalling collected packages: typing-extensions, annotated-types, greenlet, anyio, starlette, pydantic-core, pydantic, sqlalchemy, fastapi, uvicorn, alembic, psycopg2-binary, redis, celery, botocore, boto3, httpx, pytest, pytest-asyncio, pytest-cov\nSuccessfully installed alembic-1.13.1 annotated-types-0.6.0 anyio-4.3.0 boto3-1.34.89 botocore-1.34.89 celery-5.4.0 fastapi-0.111.0 greenlet-3.0.3 httpx-0.27.0 psycopg2-binary-2.9.9 pydantic-2.7.1 pydantic-core-2.18.2 pytest-8.1.0 pytest-asyncio-0.23.6 pytest-cov-5.0.0 redis-5.0.4 sqlalchemy-2.0.30 starlette-0.37.2 typing-extensions-4.11.0 uvicorn-0.29.0"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "install deps"
+      },
+      {
+        "role": "assistant",
+        "content": "Installing dependencies from requirements.txt."
+      },
+      {
+        "role": "user",
+        "content": "WARNING: pip is configured with locations that require TLS/SSL, however the ssl module in Python is not available.\nSuccessfully installed alembic-1.13.1 anyio-4.3.0 boto3-1.34.89 celery-5.4.0 fastapi-0.111.0 httpx-0.27.0 psycopg2-binary-2.9.9 pydantic-2.7.1 pytest-8.1.0 pytest-asyncio-0.23.6 pytest-cov-5.0.0 redis-5.0.4 sqlalchemy-2.0.30 uvicorn-0.29.0"
+      }
+    ],
+    "user_message": "Any issues with installed packages?"
+  },
+  {
+    "id": "bash-pip-002",
+    "category": "bash_filter",
+    "name": "pip install dev extras verbose",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "install dev dependencies"
+      },
+      {
+        "role": "assistant",
+        "content": "Installing with dev extras."
+      },
+      {
+        "role": "user",
+        "content": "Obtaining file:///app\n  Installing build dependencies: started\n  Installing build dependencies: finished with status 'done'\n  Checking if build backend supports build_editable: started\n  Checking if build backend supports build_editable: finished with status 'done'\n  Getting requirements to build editable: started\n  Getting requirements to build editable: finished with status 'done'\n  Preparing editable metadata (pyproject.toml): started\n  Preparing editable metadata (pyproject.toml): finished with status 'done'\nCollecting ruff==0.4.2\n  Downloading ruff-0.4.2-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (7.9 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.9/7.9 MB 5.1 MB/s eta 0:00:00\nCollecting mypy==1.10.0\n  Downloading mypy-1.10.0-cp311-cp311-manylinux_2_17_x86_64.whl (11.7 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 11.7/11.7 MB 5.8 MB/s eta 0:00:00\nCollecting pytest-bdd==7.1.2\n  Downloading pytest_bdd-7.1.2-py3-none-any.whl (53 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 53.0/53.0 kB 2.3 MB/s eta 0:00:00\nCollecting pre-commit==3.7.0\n  Downloading pre_commit-3.7.0-py2.py3-none-any.whl (204 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 204.0/204.0 kB 3.4 MB/s eta 0:00:00\nCollecting factory-boy==3.3.0\n  Downloading factory_boy-3.3.0-py2.py3-none-any.whl (58 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 58.0/58.0 kB 2.5 MB/s eta 0:00:00\nCollecting faker==25.0.1\n  Downloading Faker-25.0.1-py3-none-any.whl (1.8 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.8/1.8 MB 4.1 MB/s eta 0:00:00\nCollecting pytest-mock==3.14.0\n  Downloading pytest_mock-3.14.0-py3-none-any.whl (9.7 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.7/9.7 kB 1.5 MB/s eta 0:00:00\nCollecting httpx==0.27.0\n  Using cached httpx-0.27.0-py3-none-any.whl\nCollecting mypy-extensions==1.0.0\n  Downloading mypy_extensions-1.0.0-py3-none-any.whl (4.7 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.7/4.7 kB 1.2 MB/s eta 0:00:00\nCollecting cfgv==3.4.0\n  Downloading cfgv-3.4.0-py2.py3-none-any.whl (7.2 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 7.2/7.2 kB 1.4 MB/s eta 0:00:00\nCollecting identify==2.5.36\n  Downloading identify-2.5.36-py2.py3-none-any.whl (98 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 98.0/98.0 kB 2.8 MB/s eta 0:00:00\nCollecting nodeenv==1.8.0\n  Downloading nodeenv-1.8.0-py2.py3-none-any.whl (22 kB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 22.0/22.0 kB 2.0 MB/s eta 0:00:00\nCollecting virtualenv==20.26.1\n  Downloading virtualenv-20.26.1-py3-none-any.whl (4.0 MB)\n     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.0/4.0 MB 5.3 MB/s eta 0:00:00\nBuilding wheels for collected packages: app\n  Building editable for app (pyproject.toml): started\n  Building editable for app (pyproject.toml): finished with status 'done'\n  Created wheel for app: filename=app-0.1.0-py3-none-any.whl size=2134 sha256=abc123def456\n  Stored in directory: /tmp/pip-ephem-wheel-cache-xyz/wheels\nSuccessfully built app\nInstalling collected packages: ruff, mypy-extensions, mypy, pytest-bdd, factory-boy, faker, pytest-mock, cfgv, identify, nodeenv, virtualenv, pre-commit, app\nSuccessfully installed app-0.1.0 cfgv-3.4.0 factory-boy-3.3.0 faker-25.0.1 identify-2.5.36 mypy-1.10.0 mypy-extensions-1.0.0 nodeenv-1.8.0 pre-commit-3.7.0 pytest-bdd-7.1.2 pytest-mock-3.14.0 ruff-0.4.2 virtualenv-20.26.1"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "install dev dependencies"
+      },
+      {
+        "role": "assistant",
+        "content": "Installing with dev extras."
+      },
+      {
+        "role": "user",
+        "content": "Successfully installed app-0.1.0 cfgv-3.4.0 factory-boy-3.3.0 faker-25.0.1 identify-2.5.36 mypy-1.10.0 mypy-extensions-1.0.0 nodeenv-1.8.0 pre-commit-3.7.0 pytest-bdd-7.1.2 pytest-mock-3.14.0 ruff-0.4.2 virtualenv-20.26.1"
+      }
+    ],
+    "user_message": "Any issues with the installed dev packages?"
+  },
+  {
+    "id": "skill-fastapi-001",
+    "category": "skill_activation",
+    "name": "FastAPI endpoint returns 422 debug",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "My POST /users endpoint returns 422. Sending: {\"email\": \"test@example.com\", \"password\": \"secret123\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "A 422 means Pydantic rejected the request. Is the password field SecretStr? Are there length validators?"
+      },
+      {
+        "role": "user",
+        "content": "SecretStr with length >= 8. The error says: [{\"loc\":[\"body\",\"email\"],\"msg\":\"value is not a valid email address\"}]"
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "My POST /users endpoint returns 422. Sending: {\"email\": \"test@example.com\", \"password\": \"secret123\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "A 422 means Pydantic rejected the request. Is the password field SecretStr? Are there length validators?"
+      },
+      {
+        "role": "user",
+        "content": "SecretStr with length >= 8. The error says: [{\"loc\":[\"body\",\"email\"],\"msg\":\"value is not a valid email address\"}]"
+      }
+    ],
+    "user_message": "The email is test@example.com. Why does Pydantic reject it as invalid?"
+  },
+  {
+    "id": "skill-langgraph-001",
+    "category": "skill_activation",
+    "name": "LangGraph conditional edge routes to wrong node",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Conditional edge after classify node. When state decision is escalate it should go to human_review but goes to auto_resolve."
+      },
+      {
+        "role": "assistant",
+        "content": "Show me the add_conditional_edges call and the routing function."
+      },
+      {
+        "role": "user",
+        "content": "graph.add_conditional_edges('classify', lambda state: state['decision'], {'escalate': 'human_review', 'resolve': 'auto_resolve'}). State decision is definitely 'escalate'."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Conditional edge after classify node. When state decision is escalate it should go to human_review but goes to auto_resolve."
+      },
+      {
+        "role": "assistant",
+        "content": "Show me the add_conditional_edges call and the routing function."
+      },
+      {
+        "role": "user",
+        "content": "graph.add_conditional_edges('classify', lambda state: state['decision'], {'escalate': 'human_review', 'resolve': 'auto_resolve'}). State decision is definitely 'escalate'."
+      }
+    ],
+    "user_message": "The routing function returns 'escalate' but the graph goes to auto_resolve. What is the bug?"
+  },
+  {
+    "id": "skill-pytest-001",
+    "category": "skill_activation",
+    "name": "pytest module-scoped fixture causes test pollution",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "db_session fixture is scope=module. Tests in class A modify rows, class B sees the modified data."
+      },
+      {
+        "role": "assistant",
+        "content": "Module scope shares the fixture across all tests in the module. For class isolation use scope=class with rollback in teardown."
+      },
+      {
+        "role": "user",
+        "content": "scope=function is too slow. 200 tests went from 20s to 90s. We need module scope with isolation between classes."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "db_session fixture is scope=module. Tests in class A modify rows, class B sees the modified data."
+      },
+      {
+        "role": "assistant",
+        "content": "Module scope shares the fixture across all tests in the module. For class isolation use scope=class with rollback in teardown."
+      },
+      {
+        "role": "user",
+        "content": "scope=function is too slow. 200 tests went from 20s to 90s. We need module scope with isolation between classes."
+      }
+    ],
+    "user_message": "How do I keep module-scoped sessions while ensuring test isolation between test classes?"
+  },
+  {
+    "id": "skill-docker-001",
+    "category": "skill_activation",
+    "name": "Docker Compose service cannot reach postgres by hostname",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "FastAPI service tries to connect to host postgres and gets connection refused. Both are in docker-compose.yml."
+      },
+      {
+        "role": "assistant",
+        "content": "Services must share a network and postgres must be healthy before api starts. What does your depends_on look like?"
+      },
+      {
+        "role": "user",
+        "content": "depends_on: [postgres]. Connection string: postgresql://user:pass@postgres:5432/mydb. The api starts before postgres is ready."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "FastAPI service tries to connect to host postgres and gets connection refused. Both are in docker-compose.yml."
+      },
+      {
+        "role": "assistant",
+        "content": "Services must share a network and postgres must be healthy before api starts. What does your depends_on look like?"
+      },
+      {
+        "role": "user",
+        "content": "depends_on: [postgres]. Connection string: postgresql://user:pass@postgres:5432/mydb. The api starts before postgres is ready."
+      }
+    ],
+    "user_message": "How do I make the api service wait for postgres to be ready before starting?"
+  },
+  {
+    "id": "skill-mlflow-001",
+    "category": "skill_activation",
+    "name": "MLflow experiment runs not appearing in UI",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Logging with mlflow.log_metric but runs do not appear at localhost:5000."
+      },
+      {
+        "role": "assistant",
+        "content": "Set tracking URI before logging: mlflow.set_tracking_uri('http://localhost:5000'). Verify the server is running."
+      },
+      {
+        "role": "user",
+        "content": "Added set_tracking_uri. Now: ConnectionError: HTTPConnectionPool host=localhost port=5000 Max retries exceeded."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Logging with mlflow.log_metric but runs do not appear at localhost:5000."
+      },
+      {
+        "role": "assistant",
+        "content": "Set tracking URI before logging: mlflow.set_tracking_uri('http://localhost:5000'). Verify the server is running."
+      },
+      {
+        "role": "user",
+        "content": "Added set_tracking_uri. Now: ConnectionError: HTTPConnectionPool host=localhost port=5000 Max retries exceeded."
+      }
+    ],
+    "user_message": "The MLflow server is running but the client cannot connect. What should I check?"
+  },
+  {
+    "id": "skill-pydantic-001",
+    "category": "skill_activation",
+    "name": "Pydantic v2 model_validator fails on PATCH with partial data",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "model_validator mode=after sees None for missing fields on PATCH. I need to validate field combinations."
+      },
+      {
+        "role": "assistant",
+        "content": "Use model_fields_set to check which fields were explicitly provided. For cross-field validation on partials you need the DB state."
+      },
+      {
+        "role": "user",
+        "content": "model_fields_set shows the PATCH fields. But validator needs: if field_a is set, field_b must also exist either in request or in DB."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "model_validator mode=after sees None for missing fields on PATCH. I need to validate field combinations."
+      },
+      {
+        "role": "assistant",
+        "content": "Use model_fields_set to check which fields were explicitly provided. For cross-field validation on partials you need the DB state."
+      },
+      {
+        "role": "user",
+        "content": "model_fields_set shows the PATCH fields. But validator needs: if field_a is set, field_b must also exist either in request or in DB."
+      }
+    ],
+    "user_message": "How do I validate field combinations in Pydantic v2 for PATCH where missing fields live in the database?"
+  },
+  {
+    "id": "skill-mypy-001",
+    "category": "skill_activation",
+    "name": "mypy incompatible type list[Event | None] vs list[Event]",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "mypy error: Argument 1 to process_events has incompatible type list[Event | None]; expected list[Event]"
+      },
+      {
+        "role": "assistant",
+        "content": "Filter Nones before passing: [e for e in events if e is not None]. Or change the signature to accept Optional items."
+      },
+      {
+        "role": "user",
+        "content": "Events come from DB. Mapping Row to Event can return None if row is malformed. So the list is genuinely List[Event | None] at that stage."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "mypy error: Argument 1 to process_events has incompatible type list[Event | None]; expected list[Event]"
+      },
+      {
+        "role": "assistant",
+        "content": "Filter Nones before passing: [e for e in events if e is not None]. Or change the signature to accept Optional items."
+      },
+      {
+        "role": "user",
+        "content": "Events come from DB. Mapping Row to Event can return None if row is malformed. So the list is genuinely List[Event | None] at that stage."
+      }
+    ],
+    "user_message": "What is the cleanest pattern to handle List[T | None] to List[T] with mypy strict mode?"
+  },
+  {
+    "id": "skill-alembic-001",
+    "category": "skill_activation",
+    "name": "Alembic migration fails adding NOT NULL column to existing data",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Adding NOT NULL column tenant_id to table with 50k rows. Migration fails: column contains null values."
+      },
+      {
+        "role": "assistant",
+        "content": "Split into: (1) add nullable with server default, (2) backfill, (3) add NOT NULL constraint as separate migrations."
+      },
+      {
+        "role": "user",
+        "content": "Split exactly that way. First migration adds nullable. Second backfills. Third sets NOT NULL. Third still fails on staging."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Adding NOT NULL column tenant_id to table with 50k rows. Migration fails: column contains null values."
+      },
+      {
+        "role": "assistant",
+        "content": "Split into: (1) add nullable with server default, (2) backfill, (3) add NOT NULL constraint as separate migrations."
+      },
+      {
+        "role": "user",
+        "content": "Split exactly that way. First migration adds nullable. Second backfills. Third sets NOT NULL. Third still fails on staging."
+      }
+    ],
+    "user_message": "Backfill ran but NOT NULL constraint still fails on staging. What could cause this?"
+  },
+  {
+    "id": "skill-qdrant-001",
+    "category": "skill_activation",
+    "name": "Qdrant search returns irrelevant results despite high similarity",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Semantic search over 100k docs returns cosine similarity over 0.85 but clearly wrong results. Query: FastAPI dependency injection patterns."
+      },
+      {
+        "role": "assistant",
+        "content": "High score with wrong results usually means embedding model mismatch. How were docs indexed vs how are queries embedded?"
+      },
+      {
+        "role": "user",
+        "content": "Docs used text-embedding-ada-002. Queries use text-embedding-3-small. Different OpenAI generations with incompatible embedding spaces."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Semantic search over 100k docs returns cosine similarity over 0.85 but clearly wrong results. Query: FastAPI dependency injection patterns."
+      },
+      {
+        "role": "assistant",
+        "content": "High score with wrong results usually means embedding model mismatch. How were docs indexed vs how are queries embedded?"
+      },
+      {
+        "role": "user",
+        "content": "Docs used text-embedding-ada-002. Queries use text-embedding-3-small. Different OpenAI generations with incompatible embedding spaces."
+      }
+    ],
+    "user_message": "How do I migrate 100k document embeddings from ada-002 to text-embedding-3-small without search downtime?"
+  },
+  {
+    "id": "skill-infra-001",
+    "category": "skill_activation",
+    "name": "Terraform YC Serverless Container 403 PermissionDenied",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8\n\n## [CONTEXT REFRESH — Long Session]\nLong session detected. Core rules reminder:\n- TDD: write tests before code, never adapt tests to fit existing code\n- Hexagonal architecture: core/ must have zero framework imports\n- Commits: subject line only ≤72 chars, NO Co-Authored-By or AI attribution\n- Plan mode is mandatory for any multi-file change or design decision\n- Verify with user before any destructive operation\n- Never expose secrets, tokens or API keys in code or diffs\n- All configuration via environment variables\n\n## [PLAN-MODE REQUIRED — Multi-file Change Detected]\nThis request touches multiple files and requires planning.\nCall EnterPlanMode IMMEDIATELY — before reading files, writing code, or taking any action.\nSteps: (1) Call EnterPlanMode. (2) Explore codebase. (3) Present plan. (4) Wait for approval. (5) Call ExitPlanMode and implement.\n\n## Commit Rules Reminder\nOne commit = one logical stage. Subject line only, ≤72 chars. NEVER add Co-Authored-By or AI attribution. Max 2–3 commits per session.\n\n## Security Review Required\nModified security-sensitive code detected (auth, DB, user input). Run /security-review before committing.",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets\n\n## Session Environment\nPlatform: linux | Shell: bash | Python: python3 | Sessions: 8",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "terraform apply fails: rpc error code=PermissionDenied. Service account exists."
+      },
+      {
+        "role": "assistant",
+        "content": "The Terraform SA needs serverless.containers.admin. The runtime execution SA needs iam.serviceAccounts.user on itself."
+      },
+      {
+        "role": "user",
+        "content": "Terraform SA has serverless.containers.admin. Execution SA has container-registry.images.puller. Still 403."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "terraform apply fails: rpc error code=PermissionDenied. Service account exists."
+      },
+      {
+        "role": "assistant",
+        "content": "The Terraform SA needs serverless.containers.admin. The runtime execution SA needs iam.serviceAccounts.user on itself."
+      },
+      {
+        "role": "user",
+        "content": "Terraform SA has serverless.containers.admin. Execution SA has container-registry.images.puller. Still 403."
+      }
+    ],
+    "user_message": "Which exact IAM roles does the execution service account need to run a YC Serverless Container?"
+  },
+  {
+    "id": "nofilter-git-status-001",
+    "category": "no_filter_expected",
+    "name": "git status short output no filter applies",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Check the current git status before we commit."
+      },
+      {
+        "role": "assistant",
+        "content": "Running git status to see staged and unstaged files."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Check the current git status before we commit."
+      },
+      {
+        "role": "assistant",
+        "content": "Running git status to see staged and unstaged files."
+      }
+    ],
+    "user_message": "The output shows 3 modified files and 1 untracked. Which should we stage?"
+  },
+  {
+    "id": "nofilter-ls-001",
+    "category": "no_filter_expected",
+    "name": "ls directory listing no filter applies",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "List the contents of the src/ directory."
+      },
+      {
+        "role": "assistant",
+        "content": "Listing src/ to see the project structure."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "List the contents of the src/ directory."
+      },
+      {
+        "role": "assistant",
+        "content": "Listing src/ to see the project structure."
+      }
+    ],
+    "user_message": "What is the purpose of each subdirectory shown?"
+  },
+  {
+    "id": "nofilter-cat-001",
+    "category": "no_filter_expected",
+    "name": "cat pyproject.toml file read no filter applies",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Show me pyproject.toml to check project dependencies."
+      },
+      {
+        "role": "assistant",
+        "content": "Reading pyproject.toml."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Show me pyproject.toml to check project dependencies."
+      },
+      {
+        "role": "assistant",
+        "content": "Reading pyproject.toml."
+      }
+    ],
+    "user_message": "Which dependencies are under dev? Are any outdated?"
+  },
+  {
+    "id": "nofilter-echo-001",
+    "category": "no_filter_expected",
+    "name": "echo trivial output no filter applies",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Print the current working directory path."
+      },
+      {
+        "role": "assistant",
+        "content": "Echoing the current path."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Print the current working directory path."
+      },
+      {
+        "role": "assistant",
+        "content": "Echoing the current path."
+      }
+    ],
+    "user_message": "Is this the correct project root we should be working from?"
+  },
+  {
+    "id": "nofilter-python-version-001",
+    "category": "no_filter_expected",
+    "name": "python version check short output no filter applies",
+    "system_prompt_baseline": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "system_prompt_optimized": "You are a senior ML engineer. Tech stack: Python + FastAPI + pytest + Docker + Hexagonal Architecture.\n\nRules:\n- TDD: always write tests first, never adapt tests to code\n- Hexagonal arch: no framework imports in core/\n- Commits: subject line only, ≤72 chars, NO Co-Authored-By footers\n- Plan mode required for multi-file changes\n- Never hardcode secrets",
+    "messages_baseline": [
+      {
+        "role": "user",
+        "content": "Verify which Python version is active in this environment."
+      },
+      {
+        "role": "assistant",
+        "content": "Checking the Python version."
+      }
+    ],
+    "messages_optimized": [
+      {
+        "role": "user",
+        "content": "Verify which Python version is active in this environment."
+      },
+      {
+        "role": "assistant",
+        "content": "Checking the Python version."
+      }
+    ],
+    "user_message": "Is Python 3.11+ available? The project requires it for match statements."
+  }
+]

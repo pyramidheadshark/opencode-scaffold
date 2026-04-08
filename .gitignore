@@ -32,6 +32,12 @@ dev/tasks.md
 docs/demo-v1-*.gif
 docs/demo-v2-*.gif
 
+# Benchmark run artifacts (JSONL results from token_runner.py)
+scripts/benchmark/output/
+
+# Registry cache (auto-populated by registry commands)
+registry/cache/
+
 # Build artifacts
 *.tgz
 *.tape

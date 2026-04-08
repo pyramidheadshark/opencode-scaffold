@@ -1,0 +1,44 @@
+{
+  "rules": [
+    {
+      "match": "pytest",
+      "append": "2>&1 | grep -E '(FAILED|PASSED|ERROR|PASS|passed|failed|error|warning|short test)' | tail -80"
+    },
+    {
+      "match": "git log",
+      "append": "| head -30"
+    },
+    {
+      "match": "git diff --stat",
+      "append": "| tail -25"
+    },
+    {
+      "match": "npm test",
+      "append": "2>&1 | grep -E '(FAIL|PASS|Tests:|passed|failed|Error)' | tail -50"
+    },
+    {
+      "match": "pip install",
+      "append": "2>&1 | grep -E '(Successfully installed|Requirement already|WARNING|ERROR)'"
+    },
+    {
+      "match": "npm install",
+      "append": "2>&1 | grep -E '(added|removed|changed|packages|vulnerabilities|ERROR)' | tail -20"
+    },
+    {
+      "match": "docker build",
+      "append": "2>&1 | tail -30"
+    },
+    {
+      "match": "uv sync",
+      "append": "2>&1 | tail -40"
+    },
+    {
+      "match": "mypy",
+      "append": "2>&1 | grep -E '(error|warning|note|Found|Success)' | tail -30"
+    },
+    {
+      "match": "ruff check",
+      "append": "2>&1 | tail -25"
+    }
+  ]
+}

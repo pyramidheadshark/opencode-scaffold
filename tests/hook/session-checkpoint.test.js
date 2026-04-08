@@ -31,12 +31,20 @@ describe("ExitPlanMode trigger", () => {
     expect(result.system_prompt_addition).toContain("[AUTO CHECKPOINT — Plan Approved]");
   });
 
-  test("system_prompt_addition contains required sections", () => {
+  test("system_prompt_addition contains required status sections", () => {
     const result = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "s1" }), tmpDir);
     const text = result.system_prompt_addition;
     expect(text).toContain("dev/status.md");
     expect(text).toContain("Active phase marker");
     expect(text).toContain("Key architectural decisions");
+  });
+
+  test("system_prompt_addition contains compact request before Step 1", () => {
+    const result = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "s1" }), tmpDir);
+    const text = result.system_prompt_addition;
+    expect(text).toContain("[COMPACT REQUIRED BEFORE STEP 1]");
+    expect(text).toContain("/compact");
+    expect(text).toContain("re-read the plan");
   });
 
   test("updates last_checkpoint_count in cache on ExitPlanMode", () => {
@@ -45,6 +53,18 @@ describe("ExitPlanMode trigger", () => {
     expect(cache.tool_call_count).toBe(1);
     expect(cache.last_checkpoint_count).toBe(1);
   });
+
+  test("resets compact_signal_sent after ExitPlanMode", () => {
+    const sid = "csr-reset";
+    for (let i = 0; i < 25; i++) {
+      main(JSON.stringify({ tool_name: "Read", session_id: sid }), tmpDir);
+    }
+    let cache = readCache(tmpDir, sid);
+    expect(cache.compact_signal_sent).toBe(true);
+    main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: sid }), tmpDir);
+    cache = readCache(tmpDir, sid);
+    expect(cache.compact_signal_sent).toBe(false);
+  });
 });
 
 describe("Threshold trigger", () => {
@@ -52,58 +72,59 @@ describe("Threshold trigger", () => {
   beforeEach(() => { tmpDir = makeTempDir(); });
   afterEach(() => { cleanup(tmpDir); });
 
-  test("no trigger at call 49", () => {
-    for (let i = 0; i < 49; i++) {
+  test("no trigger at call 24", () => {
+    for (let i = 0; i < 24; i++) {
       main(JSON.stringify({ tool_name: "Read", session_id: "s2" }), tmpDir);
     }
     const cache = readCache(tmpDir, "s2");
-    expect(cache.tool_call_count).toBe(49);
+    expect(cache.tool_call_count).toBe(24);
     expect(cache.last_checkpoint_count).toBe(0);
   });
 
-  test("triggers at call 50", () => {
-    for (let i = 0; i < 49; i++) {
+  test("triggers at call 25", () => {
+    for (let i = 0; i < 24; i++) {
       main(JSON.stringify({ tool_name: "Edit", session_id: "s3" }), tmpDir);
     }
     const result = main(JSON.stringify({ tool_name: "Bash", session_id: "s3" }), tmpDir);
     expect(result.continue).toBe(true);
     expect(result.system_prompt_addition).toContain("[AUTO CHECKPOINT — Activity Threshold]");
+    expect(result.system_prompt_addition).toContain("[CONTEXT WARNING]");
+    expect(result.system_prompt_addition).toContain("/compact");
   });
 
-  test("threshold system_prompt_addition content", () => {
-    for (let i = 0; i < 50; i++) {
+  test("threshold updates cache correctly at call 25", () => {
+    for (let i = 0; i < 25; i++) {
       main(JSON.stringify({ tool_name: "Read", session_id: "s4" }), tmpDir);
     }
     const cache = readCache(tmpDir, "s4");
-    expect(cache.last_checkpoint_count).toBe(50);
+    expect(cache.last_checkpoint_count).toBe(25);
+    expect(cache.compact_signal_sent).toBe(true);
   });
 
-  test("ExitPlanMode resets threshold counter — fires again after 50 more calls", () => {
+  test("threshold fires only once (one-shot) — no second trigger without ExitPlanMode", () => {
+    for (let i = 0; i < 25; i++) {
+      main(JSON.stringify({ tool_name: "Read", session_id: "s-oneshot" }), tmpDir);
+    }
+    for (let i = 0; i < 25; i++) {
+      const r = main(JSON.stringify({ tool_name: "Edit", session_id: "s-oneshot" }), tmpDir);
+      expect(r.system_prompt_addition).toBeUndefined();
+    }
+  });
+
+  test("ExitPlanMode resets compact_signal_sent — threshold fires again after 25 more calls", () => {
     for (let i = 0; i < 4; i++) {
       main(JSON.stringify({ tool_name: "Read", session_id: "thr-reset" }), tmpDir);
     }
     const r1 = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "thr-reset" }), tmpDir);
     expect(r1.system_prompt_addition).toContain("Plan Approved");
 
-    for (let i = 0; i < 49; i++) {
+    for (let i = 0; i < 24; i++) {
       const r = main(JSON.stringify({ tool_name: "Edit", session_id: "thr-reset" }), tmpDir);
       expect(r.system_prompt_addition).toBeUndefined();
     }
 
     const r2 = main(JSON.stringify({ tool_name: "Bash", session_id: "thr-reset" }), tmpDir);
     expect(r2.system_prompt_addition).toContain("Activity Threshold");
-  });
-
-  test("resets after threshold — next 50 calls trigger again", () => {
-    for (let i = 0; i < 50; i++) {
-      main(JSON.stringify({ tool_name: "Read", session_id: "s5" }), tmpDir);
-    }
-    for (let i = 0; i < 49; i++) {
-      const r = main(JSON.stringify({ tool_name: "Edit", session_id: "s5" }), tmpDir);
-      expect(r.system_prompt_addition).toBeUndefined();
-    }
-    const result = main(JSON.stringify({ tool_name: "Bash", session_id: "s5" }), tmpDir);
-    expect(result.system_prompt_addition).toContain("[AUTO CHECKPOINT — Activity Threshold]");
   });
 });
 
@@ -197,5 +218,25 @@ describe("E2E — spawned process", () => {
     });
     expect(result.status).toBe(0);
     expect(JSON.parse(result.stdout)).toEqual({ continue: true });
+  });
+
+  test("SCAFFOLD_COMPACT_THRESHOLD=5 fires at call 5", () => {
+    for (let i = 0; i < 4; i++) {
+      spawnSync("node", [HOOK_PATH], {
+        input: JSON.stringify({ tool_name: "Read", session_id: "env-thr" }),
+        encoding: "utf8",
+        cwd: tmpDir,
+        env: { ...process.env, SCAFFOLD_COMPACT_THRESHOLD: "5" },
+      });
+    }
+    const result = spawnSync("node", [HOOK_PATH], {
+      input: JSON.stringify({ tool_name: "Bash", session_id: "env-thr" }),
+      encoding: "utf8",
+      cwd: tmpDir,
+      env: { ...process.env, SCAFFOLD_COMPACT_THRESHOLD: "5" },
+    });
+    const output = JSON.parse(result.stdout);
+    expect(output.system_prompt_addition).toContain("Activity Threshold");
+    expect(output.system_prompt_addition).toContain("5+");
   });
 });

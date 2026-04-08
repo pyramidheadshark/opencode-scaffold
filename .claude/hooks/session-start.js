@@ -152,6 +152,10 @@ One commit = one logical stage. Key rules:
 - NEVER add Co-Authored-By, Generated-with, or any AI attribution — hard rule.
 - Max 2–3 commits per session. Commit when a stage is complete, not after every file.`;
 
+const LIGHT_AGENTS_BLOCK = `## Light Agents Active
+For status/backlog updates, use the \`status-updater\` agent (cost-optimized model).
+Invoke: "Use the status-updater agent to update dev/status.md."`;
+
 function buildLocalizedBlocks(lang) {
   const i18n = resolveI18n();
   if (!i18n || lang === "en" || !lang) {
@@ -203,6 +207,9 @@ function main(inputStr, cwd, platform, detectPython) {
   if (depsBlock) additions.push(depsBlock);
   const infraBlock = buildInfraBlock(fs, effectiveCwd);
   if (infraBlock) additions.push(infraBlock);
+  if (process.env.SCAFFOLD_LIGHT_AGENTS === "true" || process.env.SCAFFOLD_LIGHT_AGENTS === "1") {
+    additions.push(LIGHT_AGENTS_BLOCK);
+  }
 
   return {
     continue: true,
@@ -216,4 +223,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };

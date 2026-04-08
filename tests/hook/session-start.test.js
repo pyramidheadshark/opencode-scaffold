@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -287,5 +287,49 @@ describe("main — deps/infra injection", () => {
   test("does not inject deps when no deps.yaml", () => {
     const result = main("{}", tmpDir, "linux", () => "python3");
     expect(result.system_prompt_addition).not.toContain("DEPENDENCIES");
+  });
+});
+
+describe("main — SCAFFOLD_LIGHT_AGENTS", () => {
+  let tmpDir;
+  const ORIG_ENV = process.env.SCAFFOLD_LIGHT_AGENTS;
+
+  beforeEach(() => {
+    tmpDir = makeTempDir();
+    delete process.env.SCAFFOLD_LIGHT_AGENTS;
+  });
+  afterEach(() => {
+    cleanup(tmpDir);
+    if (ORIG_ENV !== undefined) process.env.SCAFFOLD_LIGHT_AGENTS = ORIG_ENV;
+    else delete process.env.SCAFFOLD_LIGHT_AGENTS;
+  });
+
+  test("injects light agents block when SCAFFOLD_LIGHT_AGENTS=true", () => {
+    process.env.SCAFFOLD_LIGHT_AGENTS = "true";
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.system_prompt_addition).toContain("Light Agents Active");
+    expect(result.system_prompt_addition).toContain("status-updater");
+  });
+
+  test("injects light agents block when SCAFFOLD_LIGHT_AGENTS=1", () => {
+    process.env.SCAFFOLD_LIGHT_AGENTS = "1";
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.system_prompt_addition).toContain("Light Agents Active");
+  });
+
+  test("does not inject when SCAFFOLD_LIGHT_AGENTS not set", () => {
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.system_prompt_addition).not.toContain("Light Agents Active");
+  });
+
+  test("does not inject when SCAFFOLD_LIGHT_AGENTS=false", () => {
+    process.env.SCAFFOLD_LIGHT_AGENTS = "false";
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.system_prompt_addition).not.toContain("Light Agents Active");
+  });
+
+  test("LIGHT_AGENTS_BLOCK export contains status-updater reference", () => {
+    expect(LIGHT_AGENTS_BLOCK).toContain("status-updater");
+    expect(LIGHT_AGENTS_BLOCK).toContain("Light Agents Active");
   });
 });

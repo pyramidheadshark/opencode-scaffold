@@ -1,6 +1,6 @@
 {
   "name": "claude-scaffold",
-  "version": "1.6.0",
+  "version": "2.1.0",
   "description": "Claude Code infrastructure for ML and AI engineers — skills, hooks, agents, and CI profiles.",
   "bin": {
     "claude-scaffold": "bin/cli.js"
@@ -26,7 +26,13 @@
     "test:watch": "jest tests/hook/ tests/cli/ --watch",
     "check:budget": "python3 tests/infra/test_infra.py TestSkillMdFiles.test_skill_line_budget || python tests/infra/test_infra.py TestSkillMdFiles.test_skill_line_budget",
     "metrics": "node scripts/metrics-report.js",
-    "benchmark": "jest tests/benchmark/ --no-coverage --verbose"
+    "benchmark": "jest tests/benchmark/ --no-coverage --verbose",
+    "bench:check": "python scripts/benchmark/check_sdk.py",
+    "bench:baseline": "python scripts/benchmark/token_runner.py --mode baseline",
+    "bench:optimized": "python scripts/benchmark/token_runner.py --mode optimized",
+    "bench:token": "npm run bench:baseline && npm run bench:optimized",
+    "bench:report": "python scripts/benchmark/report.py",
+    "bench:full": "npm run bench:token && npm run bench:report"
   },
   "keywords": [
     "claude",

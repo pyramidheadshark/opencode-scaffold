@@ -14,78 +14,111 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 
 ## Current Phase
 
-**Active**: Phase 9 — Growth & Polish (2026-04-06)
+**Active**: v2.1.0 — Token Optimization (2026-04-08)
 
-v2.0.0 code complete, 29 repos deployed, issue #2 resolved. Focus: npm publish, GitHub star growth, awesome-list submissions.
-
----
-
-## Current State (2026-04-06)
-
-- **v2.0.0 code complete**, npm publish only by explicit user command
-- **541 tests** (424 Jest + 60 benchmark + 57 Python), 0 failed
-- **29 repos deployed** at `309efdd`, all up to date
-- **Issue #2 resolved** — README.ru.md fully rewritten to v2.0.0 parity, language switcher added
-- **4 GitHub stars**, 0 forks, 18 topics
-
-### Versions:
-- **v1.5.0** — published on npm
-- **v1.6.0** — code complete (delayed release): dynamic budget, windows-developer, hub/task-hub profiles, QA workflow, skill registry
-- **v2.0.0** — code complete (delayed release): deps.yaml + CLI, INFRA.yaml + /infra, agent extensions, PITFALLS.md
-
-### Git state:
-Main @ `309efdd`, 5 commits ahead of npm v1.5.0:
-- `0713282` feat: v1.6.0
-- `a77fdb3` feat: v2.0.0
-- `de7a035` fix: v2.0.0 review
-- `8287f45` fix: update flow deploys agent-extensions + PITFALLS
-- `309efdd` fix: deploy.py agent-extensions + PITFALLS
+Branch: `feature/token-optimization`. All 5 phases complete. Ready for PR → main.
+Goal: benchmark-driven token optimization for Claude Code sessions.
 
 ---
 
-## Star Growth Strategy
+## Current State (2026-04-08)
 
-### Awesome-листы (приоритет 1)
+- **v1.6.0 PUBLISHED** npm@1.6.0, main HEAD at `a8b4e68`
+- **v2.0.0 code complete** on main — publish only by explicit command
+- **v2.1.0 COMPLETE** on `feature/token-optimization`, HEAD at `86a1050`
+- **527 tests** (470 Jest + 57 Python), 0 failed
+- **4 GitHub stars**, 0 forks
 
-| Repo | Stars | Method | Status |
+### v2.1.0 Phase Progress:
+
+| Phase | Status | Commit | Summary |
 |---|---|---|---|
-| `hesreallyhim/awesome-claude-code` | 36.7k | Issue form (web UI only) | TODO |
-| `anthropics/claude-plugins-official` | 16k | PR to external_plugins/ | TODO |
-| `VoltAgent/awesome-claude-code-subagents` | 16.3k | PR | TODO |
-| `rohitg00/awesome-claude-code-toolkit` | 1.1k | PR | **MERGED** |
-| `ccplugins/awesome-claude-code-plugins` | 667 | PR | TODO |
-| `rahulvrane/awesome-claude-agents` | 305 | PR | TODO |
-| `cassler/awesome-claude-code-setup` | 261 | PR | TODO |
+| Phase 1 — Context defaults | ✅ Done | f1b47db | `deploySettings()` sets `DISABLE_1M_CONTEXT=1` + `showClearContextOnPlanAccept:true` as one-time defaults |
+| Phase 2 — Compact signal redesign | ✅ Done | f1b47db | ExitPlanMode → /compact before Step 1; threshold one-shot (default 40), `SCAFFOLD_COMPACT_THRESHOLD` |
+| Phase 3 — Bash output filter | ✅ Done | 86fbe65 | `bash-output-filter.js` PreToolUse whitelist, `filter_rules.json`, log to `.claude/logs/filter-log.jsonl` |
+| Phase 4 — Benchmark harness | ✅ Done | dc8ce98 | OpenRouter SDK, 25 tasks, 3 PNG graphs, **60.7% savings measured** |
+| Phase 5 — Agent model routing | ✅ Done | 86a1050 | `status-updater.md` agent with haiku frontmatter, opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
 
-### Контент (приоритет 2)
+### Benchmark Results (Phase 4):
 
-- [ ] Reddit: r/ClaudeCode — how-to формат, не промо
-- [ ] Dev.to статья: "Claude Code beyond CLAUDE.md"
-- [ ] Show HN пост (после контента)
+| Category | Tasks | Avg Baseline | Avg Optimized | Savings% |
+|---|---|---|---|---|
+| bash_filter | 10 | 1 900 tok | 407 tok | **78.6%** |
+| skill_activation | 10 | 335 tok | 238 tok | **29.0%** |
+| edge_case | 5 | 766 tok | 766 tok | 0.0% (ожидаемо) |
+| **TOTAL** | **25** | **26 183 tok** | **10 287 tok** | **60.7%** |
 
-### Existing PRs
+Model: `anthropic/claude-haiku-4.5` via OpenRouter. Cost: $0.0613 → $0.0458.
 
-| Repo | PR | Status |
-|---|---|---|
-| Prat011/awesome-llm-skills | #56 | open, 16+ days — ping |
-| ComposioHQ/awesome-claude-plugins | #66 | open — ping |
-| thedaviddias/llms-txt-hub | #787 | open |
-| jamesmurdza/awesome-ai-devtools | #326 | open — ping |
+---
+
+## Key Architecture (v2.1.0)
+
+### Новые файлы этой ветки:
+
+| Файл | Что делает |
+|---|---|
+| `.claude/hooks/bash-output-filter.js` | PreToolUse: whitelist-only wrapping verbose команд (`( cmd ) \| grep \| tail`), fallback на original при ошибке |
+| `.claude/hooks/filter_rules.json` | 5 правил: pytest, git log, git diff --stat, npm test, pip install |
+| `.claude/hooks/i18n.js` | Deployed копия `lib/i18n.js` — 11 builder functions для всех user-facing блоков (EN+RU) |
+| `scripts/benchmark/token_runner.py` | CLI runner: OpenAI SDK → OpenRouter, `--mode baseline\|optimized`, JSONL output с generation_id |
+| `scripts/benchmark/tasks.json` | 25 benchmark tasks (10 bash_filter + 10 skill_activation + 5 edge_case) |
+| `scripts/benchmark/report.py` | Markdown + 3 PNG embedded (bar chart, category savings, cost pie) → `dev/benchmark-log.md` |
+| `scripts/benchmark/check_sdk.py` | Верификация OpenAI SDK + OPENROUTER_API_KEY + тестовый вызов |
+| `dev/benchmark-log.md` | Накопительный лог результатов (с embedded PNG через base64) |
+
+### Изменённые файлы:
+
+| Файл | Что изменено |
+|---|---|
+| `lib/deploy/copy.js` | 1) PreToolUse → 2 hooks (safety + filter); 2) hook merge matcher-based (не path-based) |
+| `lib/i18n.js` | +9 builder functions для всех injection blocks (EN+RU), синхронизирован с `.claude/hooks/i18n.js` |
+| `.claude/hooks/session-checkpoint.js` | RU-адаптация via i18n; `isDepsTrigger` boolean вместо `includes("BLOCKER")` |
+| `.claude/hooks/skill-activation-prompt.js` | RU-адаптация via i18n; все 6 injection blocks через `i18n.buildXxx(lang)` |
+| `tests/cli/init.test.js` | PreToolUse 1→2 hooks; matcher-based merge tests; filter_rules.json deploy test |
+| `tests/hook/bash-output-filter.test.js` | NEW: 32 теста (8 describe blocks) |
+
+---
+
+## Design Decisions (v2.1.0 specific)
+
+| Decision | Choice |
+|---|---|
+| Bash filter merge | PreToolUse `updatedInput` — whitelist-only, fallback на original при ошибке |
+| hook merge в deploySettings | Matcher-based dedup: scaffold владеет своими matchers, user hooks с другими matcher сохраняются |
+| i18n lazy loading | `getI18n()` IIFE + `loadLang(cwd)` — lazy, не падает если i18n.js недоступен |
+| isDepsTrigger | Boolean флаг вместо `includes("BLOCKER")` — language-safe |
+| Benchmark SDK | OpenAI SDK (openai>=1.0) с `base_url=openrouter.ai/api/v1` — OpenAI-compatible |
+| Benchmark observability | `x-session-id` per run, `generation_id` в JSONL, ссылка на дашборд в stdout |
+| JSONL в .gitignore | `scripts/benchmark/output/` gitignored — генерируемые артефакты |
+
+---
+
+## Next Session Plan
+
+1. **PR `feature/token-optimization` → `main`**
+   - `git push origin feature/token-optimization`
+   - `gh pr create` с `dev/benchmark-log.md` как evidence
+
+2. **Update deployed repos**
+   - `python scripts/deploy.py --update-all`
+
+3. **npm publish v2.1.0** — ТОЛЬКО по явной команде пользователя
 
 ---
 
 ## Backlog
 
 - [ ] **npm publish v2.0.0** — ONLY by explicit user command: `git tag v2.0.0 && git push origin v2.0.0`
+- [ ] **npm publish v2.1.0** — after token-optimization PR merged
 - [ ] Submit to `hesreallyhim/awesome-claude-code` via web UI issue form
 - [ ] PR to `anthropics/claude-plugins-official` external_plugins/
 - [ ] PRs to 4 more awesome-lists (ccplugins, rahulvrane, cassler, VoltAgent)
 - [ ] Ping 3 stale PRs (awesome-llm-skills, awesome-claude-plugins, awesome-ai-devtools)
-- [ ] Create profile templates for hub/task-hub (`templates/profiles/hub/`, `templates/profiles/task-hub/`)
 - [ ] Reddit post in r/ClaudeCode
-- [ ] Dev.to article
+- [ ] Dev.to article — "Claude Code beyond CLAUDE.md"
 - [ ] phs_calorie_app: history rewrite to remove .claude/ from git (commit 359761f)
-- [ ] coris-landing-site: custom astro-frontend skill
+- [ ] GitHub Actions update: `actions/checkout@v4` → `@v5`, `setup-node@v4` → `@v5` (deadline: June 2026)
 
 ---
 
@@ -96,10 +129,21 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ### Python infra tests UnicodeDecodeError на Windows
 `read_text()` использует cp1251 по умолчанию. Фикс: `encoding="utf-8"` везде.
+Применено также в `check_sdk.py`, `token_runner.py`, `report.py` через stdout wrapper.
+
+### H5 compact signal: tool_call_count — слабый proxy для размера контекста
+`git status` и `cat large_file.py` — оба 1 вызов, но 10 токен vs 50k. Порог 40 calls — ориентир.
+Для точного сигнала нужен токен-счётчик из API response.
+
+### Bash filter: updatedInput в PreToolUse — нужна верификация в реальной сессии
+По CC docs поддерживается. Fallback при любой ошибке — оригинальная команда без изменений.
+
+### Phase 5: frontmatter `model:` в агентах — не верифицировано
+Официально документировано в CC docs. Нужно проверить реальное поведение до завершения фазы.
 
 ---
 
-## Architecture Decisions
+## Architecture Decisions (полная история)
 
 | Decision | Choice | Date |
 |---|---|---|
@@ -110,6 +154,14 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 | Priority sort in matchSkills | always_load first, then ascending priority | 2026-03-23 |
 | Shared YAML parser | lib/yaml-parser.js — no hook→lib imports | 2026-04-06 |
 | Agent extensions | Concatenation at deploy time, idempotency guard | 2026-04-06 |
+| Token defaults deploy | `=== undefined` check — one-time, never overwrites user decision | 2026-04-07 |
+| Compact signal | Two-trigger: ExitPlanMode (/compact before Step 1) + one-shot threshold | 2026-04-07 |
+| Bash output filter | PreToolUse `updatedInput` whitelist-only + fallback + log | 2026-04-07 |
+| deploySettings hook merge | Matcher-based dedup — scaffold owns matchers, user hooks preserved | 2026-04-08 |
+| i18n coverage | EN+RU builder functions in lib/i18n.js, lazy-loaded in hooks | 2026-04-08 |
+| Benchmark SDK | openai SDK → OpenRouter (not anthropic SDK, not OpenLIT) | 2026-04-08 |
+| Benchmark observability | x-session-id per run + generation_id per call → openrouter.ai/activity | 2026-04-08 |
+| JSONL output gitignored | scripts/benchmark/output/ — generated artifacts, not committed | 2026-04-08 |
 
 ---
 
@@ -126,4 +178,4 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ---
 
-*Last updated: 2026-04-06*
+*Last updated: 2026-04-08 (Phase 5 complete)*

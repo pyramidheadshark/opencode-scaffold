@@ -22,8 +22,11 @@ Usage:
     python scripts/deploy.py --status                                 # show all deployed repos + version drift
     python scripts/deploy.py --update <target>                        # update .claude/ in one repo
     python scripts/deploy.py --update-all                             # update .claude/ in all registered repos
+    python scripts/deploy.py --update <target> --dry-run              # preview what would change (no writes)
+    python scripts/deploy.py --update-all --dry-run                   # preview all repos (no writes)
 """
 import argparse
+import hashlib
 import json
 import shutil
 import subprocess
@@ -207,6 +210,88 @@ def update_all_cmd() -> None:
     print(f"  Updating {len(to_update)} of {len(registry['deployed'])} repos...\n")
     for entry in to_update:
         update_cmd(entry["path"])
+
+
+def _file_md5(path: Path) -> str:
+    return hashlib.md5(path.read_bytes()).hexdigest()
+
+
+def _diff_dir(src: Path, dst: Path, glob: str = "*") -> tuple[list[str], list[str]]:
+    """Compare src files against dst. Returns (new_files, modified_files)."""
+    new_files: list[str] = []
+    modified_files: list[str] = []
+    if not src.exists():
+        return new_files, modified_files
+    for src_file in src.glob(glob):
+        if not src_file.is_file():
+            continue
+        dst_file = dst / src_file.name
+        if not dst_file.exists():
+            new_files.append(src_file.name)
+        elif _file_md5(src_file) != _file_md5(dst_file):
+            modified_files.append(src_file.name)
+    return new_files, modified_files
+
+
+def _fmt_changes(new_files: list[str], modified_files: list[str]) -> str:
+    parts = []
+    if new_files:
+        parts.append(f"{', '.join(new_files)} (new)")
+    if modified_files:
+        parts.append(f"{', '.join(modified_files)} (modified)")
+    return " | ".join(parts) if parts else "(no changes)"
+
+
+def dry_run_cmd(target_path: str) -> None:
+    target = Path(target_path).expanduser().resolve()
+    if not target.exists():
+        print(f"\n  [DRY RUN] SKIP: {target.name} — path not found on disk")
+        return
+
+    print(f"\n  [DRY RUN] Would update: {target.name}")
+    print(f"    path: {target}")
+
+    total = 0
+    sections: list[tuple[str, str]] = []
+
+    hooks_new, hooks_mod = _diff_dir(INFRA_DIR / ".claude" / "hooks", target / ".claude" / "hooks")
+    if hooks_new or hooks_mod:
+        sections.append(("hooks", _fmt_changes(hooks_new, hooks_mod)))
+        total += len(hooks_new) + len(hooks_mod)
+
+    agents_new, agents_mod = _diff_dir(INFRA_DIR / ".claude" / "agents", target / ".claude" / "agents", "*.md")
+    if agents_new or agents_mod:
+        sections.append(("agents", _fmt_changes(agents_new, agents_mod)))
+        total += len(agents_new) + len(agents_mod)
+
+    commands_new, commands_mod = _diff_dir(INFRA_DIR / ".claude" / "commands", target / ".claude" / "commands", "*.md")
+    if commands_new or commands_mod:
+        sections.append(("commands", _fmt_changes(commands_new, commands_mod)))
+        total += len(commands_new) + len(commands_mod)
+
+    for label, detail in sections:
+        print(f"    → {label}: {detail}")
+
+    if total == 0:
+        print("    → (no file changes detected — settings.json hooks will still be rewritten)")
+    else:
+        print(f"    → {total} file(s) would be updated")
+
+
+def dry_run_all_cmd() -> None:
+    registry = _load_registry()
+    if not registry["deployed"]:
+        print("  No deployed repos registered.")
+        return
+
+    current_sha = _get_current_sha()
+    print(f"\n  [DRY RUN] Scaffold HEAD: {current_sha}")
+    print(f"  {len(registry['deployed'])} repos in registry")
+
+    for entry in registry["deployed"]:
+        dry_run_cmd(entry["path"])
+
+    print("\n  [DRY RUN] No changes were applied. Run without --dry-run to update.")
 
 
 def _hr(width: int = 60) -> None:
@@ -564,8 +649,13 @@ def main() -> None:
         status_cmd()
         return
 
+    dry_run = "--dry-run" in sys.argv
+
     if "--update-all" in sys.argv:
-        update_all_cmd()
+        if dry_run:
+            dry_run_all_cmd()
+        else:
+            update_all_cmd()
         return
 
     if "--update" in sys.argv:
@@ -573,7 +663,11 @@ def main() -> None:
         if idx + 1 >= len(sys.argv):
             print("ERROR: --update requires a target path", file=sys.stderr)
             sys.exit(1)
-        update_cmd(sys.argv[idx + 1])
+        target_arg = sys.argv[idx + 1]
+        if dry_run:
+            dry_run_cmd(target_arg)
+        else:
+            update_cmd(target_arg)
         return
 
     parser = argparse.ArgumentParser(

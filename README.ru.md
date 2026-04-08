@@ -2,16 +2,16 @@
 
 **[English](README.md)** | **[Русский](README.ru.md)**
 
-**Инфраструктурный слой Claude Code для ML и AI-инженеров — один репозиторий, который делает Claude дисциплинированным инженерным партнёром во всех твоих проектах.**
+**Инфраструктура Claude Code для ML и AI-инженеров — деплой один раз, синхронизация везде, экономия 71% входящих токенов.**
 
-Клонируй один раз. Деплой в любой проект одной командой. Обновляй все проекты при изменении конфига — всё синхронизируется автоматически.
+Три возможности в одном репозитории: **скаффолдинг** (22 скилла, профили, хуки — деплоятся в любой проект), **оптимизация токенов** (фильтры вывода bash + настройки контекста, измеренная экономия 71.4% на Sonnet 4.6), и **управление несколькими репозиториями** (`update --all` держит все проекты в синхроне одной командой).
 
 [![CI](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
-![Jest Tests](https://img.shields.io/badge/Jest-424%20tests-brightgreen)
+![Token Savings](https://img.shields.io/badge/экономия%20токенов-71.4%25-brightgreen)
+![Jest Tests](https://img.shields.io/badge/Jest-536%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-57%20tests-blue)
-![Benchmark](https://img.shields.io/badge/Benchmark-60%20tests-blueviolet)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -21,9 +21,11 @@
 
 ---
 
-## Концепция
+## Три направления
 
-Большинство конфигураций Claude Code привязаны к конкретному проекту и расходятся со временем. claude-scaffold — это **центральный инфраструктурный слой**, который ты настраиваешь один раз и деплоишь везде.
+### 1. Скаффолдинг — дисциплина в каждый проект
+
+claude-scaffold — это **центральный инфраструктурный слой**, который ты настраиваешь один раз и деплоишь везде. 22 доменных скилла загружаются автоматически исходя из того, над чем ты работаешь. Профили адаптируют CLAUDE.md под разные роли. Хуки обеспечивают проверки качества без ручной настройки.
 
 ```
 claude-scaffold  ← редактируешь один раз
@@ -31,31 +33,44 @@ claude-scaffold  ← редактируешь один раз
       ├── deploy → project-a/.claude/
       ├── deploy → project-b/.claude/
       └── deploy → project-c/.claude/
-
-Позже: npx claude-scaffold update --all
-      → все три синхронизированы, без ручного копирования
 ```
 
-Можно попросить Claude напрямую:
-> *"Задеплой claude-scaffold в мой новый проект с профилем fastapi-developer"*
-> *"Обнови все зарегистрированные проекты до последней версии инфры"*
+### 2. Оптимизация токенов — экономия 71.4% (измерено)
 
-Claude читает этот README, запускает CLI и всё подключает. Никакого ручного копирования конфигов.
+v2.1.0 поставляется с хуком-фильтром вывода bash, который оборачивает verbose-команды перед запуском. Вместо того чтобы Claude читал 2000 строк вывода `pytest`, он читает 20 строк, которые важны.
+
+```
+Бенчмарк: 25 задач × Sonnet 4.6 через OpenRouter
+  Baseline:  25,084 входящих токена
+  Optimized:  7,178 входящих токенов
+  Экономия:     71.4%
+```
+
+Также включены: ограничение контекста `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` как дефолт деплоя, напоминание `/compact` на вызове 25, и опциональная маршрутизация административных агентных задач на `claude-haiku-4-5`.
+
+### 3. Управление несколькими репозиториями — одна команда синхронизирует 29+ проектов
+
+```
+npx claude-scaffold update --all            # синхронизировать все проекты
+npx claude-scaffold update --all --dry-run  # посмотреть что изменится
+npx claude-scaffold status                  # показать дрифт версий
+```
+
+Когда ты улучшаешь хук, скилл или CLAUDE.md — каждый проект получает обновление. Никакого копирования, никакого дрейфа.
 
 ---
 
 ## Зачем claude-scaffold?
 
-### До и После
+**До:** у каждого проекта свой CLAUDE.md, скопированный по памяти. Хуки не синхронизированы, каждый проект дрейфует к разным стандартам. Счета за токены растут, пока Claude читает полный вывод `git log` и `pytest` дословно.
 
-**До:** у каждого проекта свой CLAUDE.md, скопированный по памяти. Хуки не синхронизированы, каждый проект дрейфует к разным стандартам. Когда ты улучшаешь воркфлоу, обновляется один проект — остальные остаются на старой версии.
-
-**После:** единый источник правды. `npx claude-scaffold update --all` распространяет каждое улучшение на все зарегистрированные проекты одновременно. Claude читает одну и ту же дисциплину везде.
+**После:** единый источник правды. Улучшения распространяются на все проекты одной командой. Claude читает отфильтрованный вывод — на 71% меньше входящих токенов на измеренных нагрузках.
 
 ### Почему не просто скопировать CLAUDE.md?
 
 Один CLAUDE.md работает для одного проекта. claude-scaffold добавляет:
 - **Механизм синхронизации** — `update --all` держит все проекты в синхроне одной командой
+- **Фильтрация вывода** — хук bash-фильтра сокращает входящие токены на 71.4% для verbose-команд
 - **Инъекция скиллов** — 22 доменных скилла, загружаемых автоматически по промпту через динамический бюджет строк
 - **Система профилей** — разный CLAUDE.md для каждой роли (ML-инженер, FastAPI-разработчик, AI-разработчик, fullstack)
 - **Инфраструктура хуков** — трекинг сессий, онбординг, проверки качества — всё подключается автоматически
@@ -151,22 +166,23 @@ Org-профили хранятся в `org-profiles/<org-name>/` в scaffold-р
 | `design-doc-creator` | *Мета — только вручную, не загружается автоматически* |
 | `skill-developer` | *Мета — только вручную, не загружается автоматически* |
 
-### 8 Агентов
+### 9 Агентов
 
-`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant`
+`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant` · `status-updater`
 
 ### 4 Команды
 
 `/init-design-doc` · `/new-project` · `/review` · `/dev-status`
 
-### 6 Хуков
+### 7 Хуков
 
 | Хук | Событие | Действие |
 |---|---|---|
 | `skill-activation-prompt.js` | UserPromptSubmit | Инъекция status.md + подходящих скиллов + напоминание plan-mode |
 | `session-safety.js` | PreToolUse | Классификация Bash-команд (CRITICAL/MODERATE/SAFE), создание git-снапшотов |
+| `bash-output-filter.js` | PreToolUse | Оборачивает verbose-команды (pytest, git log, docker build и др.) фильтрами вывода |
 | `session-start.js` | SessionStart | Определение платформы (win32/unix), инъекция Windows-правил, онбординг |
-| `session-checkpoint.js` | PostToolUse | Авто-чекпоинт при подтверждении плана или каждые 50 вызовов инструментов |
+| `session-checkpoint.js` | PostToolUse | Авто-чекпоинт при подтверждении плана или на вызове 25 (настраивается через `SCAFFOLD_COMPACT_THRESHOLD`) |
 | `post-tool-use-tracker.js` | PostToolUse | Логирование вызовов инструментов в `.claude/logs/` |
 | `python-quality-check.js` | Stop | Запуск ruff + mypy при завершении сессии |
 
@@ -279,6 +295,51 @@ rules:
 
 ---
 
+## Оптимизация токенов (v2.1.0+)
+
+### Фильтр bash-вывода
+
+`bash-output-filter.js` оборачивает verbose-команды фильтрами вывода до их выполнения, снижая потребление input-токенов:
+
+| Команда | Применяемый фильтр |
+|---|---|
+| `pytest ...` | grep FAILED/PASSED/ERROR + tail -80 |
+| `git log ...` | head -30 |
+| `docker build ...` | tail -30 |
+| `npm install ...` | grep added/removed/vulnerabilities + tail -20 |
+| `mypy ...` | grep error/warning/Found + tail -30 |
+| `ruff check ...` | tail -25 |
+
+Правила фильтрации — в `.claude/hooks/filter_rules.json` (редактируемый). Аудит-лог: `.claude/logs/filter-log.jsonl`.
+
+**Результат бенчмарка (Sonnet 4.6, 25 задач):** 71.4% экономии input-токенов — baseline 25 084 → optimized 7 178 токенов.
+
+### Контекстные дефолты при деплое
+
+`deploySettings()` устанавливает эти значения как one-time дефолты при первом деплое (никогда не перезаписывает существующий конфиг):
+
+```json
+{ "env": { "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1" }, "showClearContextOnPlanAccept": true }
+```
+
+### Сигнал компактизации
+
+`session-checkpoint.js` напоминает запустить `/compact` на вызове 25 (один раз за сессию). Настраивается:
+
+```bash
+SCAFFOLD_COMPACT_THRESHOLD=20 claude  # свой порог
+```
+
+### Маршрутизация модели агента (opt-in)
+
+При `SCAFFOLD_LIGHT_AGENTS=true` административные задачи (обновление статуса, бэклог) направляются в оптимизированный агент `status-updater` с `claude-haiku-4-5-20251001`:
+
+```bash
+SCAFFOLD_LIGHT_AGENTS=true claude
+```
+
+---
+
 ## Варианты деплоя
 
 ### Вариант A — NPX (без клонирования)
@@ -357,12 +418,17 @@ echo '{"prompt":"pyproject.toml ruff setup"}' | node .claude/hooks/skill-activat
 claude-scaffold/
 ├── .claude/
 │   ├── skills/          # 22 скилл-модуля (SKILL.md + resources/ + skill-metadata.json)
-│   ├── hooks/           # автоматизация жизненного цикла (6 хуков)
-│   ├── agents/          # 8 суб-агентов
+│   ├── hooks/           # автоматизация жизненного цикла (7 хуков)
+│   ├── agents/          # 9 суб-агентов
 │   ├── commands/        # 5 slash-команд
 │   └── CLAUDE.md        # базовый профиль + принципы взаимодействия
 ├── scripts/
 │   ├── deploy.py        # кросс-платформенный визард деплоя (--status, --update, --update-all)
+│   ├── benchmark/
+│   │   ├── token_runner.py   # запуск бенчмарка через OpenRouter (--mode baseline|optimized)
+│   │   ├── tasks.json        # 25 задач (bash_filter, skill_activation, no_filter_expected)
+│   │   ├── gen_tasks.py      # генератор задач
+│   │   └── report.py         # Markdown + встроенные PNG → dev/benchmark-log.md
 │   └── metrics-report.js
 ├── templates/           # pyproject.toml, Dockerfile, docker-compose, профили GitHub Actions
 ├── tests/
@@ -384,10 +450,16 @@ claude-scaffold/
 ## Запуск тестов
 
 ```bash
-npm test                          # 424 Jest + 57 Python
+npm test                          # 536 Jest + 57 Python
 npm run test:hook                 # только тесты хуков
 npm run check:budget              # проверить что все скиллы < 300 строк
 npm run metrics                   # отчёт по частоте загрузки скиллов
+
+# Бенчмарк (требует OPENROUTER_API_KEY)
+npm run bench:check               # проверить SDK + API-ключ
+npm run bench:full                # baseline + optimized прогоны → dev/benchmark-log.md
+npm run bench:token               # только замер токенов (без отчёта)
+npm run bench:report              # сгенерировать отчёт из последних JSONL-файлов
 ```
 
 ---

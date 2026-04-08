@@ -2,16 +2,16 @@
 
 **[English](README.md)** | **[Русский](README.ru.md)**
 
-**A Claude Code infrastructure layer for ML and AI engineers — one repo that makes Claude a disciplined engineering partner across all your projects.**
+**Claude Code infrastructure for ML and AI engineers — deploy once, sync everywhere, and cut input token costs by 71%.**
 
-Clone once. Deploy to any project in one command. Update all projects whenever you improve the config — every project stays in sync automatically.
+Three things in one repo: **scaffolding** (22 skills, profiles, hooks deployed to any project), **token optimization** (bash output filters + context defaults measured at 71.4% savings on Sonnet 4.6), and **multi-repo management** (`update --all` keeps every project in sync with one command).
 
 [![CI](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml/badge.svg)](https://github.com/pyramidheadshark/claude-scaffold/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
-![Jest Tests](https://img.shields.io/badge/Jest-424%20tests-brightgreen)
+![Token Savings](https://img.shields.io/badge/token%20savings-71.4%25-brightgreen)
+![Jest Tests](https://img.shields.io/badge/Jest-536%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-57%20tests-blue)
-![Benchmark](https://img.shields.io/badge/Benchmark-60%20tests-blueviolet)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -21,9 +21,11 @@ Clone once. Deploy to any project in one command. Update all projects whenever y
 
 ---
 
-## The Concept
+## Three Pillars
 
-Most Claude Code setups are per-project and drift apart. claude-scaffold is a **central infrastructure layer** that you own and deploy everywhere.
+### 1. Scaffolding — deploy discipline to every project
+
+claude-scaffold is a **central infrastructure layer** you configure once and deploy everywhere. 22 domain skills load automatically based on what you're working on. Profiles adapt the CLAUDE.md for different roles. Hooks enforce quality checks without any manual wiring.
 
 ```
 claude-scaffold  ← you configure this once
@@ -31,31 +33,44 @@ claude-scaffold  ← you configure this once
       ├── deploy → project-a/.claude/
       ├── deploy → project-b/.claude/
       └── deploy → project-c/.claude/
-
-Later: npx claude-scaffold update --all
-      → all three stay in sync with zero manual work
 ```
 
-You can ask Claude directly to handle this:
-> *"Deploy claude-scaffold to my new project with the fastapi-developer profile"*
-> *"Update all registered projects to the latest infra version"*
+### 2. Token Optimization — 71.4% input token savings (measured)
 
-Claude reads this README, runs the CLI, and wires everything up. No manual config copy-pasting.
+v2.1.0 ships a bash output filter hook that wraps verbose commands before they run. Instead of Claude reading 2,000 lines of `pytest` output, it reads the 20 lines that matter.
+
+```
+Benchmark: 25 tasks × Sonnet 4.6 via OpenRouter
+  Baseline:  25,084 input tokens
+  Optimized:  7,178 input tokens
+  Savings:      71.4%
+```
+
+Also included: `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` context cap as deploy default, `/compact` reminder at call 25, and opt-in `claude-haiku-4-5` routing for administrative agent tasks.
+
+### 3. Multi-Repo Management — one command keeps 29+ projects in sync
+
+```
+npx claude-scaffold update --all   # sync all registered projects
+npx claude-scaffold update --all --dry-run  # preview what changes
+npx claude-scaffold status         # show version drift across projects
+```
+
+When you improve a hook, skill, or CLAUDE.md — every project gets it. No copy-pasting, no drift.
 
 ---
 
 ## Why claude-scaffold?
 
-### Before vs After
+**Before:** every project has its own CLAUDE.md copied from memory, hooks are not synchronized, each project drifts toward different standards. Token bills grow as Claude reads full `git log` and `pytest` output verbatim.
 
-**Before:** every project has its own CLAUDE.md copied from memory, hooks are not synchronized, each project drifts toward different standards. When you improve your workflow, you update one project — the rest stay stale.
-
-**After:** one source of truth. `npx claude-scaffold update --all` propagates every improvement to all registered projects simultaneously. Claude reads the same discipline everywhere.
+**After:** one source of truth. Improvements propagate to all projects with one command. Claude reads filtered output — 71% fewer input tokens on measured workloads.
 
 ### Why not just copy a CLAUDE.md?
 
 A single CLAUDE.md copy works for one project. claude-scaffold adds:
 - **Sync mechanism** — `update --all` keeps every project in sync with one command
+- **Output filtering** — bash filter hook cuts input tokens by 71.4% on verbose commands
 - **Skill injection** — 22 domain skills loaded automatically per prompt via dynamic line-count budget
 - **Profile system** — different CLAUDE.md per role (ML engineer, FastAPI dev, AI developer, fullstack)
 - **Hook infrastructure** — session tracking, onboarding, quality checks, all wired automatically
@@ -151,22 +166,23 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 | `design-doc-creator` | *Meta — manual only, not auto-loaded* |
 | `skill-developer` | *Meta — manual only, not auto-loaded* |
 
-### 8 Agents
+### 9 Agents
 
-`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant`
+`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant` · `status-updater`
 
 ### 4 Commands
 
 `/init-design-doc` · `/new-project` · `/review` · `/dev-status`
 
-### 6 Hooks
+### 7 Hooks
 
 | Hook | Event | Action |
 |---|---|---|
 | `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills + plan-mode reminder |
 | `session-safety.js` | PreToolUse | Classify Bash commands (CRITICAL/MODERATE/SAFE), create git snapshots |
+| `bash-output-filter.js` | PreToolUse | Wrap verbose commands (pytest, git log, docker build, etc.) with output filters |
 | `session-start.js` | SessionStart | Detect platform (win32/unix), inject Windows rules, onboarding |
-| `session-checkpoint.js` | PostToolUse | Auto-checkpoint at plan approval or every 50 tool calls |
+| `session-checkpoint.js` | PostToolUse | Auto-checkpoint at plan approval or at call 25 (configurable via `SCAFFOLD_COMPACT_THRESHOLD`) |
 | `post-tool-use-tracker.js` | PostToolUse | Log tool calls to `.claude/logs/` |
 | `python-quality-check.js` | Stop | Run ruff + mypy at session end |
 
@@ -279,6 +295,51 @@ Extensions are concatenated with base agents during deploy/update. User extensio
 
 ---
 
+## Token Optimization (v2.1.0+)
+
+### Bash Output Filter
+
+`bash-output-filter.js` wraps verbose commands with output filters before they run, reducing input token consumption. Matches commands by prefix and appends a grep/tail pipeline:
+
+| Command | Filter Applied |
+|---|---|
+| `pytest ...` | grep FAILED/PASSED/ERROR + tail -80 |
+| `git log ...` | head -30 |
+| `docker build ...` | tail -30 |
+| `npm install ...` | grep added/removed/vulnerabilities + tail -20 |
+| `mypy ...` | grep error/warning/Found + tail -30 |
+| `ruff check ...` | tail -25 |
+
+Filter rules are in `.claude/hooks/filter_rules.json` (editable). Audit log at `.claude/logs/filter-log.jsonl`.
+
+**Benchmark result (Sonnet 4.6, 25 tasks):** 71.4% input token savings — baseline 25,084 tokens → optimized 7,178 tokens.
+
+### Context Defaults
+
+`deploySettings()` sets these as one-time defaults on first deploy (never overwrites existing config):
+
+```json
+{ "env": { "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1" }, "showClearContextOnPlanAccept": true }
+```
+
+### Compact Signal
+
+`session-checkpoint.js` reminds the user to run `/compact` at call 25 (one-shot per session). Configurable:
+
+```bash
+SCAFFOLD_COMPACT_THRESHOLD=20 claude  # custom threshold
+```
+
+### Agent Model Routing (opt-in)
+
+Set `SCAFFOLD_LIGHT_AGENTS=true` to route administrative tasks (status updates, backlog) to the cost-optimized `status-updater` agent which uses `claude-haiku-4-5-20251001`:
+
+```bash
+SCAFFOLD_LIGHT_AGENTS=true claude
+```
+
+---
+
 ## Deploy Options
 
 ### Option A — NPX (no clone needed)
@@ -357,12 +418,17 @@ On a 200K context window: < 3% overhead per prompt.
 claude-scaffold/
 ├── .claude/
 │   ├── skills/          # 22 skill modules (SKILL.md + resources/ + skill-metadata.json)
-│   ├── hooks/           # lifecycle automation (6 hooks)
-│   ├── agents/          # 8 sub-agents
+│   ├── hooks/           # lifecycle automation (7 hooks)
+│   ├── agents/          # 9 sub-agents
 │   ├── commands/        # 5 slash commands
 │   └── CLAUDE.md        # core profile + interaction principles
 ├── scripts/
 │   ├── deploy.py        # cross-platform deploy wizard (--status, --update, --update-all)
+│   ├── benchmark/
+│   │   ├── token_runner.py   # OpenRouter benchmark runner (--mode baseline|optimized)
+│   │   ├── tasks.json        # 25 scripted tasks (bash_filter, skill_activation, no_filter_expected)
+│   │   ├── gen_tasks.py      # task generator
+│   │   └── report.py         # Markdown + embedded PNG report → dev/benchmark-log.md
 │   └── metrics-report.js
 ├── templates/           # pyproject.toml, Dockerfile, docker-compose, GitHub Actions profiles
 ├── tests/
@@ -384,10 +450,16 @@ claude-scaffold/
 ## Running Tests
 
 ```bash
-npm test                          # 424 Jest + 57 Python
+npm test                          # 536 Jest + 57 Python
 npm run test:hook                 # hook tests only
 npm run check:budget              # verify all skills under 300 lines
 npm run metrics                   # skill load frequency report
+
+# Benchmark (requires OPENROUTER_API_KEY)
+npm run bench:check               # verify SDK + API key
+npm run bench:full                # baseline + optimized runs → dev/benchmark-log.md
+npm run bench:token               # token measurement only (no report)
+npm run bench:report              # generate report from latest JSONL files
 ```
 
 ---

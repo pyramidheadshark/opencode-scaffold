@@ -3,30 +3,58 @@
 const fs = require("fs");
 const path = require("path");
 
-const THRESHOLD = 50;
+const DEFAULT_THRESHOLD = 25;
 const DEPS_REMINDER_INTERVAL = 20;
 
-const CHECKPOINT_PLAN =
-  "## [AUTO CHECKPOINT — Plan Approved]\n" +
-  "The plan was just approved (ExitPlanMode called). Before starting implementation,\n" +
-  "write dev/status.md:\n" +
-  "- Active phase marker\n" +
-  "- What is about to be implemented\n" +
-  "- Key architectural decisions from the plan\n" +
-  "- Open questions / blockers";
+let _i18n;
+function getI18n() {
+  if (!_i18n) {
+    try { _i18n = require("./i18n"); } catch { _i18n = null; }
+  }
+  return _i18n;
+}
 
-const CHECKPOINT_THRESHOLD =
-  "## [AUTO CHECKPOINT — Activity Threshold]\n" +
-  "50+ tool calls since last checkpoint. Before your next response,\n" +
-  "update dev/status.md with current progress, decisions made, and next steps.";
+function loadLang(cwd) {
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(cwd, ".claude", "project-config.json"), "utf8"));
+    return config.lang || "en";
+  } catch { return "en"; }
+}
+
+function buildCheckpointPlan(lang) {
+  const i18n = getI18n();
+  if (i18n) return i18n.buildCheckpointPlanBlock(lang);
+  return "## [AUTO CHECKPOINT — Plan Approved]\n" +
+    "The plan was just approved (ExitPlanMode called). Before starting implementation,\n" +
+    "write dev/status.md:\n" +
+    "- Active phase marker\n" +
+    "- What is about to be implemented\n" +
+    "- Key architectural decisions from the plan\n" +
+    "- Open questions / blockers\n\n" +
+    "## [COMPACT REQUIRED BEFORE STEP 1]\n" +
+    "Your FIRST AND ONLY action before reading or executing any plan step:\n" +
+    "Tell the user exactly: \"Before we start implementation, please run /compact in the input box. " +
+    "After that, send any message — I will re-read the plan and begin Step 1.\"\n" +
+    "Do NOT read or execute plan steps yet. Wait for the user to confirm they ran /compact.";
+}
+
+function buildThresholdBlock(threshold, lang) {
+  const i18n = getI18n();
+  if (i18n) return i18n.buildThresholdCheckpointBlock(threshold, lang);
+  return "## [AUTO CHECKPOINT — Activity Threshold]\n" +
+    `${threshold}+ tool calls since last checkpoint. Before your next response,\n` +
+    "update dev/status.md with current progress, decisions made, and next steps.\n\n" +
+    "## [CONTEXT WARNING]\n" +
+    "Context is filling up. Tell the user: \"Consider running /compact to preserve session continuity.\"";
+}
 
 function loadCache(cacheDir, sessionId) {
   const cachePath = path.join(cacheDir, `checkpoint-${sessionId}.json`);
-  if (!fs.existsSync(cachePath)) return { tool_call_count: 0, last_checkpoint_count: 0 };
+  if (!fs.existsSync(cachePath)) return { tool_call_count: 0, last_checkpoint_count: 0, compact_signal_sent: false };
   try {
     return JSON.parse(fs.readFileSync(cachePath, "utf8"));
   } catch {
-    return { tool_call_count: 0, last_checkpoint_count: 0 };
+    return { tool_call_count: 0, last_checkpoint_count: 0, compact_signal_sent: false };
   }
 }
 
@@ -38,12 +66,14 @@ function saveCache(cacheDir, sessionId, cache) {
   } catch (e) { process.stderr.write(`[session-checkpoint] saveCache: ${e.message}\n`); }
 }
 
-function main(inputStr, cwd) {
+function main(inputStr, cwd, _fs) {
+  const threshold = parseInt(process.env.SCAFFOLD_COMPACT_THRESHOLD || String(DEFAULT_THRESHOLD), 10);
   let input = {};
   try { input = JSON.parse(inputStr); } catch { input = {}; }
 
   const toolName = input.tool_name || "unknown";
   const sessionId = input.session_id || "default";
+  const lang = loadLang(cwd);
 
   const cacheDir = path.join(cwd, ".claude/cache");
   const cache = loadCache(cacheDir, sessionId);
@@ -52,14 +82,20 @@ function main(inputStr, cwd) {
   if (cache.last_checkpoint_count === undefined) cache.last_checkpoint_count = 0;
 
   let triggered = false;
+  let isDepsTrigger = false;
   let checkpointBlock = null;
 
   if (toolName === "ExitPlanMode") {
     triggered = true;
-    checkpointBlock = CHECKPOINT_PLAN;
-  } else if (cache.tool_call_count - cache.last_checkpoint_count >= THRESHOLD) {
+    checkpointBlock = buildCheckpointPlan(lang);
+    cache.compact_signal_sent = false;
+  } else if (
+    !cache.compact_signal_sent &&
+    cache.tool_call_count - cache.last_checkpoint_count >= threshold
+  ) {
     triggered = true;
-    checkpointBlock = CHECKPOINT_THRESHOLD;
+    checkpointBlock = buildThresholdBlock(threshold, lang);
+    cache.compact_signal_sent = true;
   }
 
   if (!triggered) {
@@ -81,9 +117,13 @@ function main(inputStr, cwd) {
           }
           if (open.length > 0) {
             triggered = true;
-            checkpointBlock = "## [OPEN BLOCKERS REMINDER]\n" +
-              open.map(b => `- [${b.id}] ${b.description || "no description"}`).join("\n") +
-              "\nConsider addressing these blockers or updating their status.";
+            isDepsTrigger = true;
+            const i18n = getI18n();
+            checkpointBlock = i18n
+              ? i18n.buildDepsBrockersBlock(open, lang)
+              : "## [OPEN BLOCKERS REMINDER]\n" +
+                open.map(b => `- [${b.id}] ${b.description || "no description"}`).join("\n") +
+                "\nConsider addressing these blockers or updating their status.";
           }
         }
       } catch (e) { process.stderr.write(`[session-checkpoint] deps blocker: ${e.message}\n`); }
@@ -91,7 +131,7 @@ function main(inputStr, cwd) {
   }
 
   if (triggered) {
-    if (checkpointBlock && checkpointBlock.includes("BLOCKER")) {
+    if (isDepsTrigger) {
       cache.last_deps_reminder_count = cache.tool_call_count;
     } else {
       cache.last_checkpoint_count = cache.tool_call_count;
