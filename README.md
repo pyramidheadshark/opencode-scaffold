@@ -151,22 +151,23 @@ Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs
 | `design-doc-creator` | *Meta — manual only, not auto-loaded* |
 | `skill-developer` | *Meta — manual only, not auto-loaded* |
 
-### 8 Agents
+### 9 Agents
 
-`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant`
+`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant` · `status-updater`
 
 ### 4 Commands
 
 `/init-design-doc` · `/new-project` · `/review` · `/dev-status`
 
-### 6 Hooks
+### 7 Hooks
 
 | Hook | Event | Action |
 |---|---|---|
 | `skill-activation-prompt.js` | UserPromptSubmit | Inject status.md + matched skills + plan-mode reminder |
 | `session-safety.js` | PreToolUse | Classify Bash commands (CRITICAL/MODERATE/SAFE), create git snapshots |
+| `bash-output-filter.js` | PreToolUse | Wrap verbose commands (pytest, git log, docker build, etc.) with output filters |
 | `session-start.js` | SessionStart | Detect platform (win32/unix), inject Windows rules, onboarding |
-| `session-checkpoint.js` | PostToolUse | Auto-checkpoint at plan approval or every 50 tool calls |
+| `session-checkpoint.js` | PostToolUse | Auto-checkpoint at plan approval or at call 25 (configurable via `SCAFFOLD_COMPACT_THRESHOLD`) |
 | `post-tool-use-tracker.js` | PostToolUse | Log tool calls to `.claude/logs/` |
 | `python-quality-check.js` | Stop | Run ruff + mypy at session end |
 
@@ -279,6 +280,51 @@ Extensions are concatenated with base agents during deploy/update. User extensio
 
 ---
 
+## Token Optimization (v2.1.0+)
+
+### Bash Output Filter
+
+`bash-output-filter.js` wraps verbose commands with output filters before they run, reducing input token consumption. Matches commands by prefix and appends a grep/tail pipeline:
+
+| Command | Filter Applied |
+|---|---|
+| `pytest ...` | grep FAILED/PASSED/ERROR + tail -80 |
+| `git log ...` | head -30 |
+| `docker build ...` | tail -30 |
+| `npm install ...` | grep added/removed/vulnerabilities + tail -20 |
+| `mypy ...` | grep error/warning/Found + tail -30 |
+| `ruff check ...` | tail -25 |
+
+Filter rules are in `.claude/hooks/filter_rules.json` (editable). Audit log at `.claude/logs/filter-log.jsonl`.
+
+**Benchmark result (Sonnet 4.6, 25 tasks):** 71.4% input token savings — baseline 25,084 tokens → optimized 7,178 tokens.
+
+### Context Defaults
+
+`deploySettings()` sets these as one-time defaults on first deploy (never overwrites existing config):
+
+```json
+{ "env": { "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1" }, "showClearContextOnPlanAccept": true }
+```
+
+### Compact Signal
+
+`session-checkpoint.js` reminds the user to run `/compact` at call 25 (one-shot per session). Configurable:
+
+```bash
+SCAFFOLD_COMPACT_THRESHOLD=20 claude  # custom threshold
+```
+
+### Agent Model Routing (opt-in)
+
+Set `SCAFFOLD_LIGHT_AGENTS=true` to route administrative tasks (status updates, backlog) to the cost-optimized `status-updater` agent which uses `claude-haiku-4-5-20251001`:
+
+```bash
+SCAFFOLD_LIGHT_AGENTS=true claude
+```
+
+---
+
 ## Deploy Options
 
 ### Option A — NPX (no clone needed)
@@ -357,12 +403,17 @@ On a 200K context window: < 3% overhead per prompt.
 claude-scaffold/
 ├── .claude/
 │   ├── skills/          # 22 skill modules (SKILL.md + resources/ + skill-metadata.json)
-│   ├── hooks/           # lifecycle automation (6 hooks)
-│   ├── agents/          # 8 sub-agents
+│   ├── hooks/           # lifecycle automation (7 hooks)
+│   ├── agents/          # 9 sub-agents
 │   ├── commands/        # 5 slash commands
 │   └── CLAUDE.md        # core profile + interaction principles
 ├── scripts/
 │   ├── deploy.py        # cross-platform deploy wizard (--status, --update, --update-all)
+│   ├── benchmark/
+│   │   ├── token_runner.py   # OpenRouter benchmark runner (--mode baseline|optimized)
+│   │   ├── tasks.json        # 25 scripted tasks (bash_filter, skill_activation, no_filter_expected)
+│   │   ├── gen_tasks.py      # task generator
+│   │   └── report.py         # Markdown + embedded PNG report → dev/benchmark-log.md
 │   └── metrics-report.js
 ├── templates/           # pyproject.toml, Dockerfile, docker-compose, GitHub Actions profiles
 ├── tests/
@@ -384,10 +435,16 @@ claude-scaffold/
 ## Running Tests
 
 ```bash
-npm test                          # 424 Jest + 57 Python
+npm test                          # 533 Jest + 57 Python
 npm run test:hook                 # hook tests only
 npm run check:budget              # verify all skills under 300 lines
 npm run metrics                   # skill load frequency report
+
+# Benchmark (requires OPENROUTER_API_KEY)
+npm run bench:check               # verify SDK + API key
+npm run bench:full                # baseline + optimized runs → dev/benchmark-log.md
+npm run bench:token               # token measurement only (no report)
+npm run bench:report              # generate report from latest JSONL files
 ```
 
 ---

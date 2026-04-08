@@ -151,22 +151,23 @@ Org-профили хранятся в `org-profiles/<org-name>/` в scaffold-р
 | `design-doc-creator` | *Мета — только вручную, не загружается автоматически* |
 | `skill-developer` | *Мета — только вручную, не загружается автоматически* |
 
-### 8 Агентов
+### 9 Агентов
 
-`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant`
+`design-doc-architect` · `test-architect` · `multimodal-analyzer` · `code-reviewer` · `infra-provisioner` · `refactor-planner` · `project-status-reporter` · `debug-assistant` · `status-updater`
 
 ### 4 Команды
 
 `/init-design-doc` · `/new-project` · `/review` · `/dev-status`
 
-### 6 Хуков
+### 7 Хуков
 
 | Хук | Событие | Действие |
 |---|---|---|
 | `skill-activation-prompt.js` | UserPromptSubmit | Инъекция status.md + подходящих скиллов + напоминание plan-mode |
 | `session-safety.js` | PreToolUse | Классификация Bash-команд (CRITICAL/MODERATE/SAFE), создание git-снапшотов |
+| `bash-output-filter.js` | PreToolUse | Оборачивает verbose-команды (pytest, git log, docker build и др.) фильтрами вывода |
 | `session-start.js` | SessionStart | Определение платформы (win32/unix), инъекция Windows-правил, онбординг |
-| `session-checkpoint.js` | PostToolUse | Авто-чекпоинт при подтверждении плана или каждые 50 вызовов инструментов |
+| `session-checkpoint.js` | PostToolUse | Авто-чекпоинт при подтверждении плана или на вызове 25 (настраивается через `SCAFFOLD_COMPACT_THRESHOLD`) |
 | `post-tool-use-tracker.js` | PostToolUse | Логирование вызовов инструментов в `.claude/logs/` |
 | `python-quality-check.js` | Stop | Запуск ruff + mypy при завершении сессии |
 
@@ -279,6 +280,51 @@ rules:
 
 ---
 
+## Оптимизация токенов (v2.1.0+)
+
+### Фильтр bash-вывода
+
+`bash-output-filter.js` оборачивает verbose-команды фильтрами вывода до их выполнения, снижая потребление input-токенов:
+
+| Команда | Применяемый фильтр |
+|---|---|
+| `pytest ...` | grep FAILED/PASSED/ERROR + tail -80 |
+| `git log ...` | head -30 |
+| `docker build ...` | tail -30 |
+| `npm install ...` | grep added/removed/vulnerabilities + tail -20 |
+| `mypy ...` | grep error/warning/Found + tail -30 |
+| `ruff check ...` | tail -25 |
+
+Правила фильтрации — в `.claude/hooks/filter_rules.json` (редактируемый). Аудит-лог: `.claude/logs/filter-log.jsonl`.
+
+**Результат бенчмарка (Sonnet 4.6, 25 задач):** 71.4% экономии input-токенов — baseline 25 084 → optimized 7 178 токенов.
+
+### Контекстные дефолты при деплое
+
+`deploySettings()` устанавливает эти значения как one-time дефолты при первом деплое (никогда не перезаписывает существующий конфиг):
+
+```json
+{ "env": { "CLAUDE_CODE_DISABLE_1M_CONTEXT": "1" }, "showClearContextOnPlanAccept": true }
+```
+
+### Сигнал компактизации
+
+`session-checkpoint.js` напоминает запустить `/compact` на вызове 25 (один раз за сессию). Настраивается:
+
+```bash
+SCAFFOLD_COMPACT_THRESHOLD=20 claude  # свой порог
+```
+
+### Маршрутизация модели агента (opt-in)
+
+При `SCAFFOLD_LIGHT_AGENTS=true` административные задачи (обновление статуса, бэклог) направляются в оптимизированный агент `status-updater` с `claude-haiku-4-5-20251001`:
+
+```bash
+SCAFFOLD_LIGHT_AGENTS=true claude
+```
+
+---
+
 ## Варианты деплоя
 
 ### Вариант A — NPX (без клонирования)
@@ -357,12 +403,17 @@ echo '{"prompt":"pyproject.toml ruff setup"}' | node .claude/hooks/skill-activat
 claude-scaffold/
 ├── .claude/
 │   ├── skills/          # 22 скилл-модуля (SKILL.md + resources/ + skill-metadata.json)
-│   ├── hooks/           # автоматизация жизненного цикла (6 хуков)
-│   ├── agents/          # 8 суб-агентов
+│   ├── hooks/           # автоматизация жизненного цикла (7 хуков)
+│   ├── agents/          # 9 суб-агентов
 │   ├── commands/        # 5 slash-команд
 │   └── CLAUDE.md        # базовый профиль + принципы взаимодействия
 ├── scripts/
 │   ├── deploy.py        # кросс-платформенный визард деплоя (--status, --update, --update-all)
+│   ├── benchmark/
+│   │   ├── token_runner.py   # запуск бенчмарка через OpenRouter (--mode baseline|optimized)
+│   │   ├── tasks.json        # 25 задач (bash_filter, skill_activation, no_filter_expected)
+│   │   ├── gen_tasks.py      # генератор задач
+│   │   └── report.py         # Markdown + встроенные PNG → dev/benchmark-log.md
 │   └── metrics-report.js
 ├── templates/           # pyproject.toml, Dockerfile, docker-compose, профили GitHub Actions
 ├── tests/
@@ -384,10 +435,16 @@ claude-scaffold/
 ## Запуск тестов
 
 ```bash
-npm test                          # 424 Jest + 57 Python
+npm test                          # 533 Jest + 57 Python
 npm run test:hook                 # только тесты хуков
 npm run check:budget              # проверить что все скиллы < 300 строк
 npm run metrics                   # отчёт по частоте загрузки скиллов
+
+# Бенчмарк (требует OPENROUTER_API_KEY)
+npm run bench:check               # проверить SDK + API-ключ
+npm run bench:full                # baseline + optimized прогоны → dev/benchmark-log.md
+npm run bench:token               # только замер токенов (без отчёта)
+npm run bench:report              # сгенерировать отчёт из последних JSONL-файлов
 ```
 
 ---
