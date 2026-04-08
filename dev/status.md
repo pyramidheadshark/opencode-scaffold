@@ -16,7 +16,7 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 
 **Active**: v2.1.0 — Token Optimization (2026-04-08)
 
-Branch: `feature/token-optimization`. Phase 1-4 complete, Phase 5 next.
+Branch: `feature/token-optimization`. All 5 phases complete. Ready for PR → main.
 Goal: benchmark-driven token optimization for Claude Code sessions.
 
 ---
@@ -25,8 +25,8 @@ Goal: benchmark-driven token optimization for Claude Code sessions.
 
 - **v1.6.0 PUBLISHED** npm@1.6.0, main HEAD at `a8b4e68`
 - **v2.0.0 code complete** on main — publish only by explicit command
-- **v2.1.0 IN PROGRESS** on `feature/token-optimization`, HEAD at `dc8ce98`
-- **522 tests** (465 Jest + 57 Python), 0 failed
+- **v2.1.0 COMPLETE** on `feature/token-optimization`, HEAD at `86a1050`
+- **527 tests** (470 Jest + 57 Python), 0 failed
 - **4 GitHub stars**, 0 forks
 
 ### v2.1.0 Phase Progress:
@@ -37,7 +37,7 @@ Goal: benchmark-driven token optimization for Claude Code sessions.
 | Phase 2 — Compact signal redesign | ✅ Done | f1b47db | ExitPlanMode → /compact before Step 1; threshold one-shot (default 40), `SCAFFOLD_COMPACT_THRESHOLD` |
 | Phase 3 — Bash output filter | ✅ Done | 86fbe65 | `bash-output-filter.js` PreToolUse whitelist, `filter_rules.json`, log to `.claude/logs/filter-log.jsonl` |
 | Phase 4 — Benchmark harness | ✅ Done | dc8ce98 | OpenRouter SDK, 25 tasks, 3 PNG graphs, **60.7% savings measured** |
-| Phase 5 — Agent model routing | ⏳ Next | — | `status-updater.md` agent with haiku frontmatter, opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
+| Phase 5 — Agent model routing | ✅ Done | 86a1050 | `status-updater.md` agent with haiku frontmatter, opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
 
 ### Benchmark Results (Phase 4):
 
@@ -96,18 +96,12 @@ Model: `anthropic/claude-haiku-4.5` via OpenRouter. Cost: $0.0613 → $0.0458.
 
 ## Next Session Plan
 
-1. **Phase 5: Agent model routing (opt-in)**
-   - Plan mode перед реализацией
-   - Создать `.claude/agents/status-updater.md` с frontmatter `model: claude-haiku-4-5-20251001`
-   - Изменить `session-start.js`: при `SCAFFOLD_LIGHT_AGENTS=true` inject hint про агента
-   - Добавить тесты в `tests/hook/session-start.test.js`
-   - Верифицировать frontmatter `model:` field реально подхватывается CC
+1. **PR `feature/token-optimization` → `main`**
+   - `git push origin feature/token-optimization`
+   - `gh pr create` с `dev/benchmark-log.md` как evidence
 
-2. **После Phase 5:**
-   - Bump version → 2.1.0 в `package.json`
-   - PR `feature/token-optimization` → `main`
-   - Update deployed repos через `python scripts/deploy.py --update-all`
-   - `dev/benchmark-log.md` → прикрепить к PR как evidence
+2. **Update deployed repos**
+   - `python scripts/deploy.py --update-all`
 
 3. **npm publish v2.1.0** — ТОЛЬКО по явной команде пользователя
 
@@ -184,4 +178,4 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ---
 
-*Last updated: 2026-04-08*
+*Last updated: 2026-04-08 (Phase 5 complete)*
