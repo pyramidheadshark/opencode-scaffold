@@ -17,8 +17,7 @@ Personal Claude Code infrastructure for ML engineering projects — reusable ski
 **Active**: v2.1.0 — Token Optimization (2026-04-08)
 
 Branch: `feature/token-optimization`. Phase 1-4 complete, Phase 5 next.
-Context: community data shows 3-4x token increase after Claude Code switched to 1M context (March 2026).
-Goal: benchmark-driven optimization with Anthropic SDK, infographic output.
+Goal: benchmark-driven token optimization for Claude Code sessions.
 
 ---
 
@@ -26,7 +25,7 @@ Goal: benchmark-driven optimization with Anthropic SDK, infographic output.
 
 - **v1.6.0 PUBLISHED** npm@1.6.0, main HEAD at `a8b4e68`
 - **v2.0.0 code complete** on main — publish only by explicit command
-- **v2.1.0 IN PROGRESS** on `feature/token-optimization`
+- **v2.1.0 IN PROGRESS** on `feature/token-optimization`, HEAD at `dc8ce98`
 - **522 tests** (465 Jest + 57 Python), 0 failed
 - **4 GitHub stars**, 0 forks
 
@@ -34,48 +33,83 @@ Goal: benchmark-driven optimization with Anthropic SDK, infographic output.
 
 | Phase | Status | Commit | Summary |
 |---|---|---|---|
-| Phase 1 — Context defaults | ✅ Done | f1b47db | `deploySettings()` now sets `DISABLE_1M_CONTEXT=1` + `showClearContextOnPlanAccept:true` as one-time defaults |
-| Phase 2 — Compact signal redesign | ✅ Done | f1b47db | ExitPlanMode → /compact request before Step 1; threshold one-shot (default 40), configurable via `SCAFFOLD_COMPACT_THRESHOLD` |
-| Phase 3 — Bash output filter | ✅ Done | 86fbe65 | `bash-output-filter.js` PreToolUse whitelist, `filter_rules.json`, visible log |
-| Phase 4 — Benchmark harness | ✅ Done | pending | `scripts/benchmark/` — check_sdk.py, token_runner.py, tasks.json (25 tasks), report.py + `bench:*` npm scripts |
-| Phase 5 — Agent model routing | ⏳ Pending | — | `status-updater.md` agent with haiku frontmatter, opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
+| Phase 1 — Context defaults | ✅ Done | f1b47db | `deploySettings()` sets `DISABLE_1M_CONTEXT=1` + `showClearContextOnPlanAccept:true` as one-time defaults |
+| Phase 2 — Compact signal redesign | ✅ Done | f1b47db | ExitPlanMode → /compact before Step 1; threshold one-shot (default 40), `SCAFFOLD_COMPACT_THRESHOLD` |
+| Phase 3 — Bash output filter | ✅ Done | 86fbe65 | `bash-output-filter.js` PreToolUse whitelist, `filter_rules.json`, log to `.claude/logs/filter-log.jsonl` |
+| Phase 4 — Benchmark harness | ✅ Done | dc8ce98 | OpenRouter SDK, 25 tasks, 3 PNG graphs, **60.7% savings measured** |
+| Phase 5 — Agent model routing | ⏳ Next | — | `status-updater.md` agent with haiku frontmatter, opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
 
-### Key design decisions:
+### Benchmark Results (Phase 4):
 
-- `deploySettings()` uses `=== undefined` check — respects explicit user overrides, only sets on first deploy
-- Compact signal: two triggers — A) ExitPlanMode (compact BEFORE Step 1), B) tool_call_count threshold (one-shot)
-- Benchmark uses Anthropic SDK direct — `response.usage` for input_tokens, output_tokens, cache fields
-- Bash filter: PreToolUse `updatedInput` whitelist-only + fallback on any error + log to `.claude/logs/filter-log.jsonl`
-- i18n: all user-facing hook blocks covered in EN+RU via `lib/i18n.js` builder functions
-- deploySettings() hook merge: matcher-based (not path-based) — preserves user hooks with different matchers
-- `isDepsTrigger` boolean replaces fragile `checkpointBlock.includes("BLOCKER")` — language-safe
-- Benchmark: 10 bash_filter + 10 skill_activation + 5 edge_case; requires `ANTHROPIC_API_KEY` env var
+| Category | Tasks | Avg Baseline | Avg Optimized | Savings% |
+|---|---|---|---|---|
+| bash_filter | 10 | 1 900 tok | 407 tok | **78.6%** |
+| skill_activation | 10 | 335 tok | 238 tok | **29.0%** |
+| edge_case | 5 | 766 tok | 766 tok | 0.0% (ожидаемо) |
+| **TOTAL** | **25** | **26 183 tok** | **10 287 tok** | **60.7%** |
 
-### Versions:
-- **v1.6.0** — published on npm (2026-04-07)
-- **v2.0.0** — code complete on main (pending explicit publish)
-- **v2.1.0** — in progress on feature branch
+Model: `anthropic/claude-haiku-4.5` via OpenRouter. Cost: $0.0613 → $0.0458.
+
+---
+
+## Key Architecture (v2.1.0)
+
+### Новые файлы этой ветки:
+
+| Файл | Что делает |
+|---|---|
+| `.claude/hooks/bash-output-filter.js` | PreToolUse: whitelist-only wrapping verbose команд (`( cmd ) \| grep \| tail`), fallback на original при ошибке |
+| `.claude/hooks/filter_rules.json` | 5 правил: pytest, git log, git diff --stat, npm test, pip install |
+| `.claude/hooks/i18n.js` | Deployed копия `lib/i18n.js` — 11 builder functions для всех user-facing блоков (EN+RU) |
+| `scripts/benchmark/token_runner.py` | CLI runner: OpenAI SDK → OpenRouter, `--mode baseline\|optimized`, JSONL output с generation_id |
+| `scripts/benchmark/tasks.json` | 25 benchmark tasks (10 bash_filter + 10 skill_activation + 5 edge_case) |
+| `scripts/benchmark/report.py` | Markdown + 3 PNG embedded (bar chart, category savings, cost pie) → `dev/benchmark-log.md` |
+| `scripts/benchmark/check_sdk.py` | Верификация OpenAI SDK + OPENROUTER_API_KEY + тестовый вызов |
+| `dev/benchmark-log.md` | Накопительный лог результатов (с embedded PNG через base64) |
+
+### Изменённые файлы:
+
+| Файл | Что изменено |
+|---|---|
+| `lib/deploy/copy.js` | 1) PreToolUse → 2 hooks (safety + filter); 2) hook merge matcher-based (не path-based) |
+| `lib/i18n.js` | +9 builder functions для всех injection blocks (EN+RU), синхронизирован с `.claude/hooks/i18n.js` |
+| `.claude/hooks/session-checkpoint.js` | RU-адаптация via i18n; `isDepsTrigger` boolean вместо `includes("BLOCKER")` |
+| `.claude/hooks/skill-activation-prompt.js` | RU-адаптация via i18n; все 6 injection blocks через `i18n.buildXxx(lang)` |
+| `tests/cli/init.test.js` | PreToolUse 1→2 hooks; matcher-based merge tests; filter_rules.json deploy test |
+| `tests/hook/bash-output-filter.test.js` | NEW: 32 теста (8 describe blocks) |
+
+---
+
+## Design Decisions (v2.1.0 specific)
+
+| Decision | Choice |
+|---|---|
+| Bash filter merge | PreToolUse `updatedInput` — whitelist-only, fallback на original при ошибке |
+| hook merge в deploySettings | Matcher-based dedup: scaffold владеет своими matchers, user hooks с другими matcher сохраняются |
+| i18n lazy loading | `getI18n()` IIFE + `loadLang(cwd)` — lazy, не падает если i18n.js недоступен |
+| isDepsTrigger | Boolean флаг вместо `includes("BLOCKER")` — language-safe |
+| Benchmark SDK | OpenAI SDK (openai>=1.0) с `base_url=openrouter.ai/api/v1` — OpenAI-compatible |
+| Benchmark observability | `x-session-id` per run, `generation_id` в JSONL, ссылка на дашборд в stdout |
+| JSONL в .gitignore | `scripts/benchmark/output/` gitignored — генерируемые артефакты |
 
 ---
 
 ## Next Session Plan
 
-1. **Запустить бенчмарк** (требует `ANTHROPIC_API_KEY`):
-   ```bash
-   export ANTHROPIC_API_KEY=sk-ant-...
-   npm run bench:check    # → [✓] All checks passed
-   npm run bench:token    # baseline + optimized (~50 API calls, ~$0.10 haiku)
-   npm run bench:report   # → dev/benchmark-log.md + 3 PNG встроены
-   ```
-
-2. **Phase 5**: Agent model routing (opt-in)
+1. **Phase 5: Agent model routing (opt-in)**
+   - Plan mode перед реализацией
    - Создать `.claude/agents/status-updater.md` с frontmatter `model: claude-haiku-4-5-20251001`
-   - Изменить `session-start.js`: SCAFFOLD_LIGHT_AGENTS hint injection
-   - Добавить тесты
+   - Изменить `session-start.js`: при `SCAFFOLD_LIGHT_AGENTS=true` inject hint про агента
+   - Добавить тесты в `tests/hook/session-start.test.js`
+   - Верифицировать frontmatter `model:` field реально подхватывается CC
 
-3. **Commit**: `feat: token-opt phase 3-4 — bash output filter and benchmark harness`
+2. **После Phase 5:**
+   - Bump version → 2.1.0 в `package.json`
+   - PR `feature/token-optimization` → `main`
+   - Update deployed repos через `python scripts/deploy.py --update-all`
+   - `dev/benchmark-log.md` → прикрепить к PR как evidence
 
-4. **После Phase 5**: bump version → 2.1.0, PR feature → main, `/dev-status`
+3. **npm publish v2.1.0** — ТОЛЬКО по явной команде пользователя
 
 ---
 
@@ -101,17 +135,21 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ### Python infra tests UnicodeDecodeError на Windows
 `read_text()` использует cp1251 по умолчанию. Фикс: `encoding="utf-8"` везде.
+Применено также в `check_sdk.py`, `token_runner.py`, `report.py` через stdout wrapper.
 
 ### H5 compact signal: tool_call_count — слабый proxy для размера контекста
-`git status` и `cat large_file.py` — оба 1 вызов, но 10 токен vs 50k. Порог 40 calls — ориентир, не точное измерение.
-Пока оставлено как есть (лучше чем ничего), для точного сигнала нужен токен-счётчик из API response.
+`git status` и `cat large_file.py` — оба 1 вызов, но 10 токен vs 50k. Порог 40 calls — ориентир.
+Для точного сигнала нужен токен-счётчик из API response.
 
-### Bash filter: updatedInput в PreToolUse — нужна верификация
-Согласно CC docs, поддерживается. Но если нет — fallback: оригинальный вывод без изменений.
+### Bash filter: updatedInput в PreToolUse — нужна верификация в реальной сессии
+По CC docs поддерживается. Fallback при любой ошибке — оригинальная команда без изменений.
+
+### Phase 5: frontmatter `model:` в агентах — не верифицировано
+Официально документировано в CC docs. Нужно проверить реальное поведение до завершения фазы.
 
 ---
 
-## Architecture Decisions
+## Architecture Decisions (полная история)
 
 | Decision | Choice | Date |
 |---|---|---|
@@ -123,12 +161,13 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 | Shared YAML parser | lib/yaml-parser.js — no hook→lib imports | 2026-04-06 |
 | Agent extensions | Concatenation at deploy time, idempotency guard | 2026-04-06 |
 | Token defaults deploy | `=== undefined` check — one-time, never overwrites user decision | 2026-04-07 |
-| Compact signal | Two-trigger: ExitPlanMode (asks /compact before Step 1) + one-shot threshold | 2026-04-07 |
-| Bash output filter | PreToolUse `updatedInput` whitelist-only + visible log — no PostToolUse (MCP-only) | 2026-04-07 |
-| Benchmark token tracking | Anthropic SDK direct — response.usage fields only, no OpenLIT needed | 2026-04-08 |
-| Hook merge in deploySettings | Matcher-based dedup — scaffold owns specific matchers, user hooks preserved by different matcher | 2026-04-08 |
-| i18n coverage | All user-facing hook blocks in EN+RU via lib/i18n.js builder functions, lazy-loaded in hooks | 2026-04-08 |
-| Gemini routing | Agent frontmatter `model:` + opt-in SCAFFOLD_LIGHT_AGENTS — not hook-based | 2026-04-07 |
+| Compact signal | Two-trigger: ExitPlanMode (/compact before Step 1) + one-shot threshold | 2026-04-07 |
+| Bash output filter | PreToolUse `updatedInput` whitelist-only + fallback + log | 2026-04-07 |
+| deploySettings hook merge | Matcher-based dedup — scaffold owns matchers, user hooks preserved | 2026-04-08 |
+| i18n coverage | EN+RU builder functions in lib/i18n.js, lazy-loaded in hooks | 2026-04-08 |
+| Benchmark SDK | openai SDK → OpenRouter (not anthropic SDK, not OpenLIT) | 2026-04-08 |
+| Benchmark observability | x-session-id per run + generation_id per call → openrouter.ai/activity | 2026-04-08 |
+| JSONL output gitignored | scripts/benchmark/output/ — generated artifacts, not committed | 2026-04-08 |
 
 ---
 
