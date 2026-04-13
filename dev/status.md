@@ -16,7 +16,30 @@ Positioned around three pillars: **scaffolding** (deploy + sync), **token optimi
 
 ## Current Phase
 
-**Idle** — v2.1.0 published. No active branch. Next work starts from main.
+**P0 Overhaul — Session 1 DONE, Session 2 pending.**
+
+Session 1 (A2 + Post-Compact Resume) committed to main (`137cfca`). Deploy to 29 repos pending.
+Next: Session 2 (B1, B2, D1, D2, D3) — skill re-injection audit + model router.
+
+---
+
+## P0 Overhaul Plan (2026-04-13)
+
+Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.md`
+
+| Session | Phases | Status | Notes |
+|---------|--------|--------|-------|
+| Session 1 | A1 (user action) + A2 | ✅ DONE | A1: user adds `export ANTHROPIC_MODEL=claude-sonnet-4-6` to ~/.bashrc |
+| Session 2 | B1 + B2 + D1 + D2 + D3 | ⏳ Pending | skill re-injection + model router CLI |
+| Session 3 | C1 + C2 | ⏳ Pending | Session Contract + Knowledge Manifest |
+| Session 4 | E1-E5 | ⏳ Pending | Quality Benchmark lab tasks |
+
+**A2 (Compact Button Fix):** `system_prompt_addition` → `hookSpecificOutput.additionalContext` (PostToolUse/SessionStart), top-level `additionalContext` (UserPromptSubmit). Resume Message template added to EN+RU compact blocks.
+
+**Critical OpenRouter facts (for D1):**
+- Base URL: `https://openrouter.ai/api` (NOT `/api/v1`)
+- Auth: `ANTHROPIC_AUTH_TOKEN=sk-or-v1-...` + `ANTHROPIC_API_KEY=""` (explicitly empty)
+- Gemini alias: `google/gemini-3-flash-preview`
 
 ---
 
@@ -139,4 +162,4 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ---
 
-*Last updated: 2026-04-08 (v2.1.0 published, all phases complete)*
+*Last updated: 2026-04-13 (P0 Session 1 done — hook API migration + Resume Message; deploy to 29 repos pending)*
