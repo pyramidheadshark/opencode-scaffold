@@ -16,7 +16,16 @@ Positioned around three pillars: **scaffolding** (deploy + sync), **token optimi
 
 ## Current Phase
 
-**Idle** — v2.1.0 published. No active branch. Next work starts from main.
+**Active** — v2.2.0 planning. Ветка: `feature/wyndace-hub-profiles-tools` (контрибьютор: @wyndace).
+
+### Планируемые фичи v2.2.0
+
+| Приоритет | Фича | Описание | Статус |
+|---|---|---|---|
+| 🔴 1 | **Scaffold TUI inside Claude Code** | Интерактивный TUI как slash-команда `/scaffold` — управление проектами, профилями, тулзами прямо из Claude Code с Claude как бэкендом; встроенный оркестратор для параллельного/последовательного запуска нескольких `claude --print` инстансов по репо | 🔲 Не начато |
+| 🟡 2 | **Tools manager + Skill search** | Дать URL → авто-определить тип (MCP/OpenAPI/GitHub/docs) → сгенерировать skill + обновить `skill-rules.json` → инструмент сразу участвует в skill injection | 🔲 Не начато |
+| 🟡 3 | **Profile switcher** | `npx claude-scaffold switch <profile>` — смена профиля в уже задеплоенном проекте без полного переинита | 🔲 Не начато |
+| 🟢 4 | **Hub org-profile** | CLAUDE.md-шаблон для hub-типа в org-profiles + CLI-команда для переключения между проектами | 🔲 Не начато |
 
 ---
 
