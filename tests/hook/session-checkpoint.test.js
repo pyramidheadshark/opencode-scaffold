@@ -25,26 +25,33 @@ describe("ExitPlanMode trigger", () => {
   beforeEach(() => { tmpDir = makeTempDir(); });
   afterEach(() => { cleanup(tmpDir); });
 
-  test("returns system_prompt_addition on ExitPlanMode", () => {
+  test("returns hookSpecificOutput.additionalContext on ExitPlanMode", () => {
     const result = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "s1" }), tmpDir);
     expect(result.continue).toBe(true);
-    expect(result.system_prompt_addition).toContain("[AUTO CHECKPOINT — Plan Approved]");
+    expect(result.system_prompt_addition).toBeUndefined();
+    expect(result.hookSpecificOutput.additionalContext).toContain("[AUTO CHECKPOINT — Plan Approved]");
   });
 
-  test("system_prompt_addition contains required status sections", () => {
+  test("additionalContext contains required status sections", () => {
     const result = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "s1" }), tmpDir);
-    const text = result.system_prompt_addition;
+    const text = result.hookSpecificOutput.additionalContext;
     expect(text).toContain("dev/status.md");
     expect(text).toContain("Active phase marker");
     expect(text).toContain("Key architectural decisions");
   });
 
-  test("system_prompt_addition contains compact request before Step 1", () => {
+  test("additionalContext contains compact request before Step 1", () => {
     const result = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "s1" }), tmpDir);
-    const text = result.system_prompt_addition;
+    const text = result.hookSpecificOutput.additionalContext;
     expect(text).toContain("[COMPACT REQUIRED BEFORE STEP 1]");
     expect(text).toContain("/compact");
-    expect(text).toContain("re-read the plan");
+    expect(text).toContain("Resume Message");
+  });
+
+  test("compact gate appears AFTER status write instruction (ordering)", () => {
+    const result = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "s1" }), tmpDir);
+    const text = result.hookSpecificOutput.additionalContext;
+    expect(text.indexOf("[COMPACT REQUIRED BEFORE STEP 1]")).toBeGreaterThan(text.indexOf("dev/status.md"));
   });
 
   test("updates last_checkpoint_count in cache on ExitPlanMode", () => {
@@ -87,9 +94,9 @@ describe("Threshold trigger", () => {
     }
     const result = main(JSON.stringify({ tool_name: "Bash", session_id: "s3" }), tmpDir);
     expect(result.continue).toBe(true);
-    expect(result.system_prompt_addition).toContain("[AUTO CHECKPOINT — Activity Threshold]");
-    expect(result.system_prompt_addition).toContain("[CONTEXT WARNING]");
-    expect(result.system_prompt_addition).toContain("/compact");
+    expect(result.hookSpecificOutput.additionalContext).toContain("[AUTO CHECKPOINT — Activity Threshold]");
+    expect(result.hookSpecificOutput.additionalContext).toContain("[CONTEXT WARNING]");
+    expect(result.hookSpecificOutput.additionalContext).toContain("/compact");
   });
 
   test("threshold updates cache correctly at call 25", () => {
@@ -107,7 +114,7 @@ describe("Threshold trigger", () => {
     }
     for (let i = 0; i < 25; i++) {
       const r = main(JSON.stringify({ tool_name: "Edit", session_id: "s-oneshot" }), tmpDir);
-      expect(r.system_prompt_addition).toBeUndefined();
+      expect(r.hookSpecificOutput).toBeUndefined();
     }
   });
 
@@ -116,15 +123,15 @@ describe("Threshold trigger", () => {
       main(JSON.stringify({ tool_name: "Read", session_id: "thr-reset" }), tmpDir);
     }
     const r1 = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "thr-reset" }), tmpDir);
-    expect(r1.system_prompt_addition).toContain("Plan Approved");
+    expect(r1.hookSpecificOutput.additionalContext).toContain("Plan Approved");
 
     for (let i = 0; i < 24; i++) {
       const r = main(JSON.stringify({ tool_name: "Edit", session_id: "thr-reset" }), tmpDir);
-      expect(r.system_prompt_addition).toBeUndefined();
+      expect(r.hookSpecificOutput).toBeUndefined();
     }
 
     const r2 = main(JSON.stringify({ tool_name: "Bash", session_id: "thr-reset" }), tmpDir);
-    expect(r2.system_prompt_addition).toContain("Activity Threshold");
+    expect(r2.hookSpecificOutput.additionalContext).toContain("Activity Threshold");
   });
 });
 
@@ -196,7 +203,7 @@ describe("E2E — spawned process", () => {
     expect(result.status).toBe(0);
     const output = JSON.parse(result.stdout);
     expect(output.continue).toBe(true);
-    expect(output.system_prompt_addition).toContain("AUTO CHECKPOINT");
+    expect(output.hookSpecificOutput.additionalContext).toContain("AUTO CHECKPOINT");
   });
 
   test("Read tool → { continue: true } only", () => {
@@ -236,7 +243,7 @@ describe("E2E — spawned process", () => {
       env: { ...process.env, SCAFFOLD_COMPACT_THRESHOLD: "5" },
     });
     const output = JSON.parse(result.stdout);
-    expect(output.system_prompt_addition).toContain("Activity Threshold");
-    expect(output.system_prompt_addition).toContain("5+");
+    expect(output.hookSpecificOutput.additionalContext).toContain("Activity Threshold");
+    expect(output.hookSpecificOutput.additionalContext).toContain("5+");
   });
 });

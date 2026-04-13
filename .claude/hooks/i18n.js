@@ -63,14 +63,35 @@ write dev/status.md:
 - Key architectural decisions from the plan
 - Open questions / blockers`,
     compact_required_header: '## [COMPACT REQUIRED BEFORE STEP 1]',
-    compact_required_body: `Your FIRST AND ONLY action before reading or executing any plan step:
-Tell the user exactly: "Before we start implementation, please run /compact in the input box. After that, send any message — I will re-read the plan and begin Step 1."
-Do NOT read or execute plan steps yet. Wait for the user to confirm they ran /compact.`,
+    compact_required_body: `Your FIRST AND ONLY action — execute these steps IN ORDER:
+
+**Step 1 — Generate a Post-Compact Resume Message** and display it to the user.
+Use EXACTLY this structure (fill in from current context):
+
+\`\`\`
+## 📋 Post-Compact Resume (paste this after /compact)
+**Goal:** [current session goal — one sentence]
+**Plan:** [absolute path to plan file, e.g. C:\\Users\\...\\plans\\*.md]
+**Phase:** [e.g. "Session 1 — A2 fix, updating tests"]
+**Files to read first (in order):**
+1. [absolute path] — [what to look for, e.g. "L144: new return format"]
+2. [absolute path] — [e.g. "run npm test:hook, expect 0 failures"]
+**Next action:** [exact next step to execute]
+**Key facts:** [critical non-obvious context, e.g. OpenRouter URL, env var names, confirmed findings]
+\`\`\`
+
+**Step 2 — Tell the user:**
+"I've prepared the Resume Message above. Please:
+1. Run /compact in the input box
+2. After it finishes, paste the Resume Message as your next message
+I will read the plan, the listed files, and resume from exactly where we left off."
+
+**Step 3 — WAIT. Do NOT read files or execute plan steps yet.**`,
     threshold_header: '## [AUTO CHECKPOINT — Activity Threshold]',
     threshold_body: (threshold) => `${threshold}+ tool calls since last checkpoint. Before your next response,
 update dev/status.md with current progress, decisions made, and next steps.`,
     context_warning_header: '## [CONTEXT WARNING]',
-    context_warning_body: 'Context is filling up. Tell the user: "Consider running /compact to preserve session continuity."',
+    context_warning_body: `Context is filling up. Generate a compact Post-Compact Resume Message (goal, plan path, files in progress, next action), then tell the user: "Consider running /compact — paste the Resume Message above after it completes."`,
     deps_blockers_header: '## [OPEN BLOCKERS REMINDER]',
     deps_blockers_footer: '\nConsider addressing these blockers or updating their status.',
   },
@@ -136,13 +157,34 @@ update dev/status.md with current progress, decisions made, and next steps.`,
 - Ключевые архитектурные решения из плана
 - Открытые вопросы / блокеры`,
     compact_required_header: '## [КОМПАКТ ОБЯЗАТЕЛЕН ПЕРЕД ШАГОМ 1]',
-    compact_required_body: `Твоё ПЕРВОЕ И ЕДИНСТВЕННОЕ действие перед чтением или выполнением любого шага плана:
-Скажи пользователю ровно так: «Перед началом реализации запусти /compact в поле ввода. После этого отправь любое сообщение — я перечитаю план и начну Шаг 1.»
-НЕ читай и не выполняй шаги плана. Жди подтверждения от пользователя.`,
+    compact_required_body: `Твоё ПЕРВОЕ И ЕДИНСТВЕННОЕ действие — выполни ПО ПОРЯДКУ:
+
+**Шаг 1 — Сгенерируй Resume-сообщение для возобновления** и покажи его пользователю.
+Используй ТОЧНО эту структуру (заполни из текущего контекста):
+
+\`\`\`
+## 📋 Resume после /compact (вставь это после /compact)
+**Цель:** [цель текущей сессии — одно предложение]
+**План:** [абсолютный путь к файлу плана]
+**Фаза:** [например, «Сессия 1 — фикс A2, обновляем тесты»]
+**Файлы для чтения (по порядку):**
+1. [абсолютный путь] — [что искать, например «L144: новый формат return»]
+2. [абсолютный путь] — [например «запустить npm test:hook, ожидаем 0 ошибок»]
+**Следующее действие:** [точный следующий шаг]
+**Ключевые факты:** [критичный неочевидный контекст]
+\`\`\`
+
+**Шаг 2 — Скажи пользователю:**
+«Я подготовил Resume-сообщение выше. Пожалуйста:
+1. Запусти /compact в поле ввода
+2. После завершения вставь Resume-сообщение как следующее сообщение
+Я прочитаю план, указанные файлы и продолжу с точки остановки.»
+
+**Шаг 3 — ОЖИДАЙ. НЕ читай файлы и не выполняй шаги плана.**`,
     threshold_header: '## [АВТО-ЧЕКПОИНТ — Порог активности]',
     threshold_body: (threshold) => `${threshold}+ вызовов инструментов с последнего чекпоинта. Перед следующим ответом обнови dev/status.md: текущий прогресс, принятые решения, следующие шаги.`,
     context_warning_header: '## [ПРЕДУПРЕЖДЕНИЕ КОНТЕКСТА]',
-    context_warning_body: 'Контекст заполняется. Скажи пользователю: «Рассмотри запуск /compact для сохранения непрерывности сессии.»',
+    context_warning_body: `Контекст заполняется. Сгенерируй краткое Resume-сообщение (цель, путь к плану, файлы в работе, следующее действие), затем скажи пользователю: «Рассмотри запуск /compact — вставь Resume-сообщение выше после завершения.»`,
     deps_blockers_header: '## [НАПОМИНАНИЕ ОБ ОТКРЫТЫХ БЛОКЕРАХ]',
     deps_blockers_footer: '\nРассмотри устранение этих блокеров или обновление их статуса.',
   },

@@ -32,10 +32,14 @@ function buildCheckpointPlan(lang) {
     "- Key architectural decisions from the plan\n" +
     "- Open questions / blockers\n\n" +
     "## [COMPACT REQUIRED BEFORE STEP 1]\n" +
-    "Your FIRST AND ONLY action before reading or executing any plan step:\n" +
-    "Tell the user exactly: \"Before we start implementation, please run /compact in the input box. " +
-    "After that, send any message — I will re-read the plan and begin Step 1.\"\n" +
-    "Do NOT read or execute plan steps yet. Wait for the user to confirm they ran /compact.";
+    "Your FIRST AND ONLY action — execute IN ORDER:\n\n" +
+    "Step 1 — Generate a Post-Compact Resume Message and display it:\n" +
+    "```\n## Post-Compact Resume (paste this after /compact)\n" +
+    "**Goal:** [session goal]\n**Plan:** [absolute path to plan file]\n" +
+    "**Phase:** [current phase]\n**Files to read first:**\n1. [absolute path] — [what to look for]\n" +
+    "**Next action:** [exact next step]\n**Key facts:** [critical non-obvious context]\n```\n\n" +
+    "Step 2 — Tell the user: \"Run /compact, then paste the Resume Message as your next message.\"\n\n" +
+    "Step 3 — WAIT. Do NOT read files or execute plan steps yet.";
 }
 
 function buildThresholdBlock(threshold, lang) {
@@ -141,7 +145,7 @@ function main(inputStr, cwd, _fs) {
   saveCache(cacheDir, sessionId, cache);
 
   if (triggered) {
-    return { continue: true, system_prompt_addition: checkpointBlock };
+    return { continue: true, hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: checkpointBlock } };
   }
   return { continue: true };
 }

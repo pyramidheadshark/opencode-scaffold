@@ -235,19 +235,19 @@ describe("buildOutput", () => {
   test("returns continue:true with no system_prompt_addition when injections empty", () => {
     const output = buildOutput([]);
     expect(output).toEqual({ continue: true });
-    expect(output.system_prompt_addition).toBeUndefined();
+    expect(output.additionalContext).toBeUndefined();
   });
 
   test("includes system_prompt_addition when injections present", () => {
     const output = buildOutput(["skill content A", "skill content B"]);
     expect(output.continue).toBe(true);
-    expect(output.system_prompt_addition).toContain("skill content A");
-    expect(output.system_prompt_addition).toContain("skill content B");
+    expect(output.additionalContext).toContain("skill content A");
+    expect(output.additionalContext).toContain("skill content B");
   });
 
   test("joins multiple injections with separator", () => {
     const output = buildOutput(["A", "B"]);
-    expect(output.system_prompt_addition).toContain("---");
+    expect(output.additionalContext).toContain("---");
   });
 });
 

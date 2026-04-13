@@ -266,7 +266,7 @@ class TestHookFiles(unittest.TestCase):
         self.assertTrue(hook_file.exists(), "session-checkpoint.js missing")
         content = hook_file.read_text(encoding="utf-8")
         self.assertIn("ExitPlanMode", content)
-        self.assertIn("system_prompt_addition", content)
+        self.assertIn("hookSpecificOutput", content)
 
 
 class TestClaudeIgnore(unittest.TestCase):

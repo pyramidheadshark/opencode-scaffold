@@ -213,7 +213,7 @@ function main(inputStr, cwd, platform, detectPython) {
 
   return {
     continue: true,
-    system_prompt_addition: additions.join("\n\n---\n\n"),
+    hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: additions.join("\n\n---\n\n") },
   };
 }
 

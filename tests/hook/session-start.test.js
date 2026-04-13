@@ -58,14 +58,14 @@ describe("main — first run (no config)", () => {
 
   test("returns env block in system_prompt_addition", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Session Environment");
-    expect(result.system_prompt_addition).toContain("win32");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Session Environment");
+    expect(result.hookSpecificOutput.additionalContext).toContain("win32");
   });
 
   test("includes onboarding block on first run", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Project Onboarding Required");
-    expect(result.system_prompt_addition).toContain("project-config.json");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Project Onboarding Required");
+    expect(result.hookSpecificOutput.additionalContext).toContain("project-config.json");
   });
 
   test("creates project-config.json with session_count=1", () => {
@@ -89,8 +89,8 @@ describe("main — subsequent runs (config exists)", () => {
 
   test("env block present without onboarding block", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Session Environment");
-    expect(result.system_prompt_addition).not.toContain("## Project Onboarding Required");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Session Environment");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("## Project Onboarding Required");
   });
 
   test("increments session_count", () => {
@@ -109,18 +109,18 @@ describe("main — Windows rules injection", () => {
 
   test("injects Windows rules on win32", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Windows Compatibility Rules");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Windows Compatibility Rules");
   });
 
   test("does NOT inject Windows rules on linux", () => {
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("## Windows Compatibility Rules");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("## Windows Compatibility Rules");
   });
 
   test("Windows rules injected on all win32 sessions, not just first", () => {
     saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 2 });
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Windows Compatibility Rules");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Windows Compatibility Rules");
   });
 });
 
@@ -160,20 +160,20 @@ describe("main — RU localization", () => {
   test("uses Russian onboarding when lang=ru and session_count=0 in config", () => {
     saveConfig(tmpDir, { platform: "linux", python_cmd: "python3", shell: "bash", session_count: 0, lang: "ru" });
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("## Требуется онбординг проекта");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Требуется онбординг проекта");
   });
 
   test("uses Russian windows block when lang=ru on win32", () => {
     saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 0, lang: "ru" });
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Правила совместимости с Windows");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Правила совместимости с Windows");
   });
 
   test("subsequent session lang=ru still uses Russian windows block", () => {
     saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 3, lang: "ru" });
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Правила совместимости с Windows");
-    expect(result.system_prompt_addition).not.toContain("## Требуется онбординг проекта");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Правила совместимости с Windows");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("## Требуется онбординг проекта");
   });
 });
 
@@ -187,7 +187,7 @@ describe("detectPythonCmd — win32 shortcut", () => {
     const result = main("{}", tmpDir, "win32", null);
     const config = loadConfig(tmpDir);
     expect(config.python_cmd).toBe("python");
-    expect(result.system_prompt_addition).toContain("Python: python");
+    expect(result.hookSpecificOutput.additionalContext).toContain("Python: python");
   });
 });
 
@@ -280,13 +280,13 @@ describe("main — deps/infra injection", () => {
   test("injects deps block when deps.yaml exists", () => {
     fs.writeFileSync(path.join(tmpDir, "deps.yaml"), "project: test\ndepends_on:\n  - repo: hub\n    type: knowledge\n    description: KB", "utf8");
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("DEPENDENCIES");
-    expect(result.system_prompt_addition).toContain("hub");
+    expect(result.hookSpecificOutput.additionalContext).toContain("DEPENDENCIES");
+    expect(result.hookSpecificOutput.additionalContext).toContain("hub");
   });
 
   test("does not inject deps when no deps.yaml", () => {
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("DEPENDENCIES");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("DEPENDENCIES");
   });
 });
 
@@ -307,25 +307,25 @@ describe("main — SCAFFOLD_LIGHT_AGENTS", () => {
   test("injects light agents block when SCAFFOLD_LIGHT_AGENTS=true", () => {
     process.env.SCAFFOLD_LIGHT_AGENTS = "true";
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("Light Agents Active");
-    expect(result.system_prompt_addition).toContain("status-updater");
+    expect(result.hookSpecificOutput.additionalContext).toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).toContain("status-updater");
   });
 
   test("injects light agents block when SCAFFOLD_LIGHT_AGENTS=1", () => {
     process.env.SCAFFOLD_LIGHT_AGENTS = "1";
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).toContain("Light Agents Active");
   });
 
   test("does not inject when SCAFFOLD_LIGHT_AGENTS not set", () => {
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("Light Agents Active");
   });
 
   test("does not inject when SCAFFOLD_LIGHT_AGENTS=false", () => {
     process.env.SCAFFOLD_LIGHT_AGENTS = "false";
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("Light Agents Active");
   });
 
   test("LIGHT_AGENTS_BLOCK export contains status-updater reference", () => {
