@@ -378,6 +378,7 @@ class TestDeployScript(unittest.TestCase):
             data = json.loads(settings_path.read_text(encoding="utf-8"))
             self.assertIn("hooks", data, "settings.json missing 'hooks' key")
             self.assertIn("UserPromptSubmit", data["hooks"], "hooks missing UserPromptSubmit")
+            self.assertIn("PreToolUse", data["hooks"], "hooks missing PreToolUse (bash-output-filter + session-safety)")
 
     def test_deploy_post_tool_use_has_two_hooks(self):
         with tempfile.TemporaryDirectory() as tmp:

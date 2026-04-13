@@ -46,6 +46,7 @@ REGISTRY_PATH = INFRA_DIR / "deployed-repos.json"
 def build_hooks_definition(target: Path) -> dict:
     h = (target / ".claude" / "hooks").resolve().as_posix()
     return {
+        "PreToolUse":       [{"matcher": "Bash", "hooks": [{"type": "command", "command": f'node "{h}/session-safety.js"'}, {"type": "command", "command": f'node "{h}/bash-output-filter.js"'}]}],
         "SessionStart":     [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/session-start.js"'}]}],
         "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/skill-activation-prompt.js"'}]}],
         "PostToolUse":      [{"matcher": ".*", "hooks": [{"type": "command", "command": f'node "{h}/post-tool-use-tracker.js"'}, {"type": "command", "command": f'node "{h}/session-checkpoint.js"'}]}],
@@ -584,7 +585,7 @@ def deploy(args: argparse.Namespace) -> None:
 
     print("[5c/5] Writing .claude/settings.json (hook registration)...")
     deploy_settings(target)
-    print("  hooks: SessionStart, UserPromptSubmit, PostToolUse, Stop")
+    print("  hooks: PreToolUse, SessionStart, UserPromptSubmit, PostToolUse, Stop")
 
     ext_dir = target / ".claude" / "agent-extensions"
     ext_dir.mkdir(parents=True, exist_ok=True)

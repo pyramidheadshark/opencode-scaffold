@@ -28,7 +28,7 @@ describe("ExitPlanMode trigger", () => {
   test("returns hookSpecificOutput.additionalContext on ExitPlanMode", () => {
     const result = main(JSON.stringify({ tool_name: "ExitPlanMode", session_id: "s1" }), tmpDir);
     expect(result.continue).toBe(true);
-    expect(result.system_prompt_addition).toBeUndefined();
+    expect(result.hookSpecificOutput).toBeDefined();
     expect(result.hookSpecificOutput.additionalContext).toContain("[AUTO CHECKPOINT — Plan Approved]");
   });
 
