@@ -29,7 +29,7 @@ Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.
 
 | Session | Phases | Status | Notes |
 |---------|--------|--------|-------|
-| Session 1 | A1 (user action) + A2 | ✅ DONE | A1: user adds `export ANTHROPIC_MODEL=claude-sonnet-4-6` to ~/.bashrc |
+| Session 1 | A1 (user action) + A2 | ✅ DONE | A1: `export ANTHROPIC_MODEL=claude-sonnet-4-6` added to ~/.bashrc by Claude |
 | Session 2 | B1 + B2 + D1 + D2 + D3 | ⏳ Pending | skill re-injection + model router CLI |
 | Session 3 | C1 + C2 | ⏳ Pending | Session Contract + Knowledge Manifest |
 | Session 4 | E1-E5 | ⏳ Pending | Quality Benchmark lab tasks |
@@ -162,4 +162,4 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ---
 
-*Last updated: 2026-04-13 (P0 Session 1 done — hook API migration + Resume Message; deploy to 29 repos pending)*
+*Last updated: 2026-04-14 (P0 Session 1+audit done — hook API, Resume Message, PreToolUse fix, pending_notification fix, i18n sync; 29 repos updated to 608b24e)*
