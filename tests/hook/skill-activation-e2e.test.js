@@ -275,7 +275,7 @@ describe("E2E — session cache deduplication", () => {
     runHook("write me a fastapi router", tmpCwd, sessionId);
 
     const output2 = runHook("давай сделаем коммит", tmpCwd, sessionId);
-    const addition2 = output2.additionalContext || output2.system_prompt_addition || "";
+    const addition2 = output2.additionalContext || "";
     const skills2 = getLoadedSkills(output2);
     expect(skills2).not.toContain("python-project-standards");
     expect(addition2).toMatch(/COMMIT|commit/);
@@ -285,11 +285,11 @@ describe("E2E — session cache deduplication", () => {
     const sessionId = "test-session-status-hash";
 
     const output1 = runHook("write some code", tmpCwd, sessionId);
-    const addition1 = output1.additionalContext || output1.system_prompt_addition || "";
+    const addition1 = output1.additionalContext || "";
     expect(addition1).toContain("## Project Status");
 
     const output2 = runHook("write more code", tmpCwd, sessionId);
-    const addition2 = output2.additionalContext || output2.system_prompt_addition || "";
+    const addition2 = output2.additionalContext || "";
     expect(addition2).not.toContain("## Project Status");
   });
 });
