@@ -8,122 +8,151 @@
 
 ## Business Goal
 
-Personal Claude Code infrastructure for ML engineering projects — reusable skills, hooks, agents, and templates that enforce the hexagonal architecture + TDD workflow across all Python/FastAPI projects.
+**v3.0 vision:** *Adapting Claude Code to modern Anthropic constraints + production infrastructure*
 
-Positioned around three pillars: **scaffolding** (deploy + sync), **token optimization** (71.4% savings measured), **multi-repo management** (update --all).
+Не просто скаффолдинг — полноценная инфраструктура для работы с Claude Code в условиях реальных ограничений: контекст, биллинг, multi-model routing, production-grade session protocol.
+
+Три старых столпа: **scaffolding** (deploy + sync), **token optimization** (71.4% savings), **multi-repo management** (update --all).
+
+Три новых столпа (v3.0): **model routing** (OpenRouter gateway, Gemini/Haiku/Opus by task), **session protocol** (Contract + Knowledge Manifest), **quality benchmarks** (lab tasks, model comparison).
 
 ---
 
 ## Current Phase
 
-**P0 Overhaul — Session 1 DONE, Session 2 pending.**
-
-Session 1 (A2 + Post-Compact Resume) committed to main (`137cfca`). Deploy to 29 repos pending.
-Next: Session 2 (B1, B2, D1, D2, D3) — skill re-injection audit + model router.
+**P0 Overhaul — Session 1 + Audit COMPLETE. Session 2 ready.**
 
 ---
 
-## P0 Overhaul Plan (2026-04-13)
+## Roadmap → v3.0
 
 Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.md`
 
-| Session | Phases | Status | Notes |
-|---------|--------|--------|-------|
-| Session 1 | A1 (user action) + A2 | ✅ DONE | A1: `export ANTHROPIC_MODEL=claude-sonnet-4-6` added to ~/.bashrc by Claude |
-| Session 2 | B1 + B2 + D1 + D2 + D3 | ⏳ Pending | skill re-injection + model router CLI |
-| Session 3 | C1 + C2 | ⏳ Pending | Session Contract + Knowledge Manifest |
-| Session 4 | E1-E5 | ⏳ Pending | Quality Benchmark lab tasks |
+| Сессия | Фазы | Статус | HEAD |
+|--------|------|--------|------|
+| **Session 1** | A1 (billing guard) + A2 (hook API migration) + Audit | ✅ DONE | `352798a` |
+| **Session 2** | B1 (audit) + B2 (Haiku) + D1-D3 (model router) + quick wins | ⏳ **NEXT** | — |
+| **Session 3** | C1 (Session Contract) + C2 (Knowledge Manifest) + E-tasks → **v3.0 tag** | ⏳ Pending | — |
 
-**A2 (Compact Button Fix):** `system_prompt_addition` → `hookSpecificOutput.additionalContext` (PostToolUse/SessionStart), top-level `additionalContext` (UserPromptSubmit). Resume Message template added to EN+RU compact blocks.
+### Session 1 — выполнено (2026-04-14)
 
-**Critical OpenRouter facts (for D1):**
-- Base URL: `https://openrouter.ai/api` (NOT `/api/v1`)
-- Auth: `ANTHROPIC_AUTH_TOKEN=sk-or-v1-...` + `ANTHROPIC_API_KEY=""` (explicitly empty)
-- Gemini alias: `google/gemini-3-flash-preview`
+| Задача | Что сделано | Файлы |
+|--------|-------------|-------|
+| **A1** | `export ANTHROPIC_MODEL=claude-sonnet-4-6` → `~/.bashrc` | `~/.bashrc` |
+| **A2** | Hook API: `system_prompt_addition` → `hookSpecificOutput.additionalContext` (PostToolUse/SessionStart); top-level `additionalContext` (UserPromptSubmit) | 3 хука |
+| **A2+** | Post-Compact Resume Message: 3-step шаблон EN+RU | `lib/i18n.js`, `hooks/i18n.js` |
+| **CRITICAL** | `deploy.py` не включал `PreToolUse` → `bash-output-filter` и `session-safety` не активировались в 29 репо | `scripts/deploy.py` |
+| **BUG** | `pending_notification` stale-cache: spread → mutate in-place | `skill-activation-prompt.js` |
+| **SYNC** | `lib/i18n.js` ↔ `.claude/hooks/i18n.js` синхронизированы | оба файла |
+| **TESTS** | Очищены вакуозные тесты; infra тест проверяет PreToolUse | 5 тест-файлов |
+| **29 repos** | Обновлены до `352798a` со всеми фиксами | `deployed-repos.json` |
 
 ---
 
-## Current State (2026-04-08)
+## Current State (2026-04-14)
 
-- **v2.1.0 PUBLISHED** npm@2.1.0 — tagged, pushed to main, publish.yml triggered
-- main HEAD: `3d83c7d` (merge commit — feature/token-optimization)
-- **593 tests** (536 Jest + 57 Python), 0 failed
-- **29 repos updated** via `--update-all` — all `[up to date]`
+- **v2.1.0 PUBLISHED** npm@2.1.0 (2026-04-08)
+- **main HEAD: `352798a`** (P0 Session 1 + Audit)
+- **535 tests** (478 Jest + 57 Python), 0 failed
+- **29 repos** обновлены до `352798a` с PreToolUse — все `[up to date]`
 - **4 GitHub stars**, 0 forks
+- `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
 
-### v2.1.0 Completed Phases:
+### Что работает сейчас в целевых репо (после Session 1):
 
-| Phase | Status | Summary |
-|---|---|---|
-| Phase 1 — Context defaults | ✅ Done | `deploySettings()` sets `DISABLE_1M_CONTEXT=1` + `showClearContextOnPlanAccept:true` as one-time defaults |
-| Phase 2 — Compact signal | ✅ Done | ExitPlanMode → /compact; one-shot at call 25 (was 40), `SCAFFOLD_COMPACT_THRESHOLD` |
-| Phase 3 — Bash output filter | ✅ Done | `bash-output-filter.js` + `filter_rules.json` (10 rules), `{ cmd; } filter \|\| true` syntax |
-| Phase 4 — Benchmark harness | ✅ Done | OpenRouter SDK, 25 tasks redesigned, **71.4% savings on Sonnet 4.6** |
-| Phase 5 — Agent model routing | ✅ Done | `status-updater.md` agent (haiku frontmatter), opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
-| Hardening — Hook bug fixes | ✅ Done | Braces syntax, pytest PASSED/PASS grep, `\|\| true` fallback, threshold 40→25 |
-| Documentation | ✅ Done | README.md + README.ru.md: three pillars, benchmark table, v2.1.0 changelog |
-| deploy.py dry-run | ✅ Done | `--dry-run` flag for update/update-all: MD5 diff preview, no writes |
+| Хук | Тип | Что делает | Статус |
+|-----|-----|------------|--------|
+| `session-safety.js` | PreToolUse (Bash) | Деструктивные команды → block + git snapshot | ✅ Активен |
+| `bash-output-filter.js` | PreToolUse (Bash) | Verbose команды → whitelist фильтрация | ✅ Активен (впервые!) |
+| `session-start.js` | SessionStart | Platform detect + onboarding + Windows rules | ✅ |
+| `skill-activation-prompt.js` | UserPromptSubmit | Skill injection + status hash dedup | ✅ |
+| `session-checkpoint.js` | PostToolUse | ExitPlanMode → Resume Message; one-shot threshold 25 | ✅ |
+| `post-tool-use-tracker.js` | PostToolUse | Weight accumulation + JSONL audit | ✅ |
+| `python-quality-check.js` | Stop | End-of-session quality check | ✅ |
 
-### Benchmark Results (v2.1.0, Sonnet 4.6 via OpenRouter):
+---
 
-| Category | Tasks | Avg Baseline | Avg Optimized | Savings% |
-|---|---|---|---|---|
-| bash_filter | 10 | ~2 000 tok | ~407 tok | **~78%** |
-| skill_activation | 10 | ~2 500 tok | ~700 tok | **~72%** |
-| no_filter_expected | 5 | same | same | 0% (expected) |
-| **TOTAL** | **25** | **25 084 tok** | **7 178 tok** | **71.4%** |
+## Session 2 — Scope (⏳ Pending)
 
-Model: `claude-sonnet-4-6` via OpenRouter.
+**B1: Skill re-injection audit**
+- Что уже есть: `alreadyLoaded` guard (L53), status hash dedup (L139-144) — ОБА реализованы
+- Что добавить: E2E тест на измерение injection size (5 prompts → size metrics)
+- Время: ~20 мин
+
+**B2: Haiku для subagents**
+- Добавить `recommended_model` frontmatter в `.claude/agents/*.md`
+- Обновить Agent Inventory в `CLAUDE.md` с колонкой модели
+- Время: ~30 мин
+
+**D1-D3: Model Router CLI** ← main feature Session 2
+- Новый файл: `lib/commands/model-router.js`
+- Команды: `claude-scaffold use <model>`, `claude-scaffold install-aliases`, `claude-scaffold status` (расширить)
+- Профили: sonnet, haiku, opus (Anthropic), gemini-flash, gemini-pro (OpenRouter)
+- Пресеты: `executor`→gemini-flash, `architect`→opus, `critic`→sonnet
+- Время: ~120 мин
+
+**Quick win: status.md в session-start.js**
+- Загружать `dev/status.md` также при старте сессии (не только при UserPromptSubmit)
+- 8 строк кода, тест 3 строки
+- Время: ~15 мин
+
+**Целевой объём Session 2:** 2 коммита, ~3ч работы
+
+---
+
+## Critical OpenRouter Facts (для D1)
+
+```bash
+ANTHROPIC_BASE_URL="https://openrouter.ai/api"   # НЕ /api/v1
+ANTHROPIC_AUTH_TOKEN="sk-or-v1-..."              # НЕ ANTHROPIC_API_KEY
+ANTHROPIC_API_KEY=""                              # явно пустой
+```
+
+Gemini alias: `google/gemini-3-flash-preview` (experimental — `"experimental": true` в config + warning)
 
 ---
 
 ## Key Architecture
 
-### Hook pipeline (PreToolUse Bash):
-1. `session-safety.js` — destructive pattern classification, git snapshot on CRITICAL
-2. `bash-output-filter.js` — whitelist wrapping verbose commands: `{ cmd; } 2>&1 | grep | tail || true`
+### Hook pipeline:
+```
+PreToolUse (Bash):    session-safety.js → bash-output-filter.js
+SessionStart:         session-start.js
+UserPromptSubmit:     skill-activation-prompt.js → skill-activation-logic.js
+PostToolUse (.*):     post-tool-use-tracker.js → session-checkpoint.js
+Stop:                 python-quality-check.js
+```
 
-### Skill injection (UserPromptSubmit):
-- `skill-activation-prompt.js` reads `filter_rules.json` + `skill-rules.json`
-- max 3 skills per session; `python-project-standards` always_load=true
-- i18n via `i18n.js` (EN+RU builder functions)
-
-### Compact signal (PostToolUse):
-- `session-checkpoint.js` fires once at call 25 (configurable: `SCAFFOLD_COMPACT_THRESHOLD`)
-- Also fires on `ExitPlanMode` event
+### Hook output formats (CRITICAL — не регрессировать):
+```javascript
+// PostToolUse / SessionStart:
+{ continue: true, hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: "..." } }
+// UserPromptSubmit:
+{ continue: true, additionalContext: "..." }
+// PreToolUse — session-safety:
+{ action: "block" | "continue" }
+// PreToolUse — bash-output-filter:
+{ action: "continue", updatedInput: { command: wrappedCommand } }
+```
 
 ### Deploy:
-- `lib/deploy/copy.js` — `deployCore` + `deploySettings`, matcher-based hook merge
-- `scripts/deploy.py` — `--update`, `--update-all`, `--dry-run`
+- `lib/deploy/copy.js` — `deployCore` + `deploySettings`, matcher-based hook merge, 5 hook types
+- `scripts/deploy.py` — `--update`, `--update-all`, `--dry-run`; SHA-based skip (must commit before update-all)
 - `deployed-repos.json` — local registry (gitignored)
 
 ---
 
-## Backlog
+## Backlog (не в текущем roadmap)
 
 - [ ] Submit to `hesreallyhim/awesome-claude-code` via web UI issue form
-- [ ] PR to `anthropics/claude-plugins-official` external_plugins/
 - [ ] PRs to 4 more awesome-lists (ccplugins, rahulvrane, cassler, VoltAgent)
 - [ ] Ping 3 stale PRs (awesome-llm-skills, awesome-claude-plugins, awesome-ai-devtools)
 - [ ] Reddit post in r/ClaudeCode
 - [ ] Dev.to article — "Claude Code beyond CLAUDE.md"
 - [ ] phs_calorie_app: history rewrite to remove .claude/ from git (commit 359761f)
 - [ ] GitHub Actions update: `actions/checkout@v4` → `@v5`, `setup-node@v4` → `@v5` (deadline: June 2026)
-- [ ] VHS demo gif re-render via `ssh yc-ctrl` (VHS hangs on Windows due to oh-my-posh)
+- [ ] VHS demo gif re-render via `ssh yc-ctrl`
 - [ ] techcon_infra_yac: AWS creds rotation (в git history)
-
----
-
-## Known Issues
-
-### VHS не работает на Windows
-VHS зависает из-за oh-my-posh в .bashrc. Решение: рендерить через `ssh yc-ctrl`.
-
-### Python infra tests UnicodeDecodeError на Windows
-`read_text()` использует cp1251 по умолчанию. Фикс: `encoding="utf-8"` везде.
-
-### Compact signal: tool_call_count — слабый proxy для размера контекста
-`git status` и `cat large_file.py` — оба 1 вызов, но 10 токен vs 50k. Порог 25 calls — ориентир.
 
 ---
 
@@ -140,12 +169,14 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 | Agent extensions | Concatenation at deploy time, idempotency guard | 2026-04-06 |
 | Token defaults deploy | `=== undefined` check — one-time, never overwrites user decision | 2026-04-07 |
 | Compact signal | Two-trigger: ExitPlanMode + one-shot threshold at call 25 | 2026-04-07 |
-| Bash output filter | PreToolUse `updatedInput` whitelist-only + `{ cmd; } || true` + log | 2026-04-08 |
+| Bash output filter | PreToolUse `updatedInput` whitelist-only + `{ cmd; } \|\| true` + log | 2026-04-08 |
 | deploySettings hook merge | Matcher-based dedup — scaffold owns matchers, user hooks preserved | 2026-04-08 |
 | i18n coverage | EN+RU builder functions in lib/i18n.js, lazy-loaded in hooks | 2026-04-08 |
 | Benchmark SDK | openai SDK → OpenRouter (not anthropic SDK) | 2026-04-08 |
-| Benchmark redesign | skill_activation = full injection vs env-only; no_filter_expected = regression check | 2026-04-08 |
-| deploy.py dry-run | MD5-based diff preview — shows new/modified files per repo without writing | 2026-04-08 |
+| Hook output API | system_prompt_addition deprecated → hookSpecificOutput.additionalContext / additionalContext | 2026-04-14 |
+| Post-Compact Resume | 3-step: Generate message → Tell user /compact → WAIT | 2026-04-14 |
+| PreToolUse in deploy.py | session-safety + bash-output-filter always deployed via Python path | 2026-04-14 |
+| pending_notification clear | Mutate cache in-place (not spread) to avoid stale read | 2026-04-14 |
 
 ---
 
@@ -162,4 +193,4 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ---
 
-*Last updated: 2026-04-14 (P0 Session 1+audit done — hook API, Resume Message, PreToolUse fix, pending_notification fix, i18n sync; 29 repos updated to 608b24e)*
+*Last updated: 2026-04-14 (Session 1 + Audit complete; Session 2 scope defined; v3.0 vision set)*
