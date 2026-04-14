@@ -20,117 +20,94 @@
 
 ## Current Phase
 
-**P0 Overhaul — Session 3 DONE. Ready for v2.2.0 tag.**
+**Session 5 — DONE (2026-04-14). Pending: `git tag v2.2.0` + `--update-all`**
+
+Сессия выполнена полностью, осталось два деплой-действия:
+
+1. ⏳ `git tag v2.2.0 && git push origin v2.2.0` → CI публикует npm@2.2.0 автоматически
+2. ⏳ `npx claude-scaffold update --all` → обновить 29 репо до HEAD `bade556`
+
+**Что было сделано в Session 5:**
+
+| Задача | Статус | Коммит / Детали |
+|--------|--------|-----------------|
+| GH Actions v5 | ✅ | `checkout@v4→v5`, `setup-node@v4→v5` в ci.yml + publish.yml |
+| WEIGHTS тесты удалены | ✅ | 4 вакуозных константных теста из session-utils.test.js |
+| Skill Discovery CLI | ✅ | `lib/commands/discover.js`: detectStack (16 детекторов), searchRegistry, runDiscover |
+| `claude-scaffold discover` команда | ✅ | `bin/cli.js` +discover; опции --install, --json |
+| session-start.js триггер | ✅ | `buildDiscoverySuggestionBlock`: session=1 + skills<4 → инжект подсказки |
+| 17 новых тестов | ✅ | 12 в `tests/cli/discover.test.js` + 5 в `tests/hook/session-start.test.js` |
+| package.json 2.1.0→2.2.0 | ✅ | |
+| Push в main | ✅ | HEAD `bade556` |
 
 ---
 
-## Roadmap → v3.0
-
-Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.md`
+## Roadmap Sessions (История)
 
 | Сессия | Фазы | Статус | HEAD |
 |--------|------|--------|------|
-| **Session 1** | A1 (billing guard) + A2 (hook API migration) + Audit | ✅ DONE | `352798a` |
-| **Session 2** | B1 (size test) + B2 (Haiku frontmatter) + D1-D3 (model router) | ✅ DONE | TBD |
-| **Session 3** | C1 (Session Contract) + E1/E3/E5 (Quality Benchmark) → **v2.2.0 tag** | ✅ DONE | TBD |
+| **Session 1** (2026-04-14) | A1 billing guard + A2 hook API migration + Audit | ✅ DONE | `352798a` |
+| **Session 2** (2026-04-14) | B1 size test + B2 Haiku frontmatter + D1-D3 model router | ✅ DONE | (after S1) |
+| **Session 3** (2026-04-14) | C1 Session Contract + E1/E3/E5 Quality Benchmark | ✅ DONE | `7689210` |
+| **Session 5** (2026-04-14) | GH Actions v5 + Test cleanup + Skill Discovery + v2.2.0 bump | ✅ DONE | `bade556` |
 
-### Session 1 — выполнено (2026-04-14)
+### Session 1 — детали
 
 | Задача | Что сделано | Файлы |
 |--------|-------------|-------|
 | **A1** | `export ANTHROPIC_MODEL=claude-sonnet-4-6` → `~/.bashrc` | `~/.bashrc` |
-| **A2** | Hook API: `system_prompt_addition` → `hookSpecificOutput.additionalContext` (PostToolUse/SessionStart); top-level `additionalContext` (UserPromptSubmit) | 3 хука |
+| **A2** | Hook API: `system_prompt_addition` → `hookSpecificOutput.additionalContext` | 3 хука |
 | **A2+** | Post-Compact Resume Message: 3-step шаблон EN+RU | `lib/i18n.js`, `hooks/i18n.js` |
-| **CRITICAL** | `deploy.py` не включал `PreToolUse` → `bash-output-filter` и `session-safety` не активировались в 29 репо | `scripts/deploy.py` |
-| **BUG** | `pending_notification` stale-cache: spread → mutate in-place | `skill-activation-prompt.js` |
-| **SYNC** | `lib/i18n.js` ↔ `.claude/hooks/i18n.js` синхронизированы | оба файла |
-| **TESTS** | Очищены вакуозные тесты; infra тест проверяет PreToolUse | 5 тест-файлов |
+| **CRITICAL FIX** | `deploy.py` не включал `PreToolUse` → bash-output-filter и session-safety не работали | `scripts/deploy.py` |
+| **BUG FIX** | `pending_notification` stale-cache: spread → mutate in-place | `skill-activation-prompt.js` |
 | **29 repos** | Обновлены до `352798a` со всеми фиксами | `deployed-repos.json` |
 
----
-
-## Session 2 — выполнено (2026-04-14)
+### Session 2 — детали
 
 | Задача | Что сделано | Файлы |
 |--------|-------------|-------|
-| **D1-D3** | `claude-scaffold use <model>` / `install-aliases` CLI; 5 профилей + 3 пресета; .sh + .ps1 env-файлы; маркер-блок идемпотентность | `lib/commands/model-router.js`, `bin/cli.js` |
-| **D2** | `status` команда показывает активный профиль перед таблицей репо | `lib/commands/status.js` |
-| **B2** | `model:` frontmatter в 8 агентских файлах (Haiku/Sonnet/Opus по задаче) | `.claude/agents/*.md` |
+| **D1-D3** | `claude-scaffold use <model>` / `install-aliases`; 5 профилей + 3 пресета; .sh + .ps1 | `lib/commands/model-router.js`, `bin/cli.js` |
+| **B2** | `model:` frontmatter в 8 агентских файлах | `.claude/agents/*.md` |
 | **B1-size** | E2E тест: 5 промптов подряд, max injection 2-5 < 60% от первого | `tests/hook/skill-activation-e2e.test.js` |
-| **Tests MR** | 25 тестов MR-01..MR-09: contract-based, mock os.homedir | `tests/cli/model-router.test.js` |
-| **Infra tests** | 2 новых теста: `test_all_agents_have_model_frontmatter`, `test_agent_model_values_are_known` | `tests/infra/test_infra.py` |
-| **CLAUDE.md** | Agent Inventory + колонка Model | `.claude/CLAUDE.md` |
+
+### Session 3 — детали
+
+| Задача | Что сделано | Файлы |
+|--------|-------------|-------|
+| **C1** | Session Contract template + `claude-scaffold new-session` + session-start.js buildContractMissingBlock | `templates/session-contract.md`, `lib/commands/new-session.js`, `session-start.js` |
+| **E1/E3/E5** | Quality benchmark runner + lab fixtures (fibonacci, vulnerable_api, yaml_parser_spec) + 21 тест-кейс скорер | `scripts/benchmark/quality_runner.py`, `scripts/benchmark/lab/`, `tests/benchmark/` |
+
+---
 
 ## Current State (2026-04-14)
 
-- **v2.1.0 PUBLISHED** npm@2.1.0 (2026-04-08); **v2.2.0 ready to tag**
-- **main HEAD: TBD** (P0 Session 3 done, pre-commit)
-- **597+ tests** (517 Jest + 59 Python infra + 21 quality scorer), 0 failed
-- **29 repos** на `352798a` — нужен `--update-all` после Session 2 коммитов
-- **4 GitHub stars**, 0 forks
+- **v2.1.0 PUBLISHED** npm@2.1.0 (2026-04-08)
+- **v2.2.0 READY TO TAG** — package.json = 2.2.0, HEAD = `bade556`, CI зелёный (GH Actions v5)
+- **main HEAD: `bade556`**
+- **589 tests** (530 Jest + 59 Python infra), 0 failed
+- **29 repos** на `352798a` — нужен `--update-all` до `bade556`
 - `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
 - `claude-scaffold use <model>` — Model Router CLI активен
+- `claude-scaffold discover` — Skill Discovery активен (CLI + session-start хук)
 
-### Что работает сейчас в целевых репо (после Session 1):
-
-| Хук | Тип | Что делает | Статус |
-|-----|-----|------------|--------|
-| `session-safety.js` | PreToolUse (Bash) | Деструктивные команды → block + git snapshot | ✅ Активен |
-| `bash-output-filter.js` | PreToolUse (Bash) | Verbose команды → whitelist фильтрация | ✅ Активен (впервые!) |
-| `session-start.js` | SessionStart | Platform detect + onboarding + Windows rules | ✅ |
-| `skill-activation-prompt.js` | UserPromptSubmit | Skill injection + status hash dedup | ✅ |
-| `session-checkpoint.js` | PostToolUse | ExitPlanMode → Resume Message; one-shot threshold 25 | ✅ |
-| `post-tool-use-tracker.js` | PostToolUse | Weight accumulation + JSONL audit | ✅ |
-| `python-quality-check.js` | Stop | End-of-session quality check | ✅ |
-
----
-
-## Session 3 — IN PROGRESS (2026-04-14)
-
-| Задача | Статус | Файлы |
-|--------|--------|-------|
-| **C1** | ✅ DONE | `templates/session-contract.md`, `lib/commands/new-session.js`, `bin/cli.js` (+new-session), `session-start.js` (+buildContractMissingBlock), `tests/cli/new-session.test.js`, `tests/hook/session-start.test.js` |
-| **E1/E3/E5** | ✅ DONE | `scripts/benchmark/lab/{fibonacci_broken,vulnerable_api}.py`, `lab/yaml_parser_spec.md`, `scripts/benchmark/quality_runner.py`, `tests/benchmark/test_quality_scorer.py` (21 tests) |
-
----
-
-## Session 2 — Scope (⏳ Pending — SUPERSEDED)
-
-**B1: Skill re-injection audit**
-- Что уже есть: `alreadyLoaded` guard (L53), status hash dedup (L139-144) — ОБА реализованы
-- Что добавить: E2E тест на измерение injection size (5 prompts → size metrics)
-- Время: ~20 мин
-
-**B2: Haiku для subagents**
-- Добавить `recommended_model` frontmatter в `.claude/agents/*.md`
-- Обновить Agent Inventory в `CLAUDE.md` с колонкой модели
-- Время: ~30 мин
-
-**D1-D3: Model Router CLI** ← main feature Session 2
-- Новый файл: `lib/commands/model-router.js`
-- Команды: `claude-scaffold use <model>`, `claude-scaffold install-aliases`, `claude-scaffold status` (расширить)
-- Профили: sonnet, haiku, opus (Anthropic), gemini-flash, gemini-pro (OpenRouter)
-- Пресеты: `executor`→gemini-flash, `architect`→opus, `critic`→sonnet
-- Время: ~120 мин
-
-**Quick win: status.md в session-start.js**
-- Загружать `dev/status.md` также при старте сессии (не только при UserPromptSubmit)
-- 8 строк кода, тест 3 строки
-- Время: ~15 мин
-
-**Целевой объём Session 2:** 2 коммита, ~3ч работы
-
----
-
-## Critical OpenRouter Facts (для D1)
-
+### npm publish path:
 ```bash
-ANTHROPIC_BASE_URL="https://openrouter.ai/api"   # НЕ /api/v1
-ANTHROPIC_AUTH_TOKEN="sk-or-v1-..."              # НЕ ANTHROPIC_API_KEY
-ANTHROPIC_API_KEY=""                              # явно пустой
+git tag v2.2.0 && git push origin v2.2.0
+# → publish.yml запускается автоматически → npm@2.2.0
+# НЕ используй npm publish (требует 2FA hardware key)
 ```
 
-Gemini alias: `google/gemini-3-flash-preview` (experimental — `"experimental": true` в config + warning)
+### Что деплоится в target репо:
+
+| Хук | Тип | Что делает |
+|-----|-----|------------|
+| `session-safety.js` | PreToolUse (Bash) | Деструктивные команды → block + git snapshot |
+| `bash-output-filter.js` | PreToolUse (Bash) | Verbose команды → whitelist фильтрация |
+| `session-start.js` | SessionStart | Platform detect + onboarding + Windows rules + Contract check + Discovery hint |
+| `skill-activation-prompt.js` | UserPromptSubmit | Skill injection + status hash dedup |
+| `session-checkpoint.js` | PostToolUse | ExitPlanMode → Resume Message; one-shot threshold 25 |
+| `post-tool-use-tracker.js` | PostToolUse | Weight accumulation + JSONL audit |
+| `python-quality-check.js` | Stop | End-of-session quality check |
 
 ---
 
@@ -157,24 +134,43 @@ Stop:                 python-quality-check.js
 { action: "continue", updatedInput: { command: wrappedCommand } }
 ```
 
+### Skill Discovery — архитектура (Session 5):
+- `lib/commands/discover.js` — читает `registry/skills.json` напрямую (не через кэш/HTTP)
+- `detectStack(cwd)` — 16 детекторов: React/Vue/Next/Express/TS/FastAPI/PyTorch/sklearn/LangChain/Anthropic SDK/Rust/Go/Terraform/Flutter/Python/Node
+- `searchRegistry(infraDir, tags)` — фильтр по tag intersection, сортировка по matchCount desc
+- `buildDiscoverySuggestionBlock(fsModule, cwd, sessionCount)` — инжект только session=1 И skill-rules.json < 4 rules
+
 ### Deploy:
 - `lib/deploy/copy.js` — `deployCore` + `deploySettings`, matcher-based hook merge, 5 hook types
-- `scripts/deploy.py` — `--update`, `--update-all`, `--dry-run`; SHA-based skip (must commit before update-all)
+- `scripts/deploy.py` — `--update`, `--update-all`, `--dry-run`; SHA-based skip
 - `deployed-repos.json` — local registry (gitignored)
 
 ---
 
-## Backlog (не в текущем roadmap)
+## Backlog (приоритизировано)
 
+### Техдолг (не сделано в Session 5)
+- [ ] **deploy.py тесты** — самый опасный непокрытый файл. Python unittest: `--all` флаг, PreToolUse в settings.json, не перезаписывает status.md
+- [ ] **Интеграционный тест** `new-session` → `session-start` → напоминание исчезает (сейчас только unit)
+
+### v2.3.0 features
+- [ ] Session Contract архивация: `dev/active/` → `dev/archive/YYYY-MM/` после завершения
+- [ ] `claude-scaffold status` показывает contract state + last benchmark date
+- [ ] Quality benchmark интеграция в report.py (сейчас JSONL от quality_runner не читается bench:report)
+- [ ] Запустить реальный benchmark haiku vs sonnet (нужен OPENROUTER_API_KEY)
+- [ ] Новые скилы для registry: react-patterns, typescript-patterns, rust-patterns (чтобы `discover` давал результат для фронтенд/системных проектов)
+
+### Маркетинг / growth
 - [ ] Submit to `hesreallyhim/awesome-claude-code` via web UI issue form
-- [ ] PRs to 4 more awesome-lists (ccplugins, rahulvrane, cassler, VoltAgent)
-- [ ] Ping 3 stale PRs (awesome-llm-skills, awesome-claude-plugins, awesome-ai-devtools)
+- [ ] PRs to 4 awesome-lists: ccplugins, rahulvrane, cassler, VoltAgent
+- [ ] Ping 3 stale PRs: awesome-llm-skills (#56), awesome-claude-plugins (#66), awesome-ai-devtools (#326)
 - [ ] Reddit post in r/ClaudeCode
 - [ ] Dev.to article — "Claude Code beyond CLAUDE.md"
+
+### Инфра / Репо
 - [ ] phs_calorie_app: history rewrite to remove .claude/ from git (commit 359761f)
-- [ ] GitHub Actions update: `actions/checkout@v4` → `@v5`, `setup-node@v4` → `@v5` (deadline: June 2026)
-- [ ] VHS demo gif re-render via `ssh yc-ctrl`
 - [ ] techcon_infra_yac: AWS creds rotation (в git history)
+- [ ] VHS demo gif re-render via `ssh yc-ctrl`
 
 ---
 
@@ -199,6 +195,8 @@ Stop:                 python-quality-check.js
 | Post-Compact Resume | 3-step: Generate message → Tell user /compact → WAIT | 2026-04-14 |
 | PreToolUse in deploy.py | session-safety + bash-output-filter always deployed via Python path | 2026-04-14 |
 | pending_notification clear | Mutate cache in-place (not spread) to avoid stale read | 2026-04-14 |
+| Skill Discovery layers | discover.js → registry/skills.json direct (no cache); runRegistrySearch → cache+HTTP. Different layers, no duplication. | 2026-04-14 |
+| buildDiscoverySuggestionBlock | session=1 AND skill-rules.json < 4 rules — двойной guard против ложных триггеров | 2026-04-14 |
 
 ---
 
@@ -215,4 +213,4 @@ Stop:                 python-quality-check.js
 
 ---
 
-*Last updated: 2026-04-14 (Session 1 + Audit complete; Session 2 scope defined; v3.0 vision set)*
+*Last updated: 2026-04-14 (Session 5 done — GH Actions v5 + Skill Discovery; v2.2.0 ready to tag)*
