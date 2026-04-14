@@ -20,7 +20,7 @@
 
 ## Current Phase
 
-**P0 Overhaul — Session 2 COMPLETE. Session 3 next.**
+**P0 Overhaul — Session 3 DONE. Ready for v2.2.0 tag.**
 
 ---
 
@@ -32,7 +32,7 @@ Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.
 |--------|------|--------|------|
 | **Session 1** | A1 (billing guard) + A2 (hook API migration) + Audit | ✅ DONE | `352798a` |
 | **Session 2** | B1 (size test) + B2 (Haiku frontmatter) + D1-D3 (model router) | ✅ DONE | TBD |
-| **Session 3** | C1 (Session Contract) + C2 (Knowledge Manifest) + E-tasks → **v3.0 tag** | ⏳ **NEXT** | — |
+| **Session 3** | C1 (Session Contract) + E1/E3/E5 (Quality Benchmark) → **v2.2.0 tag** | ✅ DONE | TBD |
 
 ### Session 1 — выполнено (2026-04-14)
 
@@ -63,9 +63,9 @@ Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.
 
 ## Current State (2026-04-14)
 
-- **v2.1.0 PUBLISHED** npm@2.1.0 (2026-04-08)
-- **main HEAD: TBD** (P0 Session 2 done, pre-commit)
-- **623 tests** (564 Jest + 59 Python), 0 failed
+- **v2.1.0 PUBLISHED** npm@2.1.0 (2026-04-08); **v2.2.0 ready to tag**
+- **main HEAD: TBD** (P0 Session 3 done, pre-commit)
+- **597+ tests** (517 Jest + 59 Python infra + 21 quality scorer), 0 failed
 - **29 repos** на `352798a` — нужен `--update-all` после Session 2 коммитов
 - **4 GitHub stars**, 0 forks
 - `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
@@ -85,7 +85,16 @@ Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.
 
 ---
 
-## Session 2 — Scope (⏳ Pending)
+## Session 3 — IN PROGRESS (2026-04-14)
+
+| Задача | Статус | Файлы |
+|--------|--------|-------|
+| **C1** | ✅ DONE | `templates/session-contract.md`, `lib/commands/new-session.js`, `bin/cli.js` (+new-session), `session-start.js` (+buildContractMissingBlock), `tests/cli/new-session.test.js`, `tests/hook/session-start.test.js` |
+| **E1/E3/E5** | ✅ DONE | `scripts/benchmark/lab/{fibonacci_broken,vulnerable_api}.py`, `lab/yaml_parser_spec.md`, `scripts/benchmark/quality_runner.py`, `tests/benchmark/test_quality_scorer.py` (21 tests) |
+
+---
+
+## Session 2 — Scope (⏳ Pending — SUPERSEDED)
 
 **B1: Skill re-injection audit**
 - Что уже есть: `alreadyLoaded` guard (L53), status hash dedup (L139-144) — ОБА реализованы
