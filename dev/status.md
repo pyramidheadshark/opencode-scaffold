@@ -20,7 +20,7 @@
 
 ## Current Phase
 
-**Session 6 — IN PROGRESS (2026-04-14). v2.2.1 logging fixes + docs.**
+**Session 6 — DONE (2026-04-14). v2.2.1 опубликован, 29 репо обновлены.**
 
 Сессия выполнена полностью, осталось два деплой-действия:
 
@@ -39,10 +39,10 @@
 | package.json 2.2.0→2.2.1 | ✅ | |
 | MEMORY.md актуализация | ✅ | версия, тесты, Key Paths, без стейла |
 | analyze_logs.py удалён | ✅ | временный скрипт |
-| git commit 1 (logging) | ⏳ | |
-| git commit 2 (docs) | ⏳ | |
-| git tag v2.2.1 + push | ⏳ | |
-| python scripts/deploy.py --update-all | ⏳ | |
+| git commit 1 (logging) | ✅ | `160157e` |
+| git commit 2 (docs) | ✅ | `589b9a6` |
+| git tag v2.2.1 + push | ✅ | npm@2.2.1 published |
+| python scripts/deploy.py --update-all | ✅ | 29/29 up to date |
 
 **Что было сделано в Session 5:**
 
@@ -98,14 +98,15 @@
 
 ## Current State (2026-04-14)
 
-- **v2.1.0 PUBLISHED** npm@2.1.0 (2026-04-08)
-- **v2.2.0 READY TO TAG** — package.json = 2.2.0, HEAD = `bade556`, CI зелёный (GH Actions v5)
-- **main HEAD: `bade556`**
-- **589 tests** (530 Jest + 59 Python infra), 0 failed
-- **29 repos** на `352798a` — нужен `--update-all` до `bade556`
+- **v2.2.1 PUBLISHED** npm@2.2.1 (2026-04-14), HEAD = `589b9a6`
+- **main HEAD: `589b9a6`**
+- **593 tests** (534 Jest + 59 Python infra), 0 failed
+- **29 repos** на `589b9a6` — все up to date
 - `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
 - `claude-scaffold use <model>` — Model Router CLI активен
 - `claude-scaffold discover` — Skill Discovery активен (CLI + session-start хук)
+- **session-safety.js**: block events + snapshot_created теперь пишутся в JSONL
+- **post-tool-use-tracker.js**: Bash tracking + tool_call_count исправлен (больше не null)
 
 ### npm publish path:
 ```bash
