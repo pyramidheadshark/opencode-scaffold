@@ -10,8 +10,8 @@
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
 ![Token Savings](https://img.shields.io/badge/экономия%20токенов-71.4%25-brightgreen)
-![Jest Tests](https://img.shields.io/badge/Jest-536%20tests-brightgreen)
-![Python Tests](https://img.shields.io/badge/Python-57%20tests-blue)
+![Jest Tests](https://img.shields.io/badge/Jest-534%20tests-brightgreen)
+![Python Tests](https://img.shields.io/badge/Python-59%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -133,6 +133,8 @@ Org-профили хранятся в `org-profiles/<org-name>/` в scaffold-р
 2. Определяет намерение планирования и напоминает войти в plan mode
 3. Сопоставляет промпт с 22 правилами скиллов (ключевые слова + изменённые файлы + триггеры платформы)
 4. Внедряет до 2 релевантных скиллов в `system_prompt_addition`
+5. В первой сессии нового проекта с минимумом скиллов — предлагает запустить `claude-scaffold discover`
+6. Проверяет наличие session contract (с сессии 2+) — напоминает запустить `claude-scaffold new-session "цель"`
 
 Скиллы привносят доменные знания: паттерны FastAPI, RAG-пайплайны, графы LangGraph, конфиги CI/CD, test-first воркфлоу — только когда нужно, сжатые если крупные.
 
@@ -340,6 +342,43 @@ SCAFFOLD_LIGHT_AGENTS=true claude
 
 ---
 
+## Управление сессиями (v2.2.0+)
+
+### Session Contract
+
+Отслеживайте цель сессии и предотвращайте дрейф контекста в долгих проектах:
+
+```bash
+claude-scaffold new-session "реализовать JWT аутентификацию"
+# → создаёт dev/active/session-YYYY-MM-DD.md
+# → хук session-start напоминает о контракте начиная с сессии 2+
+```
+
+### Skill Discovery
+
+Автоматически определяет стек проекта и подбирает релевантные скиллы из реестра:
+
+```bash
+claude-scaffold discover             # определяет React, FastAPI, Rust, Go и др.
+claude-scaffold discover frontend    # поиск по тегу
+claude-scaffold discover --install   # автоматически установить лучшие совпадения
+```
+
+В первой сессии нового проекта с минимумом скиллов `session-start.js` автоматически предлагает запустить `discover`.
+
+### Model Router
+
+Переключайте профили стоимость/качество без редактирования env-файлов:
+
+```bash
+claude-scaffold use sonnet           # полное качество (по умолчанию)
+claude-scaffold use haiku            # ниже стоимость для рутинных задач
+claude-scaffold use gemini-flash     # OpenRouter для мультимодальных задач
+claude-scaffold install-aliases      # добавить алиасы: use-sonnet, use-haiku и др.
+```
+
+---
+
 ## Варианты деплоя
 
 ### Вариант A — NPX (без клонирования)
@@ -450,7 +489,7 @@ claude-scaffold/
 ## Запуск тестов
 
 ```bash
-npm test                          # 536 Jest + 57 Python
+npm test                          # 534 Jest + 59 Python
 npm run test:hook                 # только тесты хуков
 npm run check:budget              # проверить что все скиллы < 300 строк
 npm run metrics                   # отчёт по частоте загрузки скиллов

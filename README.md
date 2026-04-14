@@ -10,8 +10,8 @@ Three things in one repo: **scaffolding** (22 skills, profiles, hooks deployed t
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
 ![Token Savings](https://img.shields.io/badge/token%20savings-71.4%25-brightgreen)
-![Jest Tests](https://img.shields.io/badge/Jest-536%20tests-brightgreen)
-![Python Tests](https://img.shields.io/badge/Python-57%20tests-blue)
+![Jest Tests](https://img.shields.io/badge/Jest-534%20tests-brightgreen)
+![Python Tests](https://img.shields.io/badge/Python-59%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -133,6 +133,8 @@ On every Claude Code prompt, the hook automatically:
 2. Detects planning intent and reminds to enter plan mode
 3. Matches the prompt against 22 skill rules (keywords + changed files + platform triggers)
 4. Injects up to 2 additional relevant skills into `system_prompt_addition`
+5. On first session with minimal skills installed — suggests `claude-scaffold discover`
+6. Checks for session contract (session 2+) — reminds to run `claude-scaffold new-session "goal"`
 
 Skills bring domain knowledge: FastAPI patterns, RAG pipelines, LangGraph graphs, CI/CD configs, test-first workflow — injected only when needed, compressed if large.
 
@@ -340,6 +342,43 @@ SCAFFOLD_LIGHT_AGENTS=true claude
 
 ---
 
+## Session Management (v2.2.0+)
+
+### Session Contract
+
+Track session goals and prevent context drift in long projects:
+
+```bash
+claude-scaffold new-session "implement JWT auth"
+# → creates dev/active/session-YYYY-MM-DD.md
+# → session-start hook reminds if contract is missing on session 2+
+```
+
+### Skill Discovery
+
+Auto-detect project stack and find relevant skills from the registry:
+
+```bash
+claude-scaffold discover             # detects React, FastAPI, Rust, Go, etc.
+claude-scaffold discover frontend    # search by tag
+claude-scaffold discover --install   # install top matches automatically
+```
+
+On the first session of a new project with minimal skills, `session-start.js` suggests running `discover` automatically.
+
+### Model Router
+
+Switch cost/quality profiles without editing env files:
+
+```bash
+claude-scaffold use sonnet           # full quality (default)
+claude-scaffold use haiku            # lower cost for routine tasks
+claude-scaffold use gemini-flash     # OpenRouter multimodal
+claude-scaffold install-aliases      # add shell aliases: use-sonnet, use-haiku, etc.
+```
+
+---
+
 ## Deploy Options
 
 ### Option A — NPX (no clone needed)
@@ -450,7 +489,7 @@ claude-scaffold/
 ## Running Tests
 
 ```bash
-npm test                          # 536 Jest + 57 Python
+npm test                          # 534 Jest + 59 Python
 npm run test:hook                 # hook tests only
 npm run check:budget              # verify all skills under 300 lines
 npm run metrics                   # skill load frequency report

@@ -20,12 +20,29 @@
 
 ## Current Phase
 
-**Session 5 — DONE (2026-04-14). Pending: `git tag v2.2.0` + `--update-all`**
+**Session 6 — IN PROGRESS (2026-04-14). v2.2.1 logging fixes + docs.**
 
 Сессия выполнена полностью, осталось два деплой-действия:
 
 1. ⏳ `git tag v2.2.0 && git push origin v2.2.0` → CI публикует npm@2.2.0 автоматически
 2. ⏳ `npx claude-scaffold update --all` → обновить 29 репо до HEAD `bade556`
+
+**Что делается в Session 6:**
+
+| Задача | Статус | Детали |
+|--------|--------|--------|
+| session-safety.js block logging | ✅ | appendSessionEvent при block + snapshot_created |
+| post-tool-use-tracker.js bash + count | ✅ | bash_command JSONL + tool_call_count в session cache |
+| +4 новых теста | ✅ | 2 в session-safety + 2 в post-tool-use-tracker |
+| README.md v2.2.0 features | ✅ | badges, счётчик, Session Management раздел |
+| README.ru.md v2.2.0 features | ✅ | то же на RU |
+| package.json 2.2.0→2.2.1 | ✅ | |
+| MEMORY.md актуализация | ✅ | версия, тесты, Key Paths, без стейла |
+| analyze_logs.py удалён | ✅ | временный скрипт |
+| git commit 1 (logging) | ⏳ | |
+| git commit 2 (docs) | ⏳ | |
+| git tag v2.2.1 + push | ⏳ | |
+| python scripts/deploy.py --update-all | ⏳ | |
 
 **Что было сделано в Session 5:**
 
