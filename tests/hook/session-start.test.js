@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -378,5 +378,54 @@ describe("buildContractMissingBlock", () => {
     fs.writeFileSync(path.join(activeDir, `session-${today}.md`), "# Session\n", "utf8");
     const result = main("{}", tmpDir, "linux", () => "python3");
     expect(result.hookSpecificOutput.additionalContext).not.toContain("SESSION CONTRACT MISSING");
+  });
+});
+
+describe("buildDiscoverySuggestionBlock", () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ss-discover-test-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function makeMinimalSkillRules(tmpDir, ruleCount) {
+    const skillsDir = path.join(tmpDir, ".claude", "skills");
+    fs.mkdirSync(skillsDir, { recursive: true });
+    const rules = { rules: Array.from({ length: ruleCount }, (_, i) => ({ skill: `skill-${i}` })) };
+    fs.writeFileSync(path.join(skillsDir, "skill-rules.json"), JSON.stringify(rules), "utf8");
+  }
+
+  test("returns null for session > 1", () => {
+    makeMinimalSkillRules(tmpDir, 2);
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 2)).toBeNull();
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 10)).toBeNull();
+  });
+
+  test("returns null when skill-rules.json has >= 4 rules", () => {
+    makeMinimalSkillRules(tmpDir, 4);
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 1)).toBeNull();
+  });
+
+  test("returns null when skill-rules.json does not exist", () => {
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 1)).toBeNull();
+  });
+
+  test("returns block for session 1 with < 4 rules", () => {
+    makeMinimalSkillRules(tmpDir, 2);
+    const result = buildDiscoverySuggestionBlock(fs, tmpDir, 1);
+    expect(result).not.toBeNull();
+    expect(result).toContain("SKILL DISCOVERY");
+    expect(result).toContain("claude-scaffold discover");
+  });
+
+  test("detects Node.js when package.json is present", () => {
+    makeMinimalSkillRules(tmpDir, 2);
+    fs.writeFileSync(path.join(tmpDir, "package.json"), "{}", "utf8");
+    const result = buildDiscoverySuggestionBlock(fs, tmpDir, 1);
+    expect(result).toContain("Node.js");
   });
 });

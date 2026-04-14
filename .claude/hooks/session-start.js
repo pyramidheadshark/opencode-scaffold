@@ -164,6 +164,25 @@ function buildContractMissingBlock(fsModule, cwd, sessionCount) {
   return `## [SESSION CONTRACT MISSING]\nNo session contract for today (${today}).\nRun: \`claude-scaffold new-session "your session goal"\``;
 }
 
+function buildDiscoverySuggestionBlock(fsModule, cwd, sessionCount) {
+  if (sessionCount !== 1) return null;
+  const rulesPath = path.join(cwd, '.claude', 'skills', 'skill-rules.json');
+  if (!fsModule.existsSync(rulesPath)) return null;
+  try {
+    const rules = JSON.parse(fsModule.readFileSync(rulesPath, 'utf8'));
+    if (!rules.rules || rules.rules.length >= 4) return null;
+  } catch { return null; }
+
+  const detected = [];
+  if (fsModule.existsSync(path.join(cwd, 'package.json'))) detected.push('Node.js');
+  if (fsModule.existsSync(path.join(cwd, 'pyproject.toml'))) detected.push('Python');
+  if (fsModule.existsSync(path.join(cwd, 'Cargo.toml'))) detected.push('Rust');
+  if (fsModule.existsSync(path.join(cwd, 'go.mod'))) detected.push('Go');
+
+  const stackStr = detected.length > 0 ? `Detected: ${detected.join(', ')}.` : '';
+  return `## [SKILL DISCOVERY]\nNew project with minimal skills installed. ${stackStr}\nRun: \`claude-scaffold discover\` to find relevant skills for this project.`;
+}
+
 function buildLocalizedBlocks(lang) {
   const i18n = resolveI18n();
   if (!i18n || lang === "en" || !lang) {
@@ -217,6 +236,8 @@ function main(inputStr, cwd, platform, detectPython) {
   if (infraBlock) additions.push(infraBlock);
   const contractBlock = buildContractMissingBlock(fs, effectiveCwd, sessionCount);
   if (contractBlock) additions.push(contractBlock);
+  const discoveryBlock = buildDiscoverySuggestionBlock(fs, effectiveCwd, sessionCount);
+  if (discoveryBlock) additions.push(discoveryBlock);
   if (process.env.SCAFFOLD_LIGHT_AGENTS === "true" || process.env.SCAFFOLD_LIGHT_AGENTS === "1") {
     additions.push(LIGHT_AGENTS_BLOCK);
   }
@@ -233,4 +254,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };

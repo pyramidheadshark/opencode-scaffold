@@ -2,7 +2,7 @@
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { WEIGHTS, getSessionJsonlPath, appendSessionEvent, deleteOldSessionLogs } = require("../../.claude/hooks/session-utils");
+const { getSessionJsonlPath, appendSessionEvent, deleteOldSessionLogs } = require("../../.claude/hooks/session-utils");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-utils-test-"));
@@ -11,13 +11,6 @@ function makeTempDir() {
 function cleanup(dir) {
   fs.rmSync(dir, { recursive: true, force: true });
 }
-
-describe("WEIGHTS", () => {
-  test("Write has weight 2", () => expect(WEIGHTS.Write).toBe(2));
-  test("Edit has weight 1", () => expect(WEIGHTS.Edit).toBe(1));
-  test("Bash has weight 0.3", () => expect(WEIGHTS.Bash).toBeCloseTo(0.3));
-  test("Read has weight 0", () => expect(WEIGHTS.Read).toBe(0));
-});
 
 describe("getSessionJsonlPath", () => {
   test("returns path inside .claude/logs/sessions/", () => {

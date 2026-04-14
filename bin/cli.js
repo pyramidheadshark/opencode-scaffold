@@ -193,6 +193,16 @@ program
   .action((description) => require('../lib/commands/new-session').newSession(description));
 
 program
+  .command('discover [query]')
+  .description('Detect project stack and find matching skills in the registry')
+  .option('--install', 'Auto-install matching skills without prompting')
+  .option('--json', 'Output results as JSON')
+  .action((query, opts) => {
+    const { runDiscover } = require('../lib/commands/discover');
+    runDiscover(INFRA_DIR, process.cwd(), { query, ...opts });
+  });
+
+program
   .command('list-org-profiles')
   .description('List available org profiles and their project types')
   .action(() => {
