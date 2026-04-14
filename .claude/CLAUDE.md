@@ -155,16 +155,16 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 
 ## Agent Inventory
 
-| Agent | Purpose |
-|---|---|
-| `design-doc-architect` | Creates design-doc.md from raw requirements |
-| `test-architect` | Generates full test suite skeleton from design doc |
-| `multimodal-analyzer` | Extracts structured data from PDFs, DOCX, XLSX, video |
-| `code-reviewer` | Reviews code for architectural consistency |
-| `infra-provisioner` | Writes Terraform, Packer, Docker Compose configs |
-| `refactor-planner` | Plans and executes incremental refactoring |
-| `project-status-reporter` | Generates status reports from git + coverage |
-| `debug-assistant` | Diagnoses errors and stack traces systematically |
+| Agent | Purpose | Model |
+|---|---|---|
+| `design-doc-architect` | Creates design-doc.md from raw requirements | `claude-opus-4-6` |
+| `test-architect` | Generates full test suite skeleton from design doc | `claude-sonnet-4-6` |
+| `multimodal-analyzer` | Extracts structured data from PDFs, DOCX, XLSX, video | `claude-haiku-4-5-20251001` |
+| `code-reviewer` | Reviews code for architectural consistency | `claude-sonnet-4-6` |
+| `infra-provisioner` | Writes Terraform, Packer, Docker Compose configs | `claude-sonnet-4-6` |
+| `refactor-planner` | Plans and executes incremental refactoring | `claude-sonnet-4-6` |
+| `project-status-reporter` | Generates status reports from git + coverage | `claude-haiku-4-5-20251001` |
+| `debug-assistant` | Diagnoses errors and stack traces systematically | `claude-haiku-4-5-20251001` |
 
 ## Command Inventory
 

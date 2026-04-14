@@ -1,3 +1,8 @@
+---
+description: Diagnoses errors, tracebacks, and unexpected behaviour systematically. Produces root cause analysis and concrete fix.
+model: claude-haiku-4-5-20251001
+---
+
 # Agent: debug-assistant
 
 ## Purpose

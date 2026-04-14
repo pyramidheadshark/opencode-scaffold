@@ -20,7 +20,7 @@
 
 ## Current Phase
 
-**P0 Overhaul — Session 1 + Audit COMPLETE. Session 2 ready.**
+**P0 Overhaul — Session 2 COMPLETE. Session 3 next.**
 
 ---
 
@@ -31,8 +31,8 @@ Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.
 | Сессия | Фазы | Статус | HEAD |
 |--------|------|--------|------|
 | **Session 1** | A1 (billing guard) + A2 (hook API migration) + Audit | ✅ DONE | `352798a` |
-| **Session 2** | B1 (audit) + B2 (Haiku) + D1-D3 (model router) + quick wins | ⏳ **NEXT** | — |
-| **Session 3** | C1 (Session Contract) + C2 (Knowledge Manifest) + E-tasks → **v3.0 tag** | ⏳ Pending | — |
+| **Session 2** | B1 (size test) + B2 (Haiku frontmatter) + D1-D3 (model router) | ✅ DONE | TBD |
+| **Session 3** | C1 (Session Contract) + C2 (Knowledge Manifest) + E-tasks → **v3.0 tag** | ⏳ **NEXT** | — |
 
 ### Session 1 — выполнено (2026-04-14)
 
@@ -49,14 +49,27 @@ Full plan: `C:\Users\pyramidheadshark\.claude\plans\functional-squishing-hinton.
 
 ---
 
+## Session 2 — выполнено (2026-04-14)
+
+| Задача | Что сделано | Файлы |
+|--------|-------------|-------|
+| **D1-D3** | `claude-scaffold use <model>` / `install-aliases` CLI; 5 профилей + 3 пресета; .sh + .ps1 env-файлы; маркер-блок идемпотентность | `lib/commands/model-router.js`, `bin/cli.js` |
+| **D2** | `status` команда показывает активный профиль перед таблицей репо | `lib/commands/status.js` |
+| **B2** | `model:` frontmatter в 8 агентских файлах (Haiku/Sonnet/Opus по задаче) | `.claude/agents/*.md` |
+| **B1-size** | E2E тест: 5 промптов подряд, max injection 2-5 < 60% от первого | `tests/hook/skill-activation-e2e.test.js` |
+| **Tests MR** | 25 тестов MR-01..MR-09: contract-based, mock os.homedir | `tests/cli/model-router.test.js` |
+| **Infra tests** | 2 новых теста: `test_all_agents_have_model_frontmatter`, `test_agent_model_values_are_known` | `tests/infra/test_infra.py` |
+| **CLAUDE.md** | Agent Inventory + колонка Model | `.claude/CLAUDE.md` |
+
 ## Current State (2026-04-14)
 
 - **v2.1.0 PUBLISHED** npm@2.1.0 (2026-04-08)
-- **main HEAD: `352798a`** (P0 Session 1 + Audit)
-- **535 tests** (478 Jest + 57 Python), 0 failed
-- **29 repos** обновлены до `352798a` с PreToolUse — все `[up to date]`
+- **main HEAD: TBD** (P0 Session 2 done, pre-commit)
+- **623 tests** (564 Jest + 59 Python), 0 failed
+- **29 repos** на `352798a` — нужен `--update-all` после Session 2 коммитов
 - **4 GitHub stars**, 0 forks
 - `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
+- `claude-scaffold use <model>` — Model Router CLI активен
 
 ### Что работает сейчас в целевых репо (после Session 1):
 

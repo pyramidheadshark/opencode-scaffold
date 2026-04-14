@@ -629,5 +629,42 @@ class TestCriticalAnalysisSkill(unittest.TestCase):
         )
 
 
+class TestAgentFrontmatter(unittest.TestCase):
+    def test_all_agents_have_model_frontmatter(self):
+        agent_files = list(AGENTS_DIR.glob("*.md"))
+        self.assertGreater(len(agent_files), 0, "No agent files found in .claude/agents/")
+        for agent_file in agent_files:
+            content = agent_file.read_text(encoding="utf-8")
+            lines = content.splitlines()
+            first_10 = "\n".join(lines[:10])
+            self.assertIn(
+                "model:",
+                first_10,
+                f"{agent_file.name} is missing 'model:' in frontmatter (first 10 lines)"
+            )
+
+    def test_agent_model_values_are_known(self):
+        known_models = {
+            "claude-haiku-4-5-20251001",
+            "claude-sonnet-4-6",
+            "claude-opus-4-6",
+        }
+        agent_files = list(AGENTS_DIR.glob("*.md"))
+        for agent_file in agent_files:
+            content = agent_file.read_text(encoding="utf-8")
+            lines = content.splitlines()
+            model_line = next(
+                (l for l in lines[:10] if l.startswith("model:")), None
+            )
+            if model_line is None:
+                continue
+            model_value = model_line.split(":", 1)[1].strip()
+            self.assertIn(
+                model_value,
+                known_models,
+                f"{agent_file.name} has unknown model value: '{model_value}'"
+            )
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

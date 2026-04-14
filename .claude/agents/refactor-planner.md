@@ -1,3 +1,8 @@
+---
+description: Plans and executes refactoring to align code with Hexagonal Architecture, type safety, and test coverage standards.
+model: claude-sonnet-4-6
+---
+
 # Agent: refactor-planner
 
 ## Purpose

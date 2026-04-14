@@ -294,6 +294,55 @@ describe("E2E — session cache deduplication", () => {
   });
 });
 
+describe("E2E — injection size reduction across session (B1-size)", () => {
+  let tmpCwd;
+
+  beforeEach(() => {
+    tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), "e2e-b1size-"));
+    const claudeDir = path.join(tmpCwd, ".claude");
+    fs.mkdirSync(claudeDir, { recursive: true });
+    const devDir = path.join(tmpCwd, "dev");
+    fs.mkdirSync(devDir, { recursive: true });
+    fs.writeFileSync(path.join(devDir, "status.md"), "# Status\n\nGoal: test", "utf8");
+    const fixtureSkillsDir = path.join(FIXTURE_CWD, ".claude/skills");
+    const destSkillsDir = path.join(tmpCwd, ".claude/skills");
+    fs.mkdirSync(destSkillsDir, { recursive: true });
+    fs.copyFileSync(
+      path.join(fixtureSkillsDir, "skill-rules.json"),
+      path.join(destSkillsDir, "skill-rules.json")
+    );
+    for (const entry of fs.readdirSync(fixtureSkillsDir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        const src = path.join(fixtureSkillsDir, entry.name);
+        const dst = path.join(destSkillsDir, entry.name);
+        fs.mkdirSync(dst, { recursive: true });
+        for (const f of fs.readdirSync(src)) {
+          fs.copyFileSync(path.join(src, f), path.join(dst, f));
+        }
+      }
+    }
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpCwd, { recursive: true, force: true });
+  });
+
+  test("subsequent prompts inject significantly less than prompt 1 (threshold: 60%)", () => {
+    const sessionId = "b1-size-test-" + Date.now();
+
+    const out1 = runHook("help me write a fastapi router", tmpCwd, sessionId);
+    const size1 = (out1.additionalContext || "").length;
+    expect(size1).toBeGreaterThan(100);
+
+    let maxSubsequent = 0;
+    for (let i = 0; i < 4; i++) {
+      const out = runHook("write more fastapi code", tmpCwd, sessionId);
+      maxSubsequent = Math.max(maxSubsequent, (out.additionalContext || "").length);
+    }
+    expect(maxSubsequent).toBeLessThan(size1 * 0.6);
+  });
+});
+
 describe("E2E — no-git fallback", () => {
   test("changedFiles=[] when not a git repo and skills still activate by keywords", () => {
     const noGitDir = fs.mkdtempSync(path.join(os.tmpdir(), "e2e-nogit-"));
