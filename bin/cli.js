@@ -177,6 +177,17 @@ program
   });
 
 program
+  .command('use <model>')
+  .description('Switch active model profile (sonnet, haiku, opus, gemini-flash, or preset: executor, architect, critic)')
+  .option('--show-env', 'Print env vars to stdout instead of writing file')
+  .action((model, opts) => require('../lib/commands/model-router').use(model, opts));
+
+program
+  .command('install-aliases')
+  .description('Install claude-sonnet, claude-haiku, claude-opus, claude-gemini-flash shell aliases')
+  .action(() => require('../lib/commands/model-router').installAliases());
+
+program
   .command('list-org-profiles')
   .description('List available org profiles and their project types')
   .action(() => {
