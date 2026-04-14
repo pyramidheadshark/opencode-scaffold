@@ -156,6 +156,14 @@ const LIGHT_AGENTS_BLOCK = `## Light Agents Active
 For status/backlog updates, use the \`status-updater\` agent (cost-optimized model).
 Invoke: "Use the status-updater agent to update dev/status.md."`;
 
+function buildContractMissingBlock(fsModule, cwd, sessionCount) {
+  if (sessionCount <= 1) return null;
+  const today = new Date().toISOString().split("T")[0];
+  const contractFile = path.join(cwd, "dev", "active", `session-${today}.md`);
+  if (fsModule.existsSync(contractFile)) return null;
+  return `## [SESSION CONTRACT MISSING]\nNo session contract for today (${today}).\nRun: \`claude-scaffold new-session "your session goal"\``;
+}
+
 function buildLocalizedBlocks(lang) {
   const i18n = resolveI18n();
   if (!i18n || lang === "en" || !lang) {
@@ -207,6 +215,8 @@ function main(inputStr, cwd, platform, detectPython) {
   if (depsBlock) additions.push(depsBlock);
   const infraBlock = buildInfraBlock(fs, effectiveCwd);
   if (infraBlock) additions.push(infraBlock);
+  const contractBlock = buildContractMissingBlock(fs, effectiveCwd, sessionCount);
+  if (contractBlock) additions.push(contractBlock);
   if (process.env.SCAFFOLD_LIGHT_AGENTS === "true" || process.env.SCAFFOLD_LIGHT_AGENTS === "1") {
     additions.push(LIGHT_AGENTS_BLOCK);
   }
@@ -223,4 +233,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };

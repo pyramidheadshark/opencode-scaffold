@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -331,5 +331,52 @@ describe("main — SCAFFOLD_LIGHT_AGENTS", () => {
   test("LIGHT_AGENTS_BLOCK export contains status-updater reference", () => {
     expect(LIGHT_AGENTS_BLOCK).toContain("status-updater");
     expect(LIGHT_AGENTS_BLOCK).toContain("Light Agents Active");
+  });
+});
+
+describe("buildContractMissingBlock", () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ss-contract-test-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test("returns null for session 1 (first run)", () => {
+    expect(buildContractMissingBlock(fs, tmpDir, 1)).toBeNull();
+  });
+
+  test("returns block for session 2+ when no contract file exists", () => {
+    const result = buildContractMissingBlock(fs, tmpDir, 2);
+    expect(result).not.toBeNull();
+    expect(result).toContain("SESSION CONTRACT MISSING");
+    expect(result).toContain("claude-scaffold new-session");
+  });
+
+  test("returns null when contract file exists for today", () => {
+    const today = new Date().toISOString().split("T")[0];
+    const activeDir = path.join(tmpDir, "dev", "active");
+    fs.mkdirSync(activeDir, { recursive: true });
+    fs.writeFileSync(path.join(activeDir, `session-${today}.md`), "# Session\n", "utf8");
+    expect(buildContractMissingBlock(fs, tmpDir, 2)).toBeNull();
+  });
+
+  test("main injects contract block when session > 1 and no contract", () => {
+    saveConfig(tmpDir, { session_count: 1, platform: "linux", python_cmd: "python3", shell: "bash", lang: "en" });
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.hookSpecificOutput.additionalContext).toContain("SESSION CONTRACT MISSING");
+  });
+
+  test("main does not inject contract block when contract exists", () => {
+    saveConfig(tmpDir, { session_count: 1, platform: "linux", python_cmd: "python3", shell: "bash", lang: "en" });
+    const today = new Date().toISOString().split("T")[0];
+    const activeDir = path.join(tmpDir, "dev", "active");
+    fs.mkdirSync(activeDir, { recursive: true });
+    fs.writeFileSync(path.join(activeDir, `session-${today}.md`), "# Session\n", "utf8");
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("SESSION CONTRACT MISSING");
   });
 });

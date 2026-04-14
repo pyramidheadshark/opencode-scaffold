@@ -188,6 +188,11 @@ program
   .action(() => require('../lib/commands/model-router').installAliases());
 
 program
+  .command('new-session [description]')
+  .description('Create a session contract in dev/active/session-YYYY-MM-DD.md')
+  .action((description) => require('../lib/commands/new-session').newSession(description));
+
+program
   .command('list-org-profiles')
   .description('List available org profiles and their project types')
   .action(() => {
