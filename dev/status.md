@@ -20,7 +20,9 @@
 
 ## Current Phase
 
-**Session 7 — CODE + DOCS DONE (2026-04-15). v2.3.0: Thinking Defaults + Docs Slim. Awaiting tag push + update-all.**
+**Session 7 — DONE (2026-04-15). v2.3.1 PUBLISHED npm@2.3.1. 29 репо обновлены. Thinking Defaults активны везде.**
+
+Пост-деплой обнаружена регрессия: `scripts/deploy.py` не писал env-ключи (исторический gap Python-пути). Хотфикс v2.3.1: `apply_tuning_defaults` + 2 Python теста. Spot-check подтверждает все 5 ключей (EFFORT=max, ADAPTIVE=1, 1M=1, Summaries=true, Clear=true) в deployed репо.
 
 План: `C:\Users\pyramidheadshark\.claude\plans\wobbly-wishing-meerkat.md`
 
