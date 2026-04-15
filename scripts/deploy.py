@@ -449,6 +449,20 @@ def generate_skill_rules(
     return result
 
 
+def apply_tuning_defaults(existing: dict) -> None:
+    env = existing.setdefault("env", {})
+    if "CLAUDE_CODE_DISABLE_1M_CONTEXT" not in env:
+        env["CLAUDE_CODE_DISABLE_1M_CONTEXT"] = "1"
+    if "CLAUDE_CODE_EFFORT_LEVEL" not in env:
+        env["CLAUDE_CODE_EFFORT_LEVEL"] = "max"
+    if "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING" not in env:
+        env["CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING"] = "1"
+    if "showClearContextOnPlanAccept" not in existing:
+        existing["showClearContextOnPlanAccept"] = True
+    if "showThinkingSummaries" not in existing:
+        existing["showThinkingSummaries"] = True
+
+
 def deploy_settings(target: Path) -> None:
     settings_path = target / ".claude" / "settings.json"
     existing: dict = {}
@@ -458,6 +472,7 @@ def deploy_settings(target: Path) -> None:
         except (json.JSONDecodeError, OSError):
             existing = {}
     existing["hooks"] = build_hooks_definition(target)
+    apply_tuning_defaults(existing)
     settings_path.write_text(
         json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",

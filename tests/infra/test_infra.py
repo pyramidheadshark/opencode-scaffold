@@ -380,6 +380,30 @@ class TestDeployScript(unittest.TestCase):
             self.assertIn("UserPromptSubmit", data["hooks"], "hooks missing UserPromptSubmit")
             self.assertIn("PreToolUse", data["hooks"], "hooks missing PreToolUse (bash-output-filter + session-safety)")
 
+    def test_deploy_writes_thinking_defaults(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            self._run_deploy_settings(target)
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "max")
+            self.assertEqual(data["env"]["CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING"], "1")
+            self.assertEqual(data["env"]["CLAUDE_CODE_DISABLE_1M_CONTEXT"], "1")
+            self.assertTrue(data["showThinkingSummaries"])
+            self.assertTrue(data["showClearContextOnPlanAccept"])
+
+    def test_deploy_settings_preserves_existing_env_values(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            (target / ".claude" / "settings.json").write_text(
+                json.dumps({"env": {"CLAUDE_CODE_EFFORT_LEVEL": "medium"}}),
+                encoding="utf-8",
+            )
+            self._run_deploy_settings(target)
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "medium")
+
     def test_deploy_post_tool_use_has_two_hooks(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

@@ -5,6 +5,17 @@ Format: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.3.1 — 2026-04-15
+
+### Fixed
+- **`scripts/deploy.py` parity** — Python deploy path now writes the same thinking defaults as the JS path (`CLAUDE_CODE_EFFORT_LEVEL=max`, `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`, `CLAUDE_CODE_DISABLE_1M_CONTEXT=1`, `showThinkingSummaries=true`, `showClearContextOnPlanAccept=true`). Prior to this, `python scripts/deploy.py --update-all` shipped the hook block but no env/settings — leaving deployed repos without the v2.3.0 defaults despite the SHA showing "up to date".
+- `apply_tuning_defaults(existing)` added as a pure helper, mirroring `applyTuningDefaults` in `lib/deploy/copy.js`. Non-overwrite semantics preserved.
+
+### Tests
+- +2 Python (`test_deploy_writes_thinking_defaults`, `test_deploy_settings_preserves_existing_env_values`) — 554 Jest + 61 Python, all green.
+
+---
+
 ## v2.3.0 — 2026-04-15
 
 ### Added
