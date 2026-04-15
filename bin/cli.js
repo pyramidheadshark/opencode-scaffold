@@ -14,7 +14,16 @@ const { listOrgProfiles, updateOrgProfile, loadOrgProfile } = require('../lib/co
 const { DEFAULT_REGISTRY_PATH } = require('../lib/deploy/registry');
 const { runRegistrySearch, runRegistryInstall, runRegistryList, runRegistryUpdate, runRegistryAddSource } = require('../lib/commands/registry');
 const { runDepsStatus, runDepsUpdateBlocker, runDepsAdd, runDepsRemove } = require('../lib/commands/deps');
+const { runTune } = require('../lib/commands/tune');
 const PROFILES = require('../lib/profiles');
+
+function buildTuning(opts) {
+  const tuning = {};
+  if (opts.effort !== undefined) tuning.effort = opts.effort;
+  if (opts.adaptiveThinking !== undefined) tuning.adaptiveThinking = opts.adaptiveThinking;
+  if (opts.thinkingSummaries !== undefined) tuning.thinkingSummaries = opts.thinkingSummaries;
+  return tuning;
+}
 
 const INFRA_DIR = path.join(__dirname, '..');
 const LINE = '-'.repeat(60);
@@ -37,6 +46,9 @@ program
   .option('--dry-run', 'Preview what will be deployed without writing files')
   .option('--org-profile <org>', 'Org profile name (e.g. techcon-ml)')
   .option('--org-type <type>', 'Project type within org (required with --org-profile)')
+  .option('--effort <level>', 'Thinking effort: max|high|medium|off (default: max)')
+  .option('--adaptive-thinking <mode>', 'Adaptive thinking: on|off (default: off — opt-out)')
+  .option('--thinking-summaries <mode>', 'Thinking summaries: on|off (default: on)')
   .action(async (targetPath, opts) => {
     if (opts.orgProfile && !opts.orgType) {
       console.error('Error: --org-type is required with --org-profile (see list-org-profiles)');
@@ -104,6 +116,7 @@ program
       dryRun: !!opts.dryRun,
       orgProfile: opts.orgProfile || '',
       orgType: opts.orgType || '',
+      tuning: buildTuning(opts),
     });
 
     if (opts.dryRun) return;
@@ -128,13 +141,17 @@ program
   .command('update [target-path]')
   .description('Update .claude/ in a registered project (or all with --all)')
   .option('--all', 'Update all registered projects')
+  .option('--effort <level>', 'Thinking effort: max|high|medium|off')
+  .option('--adaptive-thinking <mode>', 'Adaptive thinking: on|off')
+  .option('--thinking-summaries <mode>', 'Thinking summaries: on|off')
   .action((targetPath, opts) => {
+    const tuning = buildTuning(opts);
     if (opts.all) {
-      const result = updateAll(INFRA_DIR, DEFAULT_REGISTRY_PATH);
+      const result = updateAll(INFRA_DIR, DEFAULT_REGISTRY_PATH, tuning);
       console.log(`\nUpdated ${result.updated} repo(s), skipped ${result.skipped} (already up to date).`);
     } else if (targetPath) {
       const resolved = path.resolve(targetPath);
-      updateOne(INFRA_DIR, resolved, DEFAULT_REGISTRY_PATH);
+      updateOne(INFRA_DIR, resolved, DEFAULT_REGISTRY_PATH, tuning);
       console.log(`\nUpdated: ${resolved}`);
     } else {
       console.error('Specify a target path or use --all');
@@ -336,6 +353,32 @@ registry
   .action(async (name, url, opts) => {
     try { await runRegistryAddSource(INFRA_DIR, name, url, opts); }
     catch (e) { console.error(`Error: ${e.message}`); process.exit(1); }
+  });
+
+program
+  .command('tune [target-path]')
+  .description('Overwrite thinking/effort settings in an existing .claude/settings.json')
+  .option('--effort <level>', 'Thinking effort: max|high|medium|off (off deletes the key)')
+  .option('--adaptive-thinking <mode>', 'Adaptive thinking: on|off (on deletes the DISABLE key)')
+  .option('--thinking-summaries <mode>', 'Thinking summaries: on|off')
+  .action((targetPath, opts) => {
+    const resolved = path.resolve(targetPath || process.cwd());
+    const tuning = buildTuning(opts);
+    if (Object.keys(tuning).length === 0) {
+      console.error('Specify at least one of: --effort, --adaptive-thinking, --thinking-summaries');
+      process.exit(1);
+    }
+    const result = runTune(resolved, tuning);
+    console.log(`\nTuned: ${result.settingsPath}`);
+    if (result.env.CLAUDE_CODE_EFFORT_LEVEL !== undefined) {
+      console.log(`  CLAUDE_CODE_EFFORT_LEVEL = ${result.env.CLAUDE_CODE_EFFORT_LEVEL}`);
+    }
+    if (result.env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING !== undefined) {
+      console.log(`  CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING = ${result.env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING}`);
+    }
+    if (result.showThinkingSummaries !== undefined) {
+      console.log(`  showThinkingSummaries = ${result.showThinkingSummaries}`);
+    }
   });
 
 program.parse(process.argv);

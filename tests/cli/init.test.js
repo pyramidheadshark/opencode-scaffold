@@ -444,6 +444,105 @@ describe('init — deployCore', () => {
     expect(settings.env.CLAUDE_CODE_DISABLE_1M_CONTEXT).toBe('0');
   });
 
+  test('settings.json gets CLAUDE_CODE_EFFORT_LEVEL=max on fresh deploy', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('max');
+  });
+
+  test('settings.json does not overwrite existing CLAUDE_CODE_EFFORT_LEVEL', () => {
+    const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify({ env: { CLAUDE_CODE_EFFORT_LEVEL: 'medium' } }), 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(settings.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('medium');
+  });
+
+  test('settings.json skips CLAUDE_CODE_EFFORT_LEVEL when tuning.effort=off', () => {
+    deployCore(INFRA_DIR, tmpDir, {
+      skills: ['python-project-standards'],
+      registryPath,
+      tuning: { effort: 'off' },
+    });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.env.CLAUDE_CODE_EFFORT_LEVEL).toBeUndefined();
+  });
+
+  test('settings.json respects tuning.effort=high', () => {
+    deployCore(INFRA_DIR, tmpDir, {
+      skills: ['python-project-standards'],
+      registryPath,
+      tuning: { effort: 'high' },
+    });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('high');
+  });
+
+  test('settings.json gets CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1 on fresh deploy', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING).toBe('1');
+  });
+
+  test('settings.json does not overwrite existing CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING', () => {
+    const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify({ env: { CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING: '0' } }), 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(settings.env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING).toBe('0');
+  });
+
+  test('settings.json skips DISABLE_ADAPTIVE_THINKING when tuning.adaptiveThinking=on', () => {
+    deployCore(INFRA_DIR, tmpDir, {
+      skills: ['python-project-standards'],
+      registryPath,
+      tuning: { adaptiveThinking: 'on' },
+    });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING).toBeUndefined();
+  });
+
+  test('settings.json gets showThinkingSummaries=true on fresh deploy', () => {
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.showThinkingSummaries).toBe(true);
+  });
+
+  test('settings.json does not overwrite explicit showThinkingSummaries: false', () => {
+    const settingsPath = path.join(tmpDir, '.claude', 'settings.json');
+    fs.mkdirSync(path.dirname(settingsPath), { recursive: true });
+    fs.writeFileSync(settingsPath, JSON.stringify({ showThinkingSummaries: false }), 'utf8');
+    deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
+    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(settings.showThinkingSummaries).toBe(false);
+  });
+
+  test('settings.json skips showThinkingSummaries when tuning.thinkingSummaries=off', () => {
+    deployCore(INFRA_DIR, tmpDir, {
+      skills: ['python-project-standards'],
+      registryPath,
+      tuning: { thinkingSummaries: 'off' },
+    });
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(tmpDir, '.claude', 'settings.json'), 'utf8')
+    );
+    expect(settings.showThinkingSummaries).toBeUndefined();
+  });
+
   test('settings.json gets showClearContextOnPlanAccept on fresh deploy', () => {
     deployCore(INFRA_DIR, tmpDir, { skills: ['python-project-standards'], registryPath });
     const settings = JSON.parse(
