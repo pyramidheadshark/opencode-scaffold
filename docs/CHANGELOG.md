@@ -5,6 +5,29 @@ Format: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.3.0 — 2026-04-15
+
+### Added
+- **Thinking Defaults** — `deploySettings` writes three Anthropic-recommended keys on `init`/`update` (non-overwrite): `env.CLAUDE_CODE_EFFORT_LEVEL=max`, `env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`, top-level `showThinkingSummaries=true`. Restores full thinking depth after Anthropic silently lowered defaults in Feb–Mar 2026.
+- **CLI flags** on `init` and `update`: `--effort <max|high|medium|off>`, `--adaptive-thinking <on|off>`, `--thinking-summaries <on|off>`. `off` on deploy = skip the key (keep whatever Claude Code defaults to).
+- **`claude-scaffold tune` command** — post-deploy explicit overwrite of the three settings. Uses `applyTuningOverwrite` (in contrast to the non-overwrite `applyTuningDefaults` used by deploy).
+- `lib/commands/tune.js` with 10 Jest cases covering overwrite, key deletion, corrupt-JSON recovery, and hook preservation.
+
+### Changed
+- `lib/deploy/copy.js` refactored: `applyTuningDefaults(existing, tuning)` and `applyTuningOverwrite(existing, tuning)` extracted as pure exported functions. `DEFAULT_TUNING = { effort: 'max', adaptiveThinking: 'off', thinkingSummaries: 'on' }`.
+- `deploySettings(targetDir)` → `deploySettings(targetDir, tuning)`. Old call sites still work (tuning is optional).
+- `updateOne`/`updateAll` accept an optional `tuning` argument threaded through to `deploySettings`.
+- README slimmed from 522 to 345 lines; removed version-stamped section headings; added "Thinking Defaults" section.
+
+### Tests
+- 554 Jest + 59 Python (all green), +20 from 2.2.1 baseline.
+
+### Notes
+- Canonical env var is `CLAUDE_CODE_EFFORT_LEVEL` — not `CLAUDE_REASONING_EFFORT`, and not the `effortLevel` top-level setting (broken per GH #35904).
+- Attribution: defaults follow Anthropic / Claude Code team recommendations (HN thread with Boris).
+
+---
+
 ## v1.4.1 — 2026-03-23
 
 ### Added
