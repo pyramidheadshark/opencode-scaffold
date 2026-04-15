@@ -20,6 +20,31 @@
 
 ## Current Phase
 
+**Session 7 — CODE + DOCS DONE (2026-04-15). v2.3.0: Thinking Defaults + Docs Slim. Awaiting tag push + update-all.**
+
+План: `C:\Users\pyramidheadshark\.claude\plans\wobbly-wishing-meerkat.md`
+
+**Completed:**
+- ✅ A. `copy.js` — `applyTuningDefaults` + `applyTuningOverwrite` pure functions; 3 новых ключа non-overwrite
+- ✅ B. CLI флаги `--effort`, `--adaptive-thinking`, `--thinking-summaries` на `init`/`update`
+- ✅ C. `claude-scaffold tune` команда (overwrite semantics)
+- ✅ D. +20 Jest тестов (534→554), все зелёные; 59 Python — без регрессов
+- ✅ E. README 522→345 строк; version-stamped заголовки удалены; +Thinking Defaults секция
+- ✅ F. docs/: CHANGELOG v2.3.0 entry, REFERENCE +Thinking & Effort Defaults таблица
+- ✅ G. package.json 2.2.1→2.3.0
+
+**Pending (require user confirmation — public/shared operations):**
+- ⏳ `git tag v2.3.0 && git push origin v2.3.0` → auto-publish publish.yml → npm@2.3.0
+- ⏳ `python scripts/deploy.py --update-all` → 29 репо на v2.3.0
+
+**Decisions:**
+- Канонический env var: `CLAUDE_CODE_EFFORT_LEVEL` (не `CLAUDE_REASONING_EFFORT`; `effortLevel` в settings.json broken per GH #35904)
+- Deploy: non-overwrite (мирроринг существующего `CLAUDE_CODE_DISABLE_1M_CONTEXT`); `tune`: overwrite
+- Флаг `off` на deploy = пропустить запись ключа (не писать blank)
+- Attribution: "Anthropic / Claude Code team" (HN thread, Boris)
+
+---
+
 **Session 6 — DONE (2026-04-14). v2.2.1 опубликован, 29 репо обновлены.**
 
 Сессия выполнена полностью, осталось два деплой-действия:

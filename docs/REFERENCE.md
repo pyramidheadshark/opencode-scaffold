@@ -23,6 +23,41 @@ A single CLAUDE.md copy works for one project. claude-scaffold adds:
 
 ---
 
+## Thinking & Effort Defaults
+
+`deploySettings` writes Anthropic-recommended thinking settings into every deployed `.claude/settings.json` — non-overwrite, mirroring the existing `CLAUDE_CODE_DISABLE_1M_CONTEXT=1` pattern.
+
+| Key | Default | Effect |
+|---|---|---|
+| `env.CLAUDE_CODE_EFFORT_LEVEL` | `max` | Full thinking effort (overrides the `medium`/`85` default Anthropic set on 2026-03-03). |
+| `env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING` | `1` | Opt out of adaptive thinking (enabled by default on 2026-02-09). |
+| `showThinkingSummaries` (top-level) | `true` | Show real thinking tokens, not redaction headers. |
+| `env.CLAUDE_CODE_DISABLE_1M_CONTEXT` | `1` | Cap context at 200K (cheaper, faster cache lookups). |
+
+### CLI override
+
+Flags apply on both `init` and `update`. `off`/`on` with opposite polarity (e.g. `--effort off`, `--adaptive-thinking on`) mean "skip writing this key" — the existing value in the target settings (or Claude Code's own default) is left alone.
+
+```bash
+claude-scaffold init /path --profile ml-engineer \
+  --effort high --adaptive-thinking off --thinking-summaries on
+```
+
+### Post-deploy overwrite (`tune`)
+
+Unlike `init`/`update` (non-overwrite), `tune` **explicitly overwrites**. `--effort off` **deletes** the key; `--adaptive-thinking on` **deletes** the DISABLE key.
+
+```bash
+claude-scaffold tune --effort high
+claude-scaffold tune --effort off            # remove EFFORT_LEVEL entirely
+claude-scaffold tune --adaptive-thinking on  # remove DISABLE_ADAPTIVE_THINKING
+claude-scaffold tune --thinking-summaries off
+```
+
+Canonical env var is `CLAUDE_CODE_EFFORT_LEVEL` — the top-level `effortLevel` setting is broken per [GH #35904](https://github.com/anthropics/claude-code/issues/35904).
+
+---
+
 ## Token Budget
 
 | Component | Tokens / prompt |
