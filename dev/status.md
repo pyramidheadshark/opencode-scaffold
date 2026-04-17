@@ -20,40 +20,17 @@
 
 ## Current Phase
 
-**v2.4.0 — РЕАЛИЗАЦИЯ ЗАВЕРШЕНА, КОММИТ `0042d55` (2026-04-17, Session 8)**
+**v2.4.0 — DONE (2026-04-17, Session 8)**
 
-**Осталось:** `git push`, `git tag v2.4.0 && git push origin v2.4.0`, `python scripts/deploy.py --update-all`
-
-### v2.4.0 — IN PLANNING
-
-Цель: bug fixes + token-aware compact + hook optimizer.
-
-**Архитектурные решения (утверждены):**
-- StatusLine хук `session-status-monitor.js` — пишет `context_remaining_pct` + `context_critical` в checkpoint cache; отображает `ctx: X%` в статусбаре
+- npm@2.4.0 published, HEAD `0042d55`
+- 563 Jest + 62 Python тестов, 0 failed
+- StatusLine хук `session-status-monitor.js` — выводит `ctx: ⚠ X%` в статусбаре, пишет `context_critical` в checkpoint cache
 - PostToolUse split: `post-tool-use-tracker` → matcher `Bash|Edit|Write`; `session-checkpoint` → matcher `.*`
-- session-checkpoint: убрать 25-message threshold, читать `context_critical` из cache
-- i18n.js compact message: убрать "COMPACT REQUIRED BEFORE STEP 1", добавить "Clear context button"
+- 25-message threshold убран; compact срабатывает по `context_critical: true` из cache (token-aware)
+- `statusLine` — top-level ключ в settings.json (НЕ внутри hooks)
+- compact message: убрано "COMPACT REQUIRED BEFORE STEP 1", добавлена кнопка "Clear context"
 - CLAUDE.md: `MSYS_NO_PATHCONV=1 gh api` rule + SSH alias rule
-- Версия: 2.3.1 → **2.4.0** (новый файл + новый тип хука)
-
-**Файлы для реализации:**
-1. `.claude/hooks/session-status-monitor.js` — НОВЫЙ
-2. `.claude/hooks/session-checkpoint.js` — убрать threshold, добавить context_critical check
-3. `.claude/hooks/i18n.js` + `lib/i18n.js` — обновить compact messages (EN+RU синхронно)
-4. `lib/deploy/copy.js` — `buildHooksDefinition`: split PostToolUse + add StatusLine
-5. `scripts/deploy.py` — `build_hooks_definition`: аналогично
-6. `.claude/settings.json` — split PostToolUse matchers + add StatusLine
-7. `.claude/CLAUDE.md` — gh MSYS rule + SSH alias rule
-8. `tests/hook/session-status-monitor.test.js` — НОВЫЙ, 8 E2E тестов
-9. `tests/hook/session-checkpoint.test.js` — +4 теста
-10. `tests/infra/test_infra.py` — +2 теста (StatusLine present + split matchers)
-11. `package.json` — 2.3.1 → 2.4.0
-
-**Тесты:** +14 → цель 568 Jest + 63 Python
-**Commits:** 2 (feat + docs)
-**Деплой:** python scripts/deploy.py --update-all после коммита
-
-**План:** `C:\Users\pyramidheadshark\.claude\plans\wobbly-wishing-meerkat.md`
+- 30 репо задеплоены на `0042d55` (v2.4.0) через `python scripts/deploy.py --update-all`
 
 ### v2.3.1 — DONE (2026-04-15, Session 7)
 
@@ -149,22 +126,20 @@
 
 ---
 
-## Current State (2026-04-14)
+## Current State (2026-04-17)
 
-- **v2.2.1 PUBLISHED** npm@2.2.1 (2026-04-14), HEAD = `589b9a6`
-- **main HEAD: `589b9a6`**
-- **593 tests** (534 Jest + 59 Python infra), 0 failed
-- **29 repos** на `589b9a6` — все up to date
+- **v2.4.0 PUBLISHED** npm@2.4.0 (2026-04-17), HEAD = `0042d55`
+- **main HEAD: `0042d55`**
+- **625 tests** (563 Jest + 62 Python infra), 0 failed
+- **30 repos** на `0042d55` — все up to date
 - `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
-- `claude-scaffold use <model>` — Model Router CLI активен
-- `claude-scaffold discover` — Skill Discovery активен (CLI + session-start хук)
-- **session-safety.js**: block events + snapshot_created теперь пишутся в JSONL
-- **post-tool-use-tracker.js**: Bash tracking + tool_call_count исправлен (больше не null)
+- StatusLine хук активен во всех 30 репо — контекст отображается в статусбаре
+- PostToolUse split активен — нет лишних spawn на Read/Glob/Grep
 
 ### npm publish path:
 ```bash
-git tag v2.2.0 && git push origin v2.2.0
-# → publish.yml запускается автоматически → npm@2.2.0
+git tag vX.Y.Z && git push origin vX.Y.Z
+# → publish.yml запускается автоматически
 # НЕ используй npm publish (требует 2FA hardware key)
 ```
 
@@ -176,8 +151,9 @@ git tag v2.2.0 && git push origin v2.2.0
 | `bash-output-filter.js` | PreToolUse (Bash) | Verbose команды → whitelist фильтрация |
 | `session-start.js` | SessionStart | Platform detect + onboarding + Windows rules + Contract check + Discovery hint |
 | `skill-activation-prompt.js` | UserPromptSubmit | Skill injection + status hash dedup |
-| `session-checkpoint.js` | PostToolUse | ExitPlanMode → Resume Message; one-shot threshold 25 |
-| `post-tool-use-tracker.js` | PostToolUse | Weight accumulation + JSONL audit |
+| `post-tool-use-tracker.js` | PostToolUse (Bash\|Edit\|Write) | Weight accumulation + JSONL audit |
+| `session-checkpoint.js` | PostToolUse (.*) | ExitPlanMode → Resume Message; context_critical → compact signal |
+| `session-status-monitor.js` | StatusLine | Отображает `ctx: X%` в статусбаре, пишет context_critical в cache |
 | `python-quality-check.js` | Stop | End-of-session quality check |
 
 ---
@@ -186,11 +162,13 @@ git tag v2.2.0 && git push origin v2.2.0
 
 ### Hook pipeline:
 ```
-PreToolUse (Bash):    session-safety.js → bash-output-filter.js
-SessionStart:         session-start.js
-UserPromptSubmit:     skill-activation-prompt.js → skill-activation-logic.js
-PostToolUse (.*):     post-tool-use-tracker.js → session-checkpoint.js
-Stop:                 python-quality-check.js
+PreToolUse (Bash):           session-safety.js → bash-output-filter.js
+SessionStart:                session-start.js
+UserPromptSubmit:            skill-activation-prompt.js → skill-activation-logic.js
+PostToolUse (Bash|Edit|Write): post-tool-use-tracker.js
+PostToolUse (.*):            session-checkpoint.js
+StatusLine:                  session-status-monitor.js  [top-level key in settings.json]
+Stop:                        python-quality-check.js
 ```
 
 ### Hook output formats (CRITICAL — не регрессировать):
@@ -268,6 +246,9 @@ Stop:                 python-quality-check.js
 | pending_notification clear | Mutate cache in-place (not spread) to avoid stale read | 2026-04-14 |
 | Skill Discovery layers | discover.js → registry/skills.json direct (no cache); runRegistrySearch → cache+HTTP. Different layers, no duplication. | 2026-04-14 |
 | buildDiscoverySuggestionBlock | session=1 AND skill-rules.json < 4 rules — двойной guard против ложных триггеров | 2026-04-14 |
+| StatusLine config location | `statusLine` is a top-level key in settings.json, NOT inside `hooks` — schema validation rejects StatusLine as a hook event | 2026-04-17 |
+| PostToolUse split (v2.4.0) | tracker → `Bash\|Edit\|Write` (fixes uv_spawn EUNKNOWN on Windows); checkpoint → `.*` (ExitPlanMode detection still needed) | 2026-04-17 |
+| context_critical pipeline (v2.4.0) | StatusLine hook writes flag to cache; session-checkpoint reads on next PostToolUse; replaces 25-message threshold | 2026-04-17 |
 
 ---
 
