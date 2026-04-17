@@ -20,24 +20,17 @@
 
 ## Current Phase
 
-**Session 7 — CLOSED (2026-04-15). v2.3.1 PUBLISHED npm@2.3.1. 29 репо + сам claude-scaffold обновлены. Thinking Defaults активны везде.**
+**Между сессиями. v2.3.1 полностью закрыт (2026-04-15). Следующая сессия — v3.0 backlog или техдолг.**
 
-Пост-деплой обнаружена регрессия: `scripts/deploy.py` не писал env-ключи (исторический gap Python-пути). Хотфикс v2.3.1: `apply_tuning_defaults` + 2 Python теста. Spot-check подтверждает все 5 ключей (EFFORT=max, ADAPTIVE=1, 1M=1, Summaries=true, Clear=true) в deployed репо.
+### v2.3.1 — DONE (2026-04-15, Session 7)
 
-План: `C:\Users\pyramidheadshark\.claude\plans\wobbly-wishing-meerkat.md`
-
-**Completed:**
-- ✅ A. `copy.js` — `applyTuningDefaults` + `applyTuningOverwrite` pure functions; 3 новых ключа non-overwrite
-- ✅ B. CLI флаги `--effort`, `--adaptive-thinking`, `--thinking-summaries` на `init`/`update`
-- ✅ C. `claude-scaffold tune` команда (overwrite semantics)
-- ✅ D. +20 Jest тестов (534→554), все зелёные; 59 Python — без регрессов
-- ✅ E. README 522→345 строк; version-stamped заголовки удалены; +Thinking Defaults секция
-- ✅ F. docs/: CHANGELOG v2.3.0 entry, REFERENCE +Thinking & Effort Defaults таблица
-- ✅ G. package.json 2.2.1→2.3.0
-
-**Pending (require user confirmation — public/shared operations):**
-- ⏳ `git tag v2.3.0 && git push origin v2.3.0` → auto-publish publish.yml → npm@2.3.0
-- ⏳ `python scripts/deploy.py --update-all` → 29 репо на v2.3.0
+- npm@2.3.1 published, HEAD `5f94abc`
+- 554 Jest + 61 Python тестов, 0 failed
+- Thinking Defaults: `EFFORT=max`, `DISABLE_ADAPTIVE_THINKING=1`, `showThinkingSummaries=true`
+- 30 репо (29 registered + claude-scaffold сам) — tune applied, все ключи активны
+- `scripts/deploy.py` хотфикс: `apply_tuning_defaults` теперь пишет env-ключи (был исторический gap Python-пути)
+- `claude-scaffold tune` команда — оверрайт настроек в пост-деплой (без re-init)
+- README 522→345 строк, docs/REFERENCE + docs/CHANGELOG обновлены
 
 **Decisions:**
 - Канонический env var: `CLAUDE_CODE_EFFORT_LEVEL` (не `CLAUDE_REASONING_EFFORT`; `effortLevel` в settings.json broken per GH #35904)
