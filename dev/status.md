@@ -20,17 +20,29 @@
 
 ## Current Phase
 
-**v2.4.0 — DONE (2026-04-17, Session 8)**
+**v2.4.0 — ПОЛНОСТЬЮ ЗАВЕРШЕНО (2026-04-17, Session 8)**
 
-- npm@2.4.0 published, HEAD `732e778`
-- 563 Jest + 62 Python тестов, 0 failed
-- StatusLine хук `session-status-monitor.js` — выводит `ctx: ⚠ X%` в статусбаре, пишет `context_critical` в checkpoint cache
-- PostToolUse split: `post-tool-use-tracker` → matcher `Bash|Edit|Write`; `session-checkpoint` → matcher `.*`
-- 25-message threshold убран; compact срабатывает по `context_critical: true` из cache (token-aware)
-- `statusLine` — top-level ключ в settings.json (НЕ внутри hooks)
-- compact message: убрано "COMPACT REQUIRED BEFORE STEP 1", добавлена кнопка "Clear context"
-- CLAUDE.md: `MSYS_NO_PATHCONV=1 gh api` rule + SSH alias rule
-- 30 репо задеплоены на `0042d55` (v2.4.0) через `python scripts/deploy.py --update-all`
+- **npm@2.4.0 published** ✅ — publish.yml: `completed success`
+- **HEAD: `e70f1af`** (main, все CI зелёные)
+- **625 тестов** (563 Jest + 62 Python), 0 failed
+- **30 репо** задеплоены через `python scripts/deploy.py --update-all`
+- **README.md + README.ru.md + CHANGELOG.md** — актуализированы под v2.4.0
+
+**Что реализовано:**
+
+| Компонент | Суть |
+|-----------|------|
+| `session-status-monitor.js` | НОВЫЙ StatusLine хук: `ctx: ⚠ X%` в статусбаре, пишет `context_critical` в cache |
+| PostToolUse split | tracker → `Bash\|Edit\|Write`; checkpoint → `.*`. Фикс uv_spawn EUNKNOWN |
+| `session-checkpoint.js` | Убран threshold 25; compact по `context_critical: true` из cache |
+| i18n EN+RU | Убрано "COMPACT REQUIRED BEFORE STEP 1"; добавлена "Clear context button" |
+| `settings.json` | `statusLine` как top-level ключ (не внутри hooks — важно!) |
+| `CLAUDE.md` | Правила: MSYS_NO_PATHCONV=1 gh api + SSH alias вместо raw IP |
+| Docs | README badge/hooks/counts, CHANGELOG v2.4.0, README.ru.md раздел compact |
+
+**Критический аналитик (проведён в Session 8):**
+- Все 11 scope-пунктов v2.4.0 подтверждены как корректно реализованные
+- Единственная находка — ложное срабатывание на `DEFAULT_THRESHOLD` в мониторе (порог там и должен быть)
 
 ### v2.3.1 — DONE (2026-04-15, Session 7)
 
@@ -128,10 +140,10 @@
 
 ## Current State (2026-04-17)
 
-- **v2.4.0 PUBLISHED** npm@2.4.0 (2026-04-17), HEAD = `0042d55`
-- **main HEAD: `0042d55`**
+- **v2.4.0 PUBLISHED** npm@2.4.0 (2026-04-17), HEAD = `e70f1af`
+- **main HEAD: `e70f1af`**
 - **625 tests** (563 Jest + 62 Python infra), 0 failed
-- **30 repos** на `0042d55` — все up to date
+- **30 repos** на `0042d55` (v2.4.0 impl hooks + statusLine) — все up to date. Docs-only коммиты после деплоя re-deploy не требуют.
 - `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
 - StatusLine хук активен во всех 30 репо — контекст отображается в статусбаре
 - PostToolUse split активен — нет лишних spawn на Read/Glob/Grep
