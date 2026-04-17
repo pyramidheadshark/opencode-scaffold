@@ -49,7 +49,7 @@ def build_hooks_definition(target: Path) -> dict:
         "PreToolUse":       [{"matcher": "Bash", "hooks": [{"type": "command", "command": f'node "{h}/session-safety.js"'}, {"type": "command", "command": f'node "{h}/bash-output-filter.js"'}]}],
         "SessionStart":     [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/session-start.js"'}]}],
         "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/skill-activation-prompt.js"'}]}],
-        "PostToolUse":      [{"matcher": ".*", "hooks": [{"type": "command", "command": f'node "{h}/post-tool-use-tracker.js"'}, {"type": "command", "command": f'node "{h}/session-checkpoint.js"'}]}],
+        "PostToolUse":      [{"matcher": "Bash|Edit|Write", "hooks": [{"type": "command", "command": f'node "{h}/post-tool-use-tracker.js"'}]}, {"matcher": ".*", "hooks": [{"type": "command", "command": f'node "{h}/session-checkpoint.js"'}]}],
         "Stop":             [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/python-quality-check.js"'}]}],
     }
 
@@ -472,6 +472,9 @@ def deploy_settings(target: Path) -> None:
         except (json.JSONDecodeError, OSError):
             existing = {}
     existing["hooks"] = build_hooks_definition(target)
+    if "statusLine" not in existing:
+        h = (target / ".claude" / "hooks").as_posix()
+        existing["statusLine"] = {"type": "command", "command": f'node "{h}/session-status-monitor.js"'}
     apply_tuning_defaults(existing)
     settings_path.write_text(
         json.dumps(existing, indent=2, ensure_ascii=False) + "\n",

@@ -24,12 +24,17 @@
     ],
     "PostToolUse": [
       {
-        "matcher": ".*",
+        "matcher": "Bash|Edit|Write",
         "hooks": [
           {
             "type": "command",
             "command": "node .claude/hooks/post-tool-use-tracker.js"
-          },
+          }
+        ]
+      },
+      {
+        "matcher": ".*",
+        "hooks": [
           {
             "type": "command",
             "command": "node .claude/hooks/session-checkpoint.js"
@@ -48,6 +53,10 @@
         ]
       }
     ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/hooks/session-status-monitor.js"
   },
   "env": {
     "CLAUDE_CODE_EFFORT_LEVEL": "max",

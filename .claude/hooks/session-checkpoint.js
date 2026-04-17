@@ -3,7 +3,6 @@
 const fs = require("fs");
 const path = require("path");
 
-const DEFAULT_THRESHOLD = 25;
 const DEPS_REMINDER_INTERVAL = 20;
 
 let _i18n;
@@ -31,34 +30,28 @@ function buildCheckpointPlan(lang) {
     "- What is about to be implemented\n" +
     "- Key architectural decisions from the plan\n" +
     "- Open questions / blockers\n\n" +
-    "## [COMPACT REQUIRED BEFORE STEP 1]\n" +
-    "Your FIRST AND ONLY action — execute IN ORDER:\n\n" +
-    "Step 1 — Generate a Post-Compact Resume Message and display it:\n" +
-    "```\n## Post-Compact Resume (paste this after /compact)\n" +
-    "**Goal:** [session goal]\n**Plan:** [absolute path to plan file]\n" +
-    "**Phase:** [current phase]\n**Files to read first:**\n1. [absolute path] — [what to look for]\n" +
-    "**Next action:** [exact next step]\n**Key facts:** [critical non-obvious context]\n```\n\n" +
-    "Step 2 — Tell the user: \"Run /compact, then paste the Resume Message as your next message.\"\n\n" +
-    "Step 3 — WAIT. Do NOT read files or execute plan steps yet.";
+    "If the context window is running low, click the **\"Clear context\"** button\n" +
+    "in the Claude Code UI before starting — the plan file will survive the clear.\n" +
+    "Write a brief resume note in dev/status.md first so you can resume smoothly.";
 }
 
-function buildThresholdBlock(threshold, lang) {
+function buildThresholdBlock(pct, lang) {
   const i18n = getI18n();
-  if (i18n) return i18n.buildThresholdCheckpointBlock(threshold, lang);
-  return "## [AUTO CHECKPOINT — Activity Threshold]\n" +
-    `${threshold}+ tool calls since last checkpoint. Before your next response,\n` +
+  if (i18n) return i18n.buildThresholdCheckpointBlock(pct, lang);
+  return "## [AUTO CHECKPOINT — Context Warning]\n" +
+    `Context at ${pct}% remaining. Before your next response,\n` +
     "update dev/status.md with current progress, decisions made, and next steps.\n\n" +
     "## [CONTEXT WARNING]\n" +
-    "Context is filling up. Tell the user: \"Consider running /compact to preserve session continuity.\"";
+    "Context is filling up. Ask the user to use /compact or the \"Clear context\" button.";
 }
 
 function loadCache(cacheDir, sessionId) {
   const cachePath = path.join(cacheDir, `checkpoint-${sessionId}.json`);
-  if (!fs.existsSync(cachePath)) return { tool_call_count: 0, last_checkpoint_count: 0, compact_signal_sent: false };
+  if (!fs.existsSync(cachePath)) return { tool_call_count: 0, last_checkpoint_count: 0 };
   try {
     return JSON.parse(fs.readFileSync(cachePath, "utf8"));
   } catch {
-    return { tool_call_count: 0, last_checkpoint_count: 0, compact_signal_sent: false };
+    return { tool_call_count: 0, last_checkpoint_count: 0 };
   }
 }
 
@@ -71,7 +64,6 @@ function saveCache(cacheDir, sessionId, cache) {
 }
 
 function main(inputStr, cwd, _fs) {
-  const threshold = parseInt(process.env.SCAFFOLD_COMPACT_THRESHOLD || String(DEFAULT_THRESHOLD), 10);
   let input = {};
   try { input = JSON.parse(inputStr); } catch { input = {}; }
 
@@ -92,14 +84,10 @@ function main(inputStr, cwd, _fs) {
   if (toolName === "ExitPlanMode") {
     triggered = true;
     checkpointBlock = buildCheckpointPlan(lang);
-    cache.compact_signal_sent = false;
-  } else if (
-    !cache.compact_signal_sent &&
-    cache.tool_call_count - cache.last_checkpoint_count >= threshold
-  ) {
+  } else if (cache.context_critical) {
     triggered = true;
-    checkpointBlock = buildThresholdBlock(threshold, lang);
-    cache.compact_signal_sent = true;
+    const pct = cache.context_remaining_pct !== undefined ? cache.context_remaining_pct : "?";
+    checkpointBlock = buildThresholdBlock(pct, lang);
   }
 
   if (!triggered) {

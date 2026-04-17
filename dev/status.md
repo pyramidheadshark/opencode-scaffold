@@ -20,7 +20,38 @@
 
 ## Current Phase
 
-**Между сессиями. v2.3.1 полностью закрыт (2026-04-15). Следующая сессия — v3.0 backlog или техдолг.**
+**v2.4.0 — РЕАЛИЗАЦИЯ ЗАВЕРШЕНА, КОММИТ НЕ СДЕЛАН (2026-04-17, Session 8)**
+
+### v2.4.0 — IN PLANNING
+
+Цель: bug fixes + token-aware compact + hook optimizer.
+
+**Архитектурные решения (утверждены):**
+- StatusLine хук `session-status-monitor.js` — пишет `context_remaining_pct` + `context_critical` в checkpoint cache; отображает `ctx: X%` в статусбаре
+- PostToolUse split: `post-tool-use-tracker` → matcher `Bash|Edit|Write`; `session-checkpoint` → matcher `.*`
+- session-checkpoint: убрать 25-message threshold, читать `context_critical` из cache
+- i18n.js compact message: убрать "COMPACT REQUIRED BEFORE STEP 1", добавить "Clear context button"
+- CLAUDE.md: `MSYS_NO_PATHCONV=1 gh api` rule + SSH alias rule
+- Версия: 2.3.1 → **2.4.0** (новый файл + новый тип хука)
+
+**Файлы для реализации:**
+1. `.claude/hooks/session-status-monitor.js` — НОВЫЙ
+2. `.claude/hooks/session-checkpoint.js` — убрать threshold, добавить context_critical check
+3. `.claude/hooks/i18n.js` + `lib/i18n.js` — обновить compact messages (EN+RU синхронно)
+4. `lib/deploy/copy.js` — `buildHooksDefinition`: split PostToolUse + add StatusLine
+5. `scripts/deploy.py` — `build_hooks_definition`: аналогично
+6. `.claude/settings.json` — split PostToolUse matchers + add StatusLine
+7. `.claude/CLAUDE.md` — gh MSYS rule + SSH alias rule
+8. `tests/hook/session-status-monitor.test.js` — НОВЫЙ, 8 E2E тестов
+9. `tests/hook/session-checkpoint.test.js` — +4 теста
+10. `tests/infra/test_infra.py` — +2 теста (StatusLine present + split matchers)
+11. `package.json` — 2.3.1 → 2.4.0
+
+**Тесты:** +14 → цель 568 Jest + 63 Python
+**Commits:** 2 (feat + docs)
+**Деплой:** python scripts/deploy.py --update-all после коммита
+
+**План:** `C:\Users\pyramidheadshark\.claude\plans\wobbly-wishing-meerkat.md`
 
 ### v2.3.1 — DONE (2026-04-15, Session 7)
 

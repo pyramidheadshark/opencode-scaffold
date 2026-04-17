@@ -190,3 +190,5 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 - **Commit `.claude/` to git in target projects** — it is a local developer tool, invisible to the repo. Always ensure `.claude/` is in the target project's `.gitignore` before or immediately after deploy. If accidentally committed: rewrite history to remove all traces.
 - Push code without first verifying `ruff check` passes locally — CI will catch it and leave a red run
 - Start any implementation task (beyond trivial single-line fixes) without first calling EnterPlanMode — the bar is low: touching more than one file or making a design choice means plan mode is required
+- Use `gh api` with a leading slash on Windows — always `MSYS_NO_PATHCONV=1 gh api <path>` (no leading slash, e.g. `orgs/foo/repos` not `/orgs/foo/repos`)
+- Generate SSH commands with raw IP addresses — always use host aliases from `~/.ssh/config` (e.g. `ssh yc-ops-01` not `ssh ubuntu@84.201.161.199`)

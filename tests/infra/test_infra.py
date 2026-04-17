@@ -404,7 +404,8 @@ class TestDeployScript(unittest.TestCase):
             data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
             self.assertEqual(data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "medium")
 
-    def test_deploy_post_tool_use_has_two_hooks(self):
+    def test_deploy_post_tool_use_split_matchers(self):
+        """PostToolUse must have two entries: tracker on Bash|Edit|Write, checkpoint on .*"""
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             result = __import__("subprocess").run(
@@ -415,10 +416,30 @@ class TestDeployScript(unittest.TestCase):
             self.assertEqual(result.returncode, 0, f"deploySettings failed: {result.stderr}")
             settings_path = tmp_path / ".claude" / "settings.json"
             data = json.loads(settings_path.read_text(encoding="utf-8"))
-            hooks = data["hooks"]["PostToolUse"][0]["hooks"]
-            self.assertEqual(len(hooks), 2)
-            self.assertIn("post-tool-use-tracker.js", hooks[0]["command"])
-            self.assertIn("session-checkpoint.js", hooks[1]["command"])
+            pt = data["hooks"]["PostToolUse"]
+            matchers = [e["matcher"] for e in pt]
+            self.assertIn("Bash|Edit|Write", matchers, "tracker entry missing Bash|Edit|Write matcher")
+            self.assertIn(".*", matchers, "checkpoint entry missing .* matcher")
+            tracker_entry = next(e for e in pt if e["matcher"] == "Bash|Edit|Write")
+            checkpoint_entry = next(e for e in pt if e["matcher"] == ".*")
+            self.assertIn("post-tool-use-tracker.js", tracker_entry["hooks"][0]["command"])
+            self.assertIn("session-checkpoint.js", checkpoint_entry["hooks"][0]["command"])
+
+    def test_deploy_settings_has_status_line(self):
+        """deploySettings must write top-level statusLine key with session-status-monitor.js"""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            result = __import__("subprocess").run(
+                ["node", "-e",
+                 f"require('./lib/deploy/copy').deploySettings('{tmp.replace(chr(92), '/')}')"],
+                cwd=str(INFRA_ROOT), capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, f"deploySettings failed: {result.stderr}")
+            settings_path = tmp_path / ".claude" / "settings.json"
+            data = json.loads(settings_path.read_text(encoding="utf-8"))
+            self.assertIn("statusLine", data, "statusLine top-level key missing from deployed settings")
+            self.assertEqual(data["statusLine"]["type"], "command")
+            self.assertIn("session-status-monitor.js", data["statusLine"]["command"])
 
     def test_deploy_settings_preserves_mcp_servers(self):
         with tempfile.TemporaryDirectory() as tmpdir:
