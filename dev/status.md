@@ -22,7 +22,7 @@
 
 **v2.4.0 — DONE (2026-04-17, Session 8)**
 
-- npm@2.4.0 published, HEAD `0042d55`
+- npm@2.4.0 published, HEAD `732e778`
 - 563 Jest + 62 Python тестов, 0 failed
 - StatusLine хук `session-status-monitor.js` — выводит `ctx: ⚠ X%` в статусбаре, пишет `context_critical` в checkpoint cache
 - PostToolUse split: `post-tool-use-tracker` → matcher `Bash|Edit|Write`; `session-checkpoint` → matcher `.*`
