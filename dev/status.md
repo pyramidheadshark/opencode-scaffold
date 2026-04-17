@@ -20,7 +20,9 @@
 
 ## Current Phase
 
-**v2.4.0 — РЕАЛИЗАЦИЯ ЗАВЕРШЕНА, КОММИТ НЕ СДЕЛАН (2026-04-17, Session 8)**
+**v2.4.0 — РЕАЛИЗАЦИЯ ЗАВЕРШЕНА, КОММИТ `0042d55` (2026-04-17, Session 8)**
+
+**Осталось:** `git push`, `git tag v2.4.0 && git push origin v2.4.0`, `python scripts/deploy.py --update-all`
 
 ### v2.4.0 — IN PLANNING
 
