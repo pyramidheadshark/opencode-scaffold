@@ -77,5 +77,8 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ]
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["node-pty", "@lydell/node-pty"]
   }
 }
