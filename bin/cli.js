@@ -381,4 +381,12 @@ program
     }
   });
 
+program
+  .command('tui')
+  .description('Open the interactive TUI console (Config, Agents, Pipeline, Artifacts)')
+  .action(() => {
+    const { runTui } = require('../lib/tui/index');
+    runTui();
+  });
+
 program.parse(process.argv);
