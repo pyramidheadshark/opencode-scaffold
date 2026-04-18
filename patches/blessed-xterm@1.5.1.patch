@@ -1,0 +1,13 @@
+diff --git a/blessed-xterm.js b/blessed-xterm.js
+index 2a2c631ee38b6b003ba161b2b5416bab18939d9c..ffe8f0b020cc86cb57807aee82f759207fe073aa 100644
+--- a/blessed-xterm.js
++++ b/blessed-xterm.js
+@@ -43,7 +43,7 @@ class XTerm extends blessed.Box {
+     constructor (options = {}) {
+         /*  clone options or all widget instances will show
+             at least the same style, etc.  */
+-        options = clone(options)
++        options = JSON.parse(JSON.stringify(options))
+ 
+         /*  disable the special "scrollable" feature of Blessed's Element
+             which would use a ScrolledBox instead of a Box under the surface  */

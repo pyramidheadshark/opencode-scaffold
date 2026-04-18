@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  blessed-xterm@1.5.1:
+    hash: a7c148ef41f5791ca73f36a8c47ae191e8fbcfce5d598ea46ac2ab171b149876
+    path: patches/blessed-xterm@1.5.1.patch
+
 importers:
 
   .:
@@ -16,7 +21,7 @@ importers:
         version: 0.1.81
       blessed-xterm:
         specifier: ^1.5.1
-        version: 1.5.1
+        version: 1.5.1(patch_hash=a7c148ef41f5791ca73f36a8c47ae191e8fbcfce5d598ea46ac2ab171b149876)
       commander:
         specifier: ^14.0.0
         version: 14.0.3
@@ -2254,7 +2259,7 @@ snapshots:
 
   baseline-browser-mapping@2.10.18: {}
 
-  blessed-xterm@1.5.1:
+  blessed-xterm@1.5.1(patch_hash=a7c148ef41f5791ca73f36a8c47ae191e8fbcfce5d598ea46ac2ab171b149876):
     dependencies:
       blessed: 0.1.81
       clone: 2.1.2

@@ -79,6 +79,12 @@
     ]
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["node-pty", "@lydell/node-pty"]
+    "onlyBuiltDependencies": [
+      "node-pty",
+      "@lydell/node-pty"
+    ],
+    "patchedDependencies": {
+      "blessed-xterm@1.5.1": "patches/blessed-xterm@1.5.1.patch"
+    }
   }
 }
