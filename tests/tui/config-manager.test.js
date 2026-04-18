@@ -3,7 +3,14 @@
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
-const { listRepos, getSkillRules, getAvailableProfiles } = require('../../lib/tui/config-manager');
+const {
+  listRepos,
+  getSkillRules,
+  getSettings,
+  setEffort,
+  toggleThinkingSummaries,
+  getAvailableProfiles,
+} = require('../../lib/tui/config-manager');
 
 describe('listRepos', () => {
   it('returns empty array when registry file is missing', () => {
@@ -90,6 +97,76 @@ describe('getSkillRules', () => {
     fs.writeFileSync(path.join(skillsDir, 'skill-rules.json'), JSON.stringify({ version: '1.0' }));
     const result = getSkillRules(tmp);
     expect(result).toEqual([]);
+    fs.rmSync(tmp, { recursive: true });
+  });
+});
+
+describe('getSettings', () => {
+  it('returns null when settings.json is missing', () => {
+    expect(getSettings(path.join(os.tmpdir(), `no-settings-${Date.now()}`))).toBeNull();
+  });
+
+  it('returns parsed settings object', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tui-settings-'));
+    const claudeDir = path.join(tmp, '.claude');
+    fs.mkdirSync(claudeDir, { recursive: true });
+    fs.writeFileSync(path.join(claudeDir, 'settings.json'), JSON.stringify({
+      env: { CLAUDE_CODE_EFFORT_LEVEL: 'high' },
+      showThinkingSummaries: true,
+    }));
+    const result = getSettings(tmp);
+    expect(result.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('high');
+    expect(result.showThinkingSummaries).toBe(true);
+    fs.rmSync(tmp, { recursive: true });
+  });
+
+  it('returns null when settings.json is malformed', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tui-badsettings-'));
+    const claudeDir = path.join(tmp, '.claude');
+    fs.mkdirSync(claudeDir, { recursive: true });
+    fs.writeFileSync(path.join(claudeDir, 'settings.json'), '{{invalid}');
+    expect(getSettings(tmp)).toBeNull();
+    fs.rmSync(tmp, { recursive: true });
+  });
+});
+
+describe('setEffort', () => {
+  it('writes effort level to settings.json', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tui-effort-'));
+    setEffort(tmp, 'high');
+    const settings = getSettings(tmp);
+    expect(settings.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('high');
+    fs.rmSync(tmp, { recursive: true });
+  });
+
+  it('removes effort key when level is off', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tui-effortoff-'));
+    setEffort(tmp, 'max');
+    setEffort(tmp, 'off');
+    const settings = getSettings(tmp);
+    expect(settings.env.CLAUDE_CODE_EFFORT_LEVEL).toBeUndefined();
+    fs.rmSync(tmp, { recursive: true });
+  });
+});
+
+describe('toggleThinkingSummaries', () => {
+  it('sets showThinkingSummaries to false when previously on', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tui-toggle-'));
+    const claudeDir = path.join(tmp, '.claude');
+    fs.mkdirSync(claudeDir, { recursive: true });
+    fs.writeFileSync(path.join(claudeDir, 'settings.json'), JSON.stringify({ showThinkingSummaries: true }));
+    toggleThinkingSummaries(tmp);
+    expect(getSettings(tmp).showThinkingSummaries).toBe(false);
+    fs.rmSync(tmp, { recursive: true });
+  });
+
+  it('sets showThinkingSummaries to true when previously off', () => {
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'tui-toggle2-'));
+    const claudeDir = path.join(tmp, '.claude');
+    fs.mkdirSync(claudeDir, { recursive: true });
+    fs.writeFileSync(path.join(claudeDir, 'settings.json'), JSON.stringify({ showThinkingSummaries: false }));
+    toggleThinkingSummaries(tmp);
+    expect(getSettings(tmp).showThinkingSummaries).toBe(true);
     fs.rmSync(tmp, { recursive: true });
   });
 });
