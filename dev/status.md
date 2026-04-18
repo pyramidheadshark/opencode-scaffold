@@ -39,32 +39,33 @@
 
 | Задача | Статус | Коммит |
 |---|---|---|
-| Дизайн-документ `docs/scaffold-tui-design-doc.md` | ✅ | `8b528bf` (amended) |
+| Дизайн-документ `docs/scaffold-tui-design-doc.md` | ✅ | `8b528bf` |
 | `lib/tui/config-manager.js` + 15 тестов | ✅ | `37a1246` |
 | `lib/tui/panels/config.js` MVP (read-only) | ✅ | `37a1246` |
 | `lib/tui/index.js` + `bin/cli.js tui` | ✅ | `37a1246` |
 | Config actions: effort picker, summaries toggle, `update` | ✅ | `0a12734` |
 | Config redesign: Profiles / Org Profiles / Commands / Repos | ✅ | `b7798dd` |
-| **Agents + Pipeline + DrillIn + Artifacts** | 🔲 | — |
-| **`@lydell/node-pty` + AgentPool orchestrator** | 🔲 | — |
-| **session-safety.js: добавить `[SCAFFOLD:BLOCKED]` маркер** | 🔲 | — |
+| `@lydell/node-pty` install + AgentPool orchestrator | ✅ | pending |
+| `session-safety.js` — `[SCAFFOLD:BLOCKED]` маркер в reason | ✅ | pending |
+| `lib/tui/overlays/drill-in.js` — PTY overlay | ✅ | pending |
+| `lib/tui/panels/agents.js` — AgentsPanel | ✅ | pending |
+| `lib/tui/orchestrator/task-queue.js` — JSON queue | ✅ | pending |
+| Tab-переключение Config ↔ Agents в `index.js` | ✅ | pending |
+| **Pipeline panel** | 🔲 | — |
+| **Artifacts panel** | 🔲 | — |
+| **task-runner.js** — авто-назначение задач из queue агентам | 🔲 | — |
 
-**Архитектура Config TUI (готово):**
-- Один список слева: Profiles → Org Profiles → Commands → Deployed Repos
-- `Enter` на профиле → форма пути → `init --profile X`
-- `Enter` на команде → прямой запуск (▶) или форма (◎)
-- `e/t/u` на репо → effort, summaries, update scaffold
-- `blessed ^0.1.81` добавлен в deps
+**Архитектура (Session 9):**
+- AgentPool: `@lydell/node-pty`, graceful fallback, state machine idle→running→blocked→done/stopped
+- DrillIn overlay: `screen.grabKeys=true`, все клавиши → PTY stdin, ESC выход
+- `[SCAFFOLD:BLOCKED]` парсится из PTY output → agent.status = blocked → уведомление в statusBar
+- TaskQueue: atomic write via `.tmp` + `fs.renameSync` → `~/.claude-scaffold/tasks.json`
+- Tab key переключает Config/Agents; drill-in защищает Tab/q от bubble
 
-**Оставшееся для Full TUI (цель: 2026-04-20):**
-- `lib/tui/panels/agents.js` — AgentsPanel: список воркеров, статусы
-- `lib/tui/panels/pipeline.js` — PipelinePanel: очередь задач
-- `lib/tui/panels/artifacts.js` — ArtifactsPanel: выходные данные
-- `lib/tui/overlays/drill-in.js` — PTY overlay для drill-in в агента
-- `lib/tui/orchestrator/agent-pool.js` — `@lydell/node-pty` инстансы
-- `lib/tui/orchestrator/task-queue.js` — JSON-based очередь `~/.claude-scaffold/tasks.json`
-- `lib/tui/orchestrator/task-runner.js` — назначение задач агентам
-- Tab-переключение между панелями в `index.js`
+**Оставшееся:**
+- `lib/tui/panels/pipeline.js` — очередь задач + ручное добавление
+- `lib/tui/panels/artifacts.js` — вывод завершённых агентов
+- `lib/tui/orchestrator/task-runner.js` — авто-присвоение задач свободным агентам
 
 ---
 

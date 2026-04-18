@@ -102,7 +102,7 @@ function main(inputStr, cwd) {
       reason: "out_of_cwd",
       timestamp: new Date().toISOString(),
     });
-    return { action: "block", reason: "Blocked: operation targets location outside project directory. Run manually if intended." };
+    return { action: "block", reason: "[SCAFFOLD:BLOCKED] Blocked: operation targets location outside project directory. Run manually if intended." };
   }
 
   const level = classifyCommand(command, PATTERNS);
