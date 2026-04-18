@@ -61,7 +61,18 @@ function main(inputStr, cwd) {
     }
 
     const weight = (cache.weight || 0) + (WEIGHTS[toolName] || 0);
-    saveSessionCache(cwd, sessionId, { weight });
+    const totalCalls = (cache.tool_call_count || 0) + 1;
+    saveSessionCache(cwd, sessionId, { weight, tool_call_count: totalCalls });
+
+    if (toolName === "Bash") {
+      const command = ((input.tool_input || {}).command || "").slice(0, 150);
+      appendSessionEvent(cwd, sessionId, {
+        type: "bash_command",
+        tool: toolName,
+        command,
+        timestamp: new Date().toISOString(),
+      });
+    }
 
     if (toolName === "EnterPlanMode") {
       saveSessionCache(cwd, sessionId, { plan_mode_entered: true });

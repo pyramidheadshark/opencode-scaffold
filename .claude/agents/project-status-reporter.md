@@ -1,3 +1,8 @@
+---
+description: Generates comprehensive project status report from code, tests, git history, and dev/status.md.
+model: claude-haiku-4-5-20251001
+---
+
 # Agent: project-status-reporter
 
 ## Purpose

@@ -3,7 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
-const { sanitizeSessionId } = require("./session-utils");
+const { sanitizeSessionId, appendSessionEvent } = require("./session-utils");
 
 const PATTERNS = (() => {
   try {
@@ -96,6 +96,12 @@ function main(inputStr, cwd) {
   const sessionId = sanitizeSessionId(input.session_id || "unknown");
 
   if (isOutOfCwd(command, cwd)) {
+    appendSessionEvent(cwd, sessionId, {
+      type: "block",
+      command: command.slice(0, 150),
+      reason: "out_of_cwd",
+      timestamp: new Date().toISOString(),
+    });
     return { action: "block", reason: "Blocked: operation targets location outside project directory. Run manually if intended." };
   }
 
@@ -116,6 +122,12 @@ function main(inputStr, cwd) {
         snapshot_count: count,
         snapshot_tag: tag,
         pending_notification: notification,
+      });
+      appendSessionEvent(cwd, sessionId, {
+        type: "snapshot_created",
+        tag,
+        command: command.slice(0, 150),
+        timestamp: new Date().toISOString(),
       });
     }
   }

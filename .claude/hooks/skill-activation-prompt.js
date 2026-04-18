@@ -71,8 +71,8 @@ const sessionContext = {
 
 if (cache.pending_notification) {
   try {
-    const updatedCache = { ...cache, pending_notification: null };
-    saveSessionCache(sessionId, updatedCache);
+    cache.pending_notification = null;
+    saveSessionCache(sessionId, cache);
   } catch (e) { process.stderr.write(`[skill-activation] clearNotification: ${e.message}\n`); }
 }
 

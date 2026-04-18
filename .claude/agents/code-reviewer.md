@@ -1,3 +1,8 @@
+---
+description: Reviews code for architectural consistency, adherence to project standards, and correctness with prioritized findings.
+model: claude-sonnet-4-6
+---
+
 # Agent: code-reviewer
 
 ## Purpose

@@ -1,3 +1,8 @@
+---
+description: Generates complete test suite skeleton (.feature files + pytest stubs) from approved design-doc.md before any implementation.
+model: claude-sonnet-4-6
+---
+
 # Agent: test-architect
 
 ## Purpose

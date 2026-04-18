@@ -1,3 +1,8 @@
+---
+description: Provisions project infrastructure — writes Terraform, Packer, and Docker Compose configurations from design-doc.md.
+model: claude-sonnet-4-6
+---
+
 # Agent: infra-provisioner
 
 ## Purpose

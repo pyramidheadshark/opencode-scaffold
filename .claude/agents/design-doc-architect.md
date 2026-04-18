@@ -1,3 +1,8 @@
+---
+description: Creates complete design-doc.md from raw inputs (client description, documents, partial requirements) following project template.
+model: claude-opus-4-6
+---
+
 # Agent: design-doc-architect
 
 ## Purpose

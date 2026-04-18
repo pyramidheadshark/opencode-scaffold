@@ -266,7 +266,7 @@ class TestHookFiles(unittest.TestCase):
         self.assertTrue(hook_file.exists(), "session-checkpoint.js missing")
         content = hook_file.read_text(encoding="utf-8")
         self.assertIn("ExitPlanMode", content)
-        self.assertIn("system_prompt_addition", content)
+        self.assertIn("hookSpecificOutput", content)
 
 
 class TestClaudeIgnore(unittest.TestCase):
@@ -378,8 +378,34 @@ class TestDeployScript(unittest.TestCase):
             data = json.loads(settings_path.read_text(encoding="utf-8"))
             self.assertIn("hooks", data, "settings.json missing 'hooks' key")
             self.assertIn("UserPromptSubmit", data["hooks"], "hooks missing UserPromptSubmit")
+            self.assertIn("PreToolUse", data["hooks"], "hooks missing PreToolUse (bash-output-filter + session-safety)")
 
-    def test_deploy_post_tool_use_has_two_hooks(self):
+    def test_deploy_writes_thinking_defaults(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            self._run_deploy_settings(target)
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "max")
+            self.assertEqual(data["env"]["CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING"], "1")
+            self.assertEqual(data["env"]["CLAUDE_CODE_DISABLE_1M_CONTEXT"], "1")
+            self.assertTrue(data["showThinkingSummaries"])
+            self.assertTrue(data["showClearContextOnPlanAccept"])
+
+    def test_deploy_settings_preserves_existing_env_values(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            (target / ".claude" / "settings.json").write_text(
+                json.dumps({"env": {"CLAUDE_CODE_EFFORT_LEVEL": "medium"}}),
+                encoding="utf-8",
+            )
+            self._run_deploy_settings(target)
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "medium")
+
+    def test_deploy_post_tool_use_split_matchers(self):
+        """PostToolUse must have two entries: tracker on Bash|Edit|Write, checkpoint on .*"""
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)
             result = __import__("subprocess").run(
@@ -390,10 +416,30 @@ class TestDeployScript(unittest.TestCase):
             self.assertEqual(result.returncode, 0, f"deploySettings failed: {result.stderr}")
             settings_path = tmp_path / ".claude" / "settings.json"
             data = json.loads(settings_path.read_text(encoding="utf-8"))
-            hooks = data["hooks"]["PostToolUse"][0]["hooks"]
-            self.assertEqual(len(hooks), 2)
-            self.assertIn("post-tool-use-tracker.js", hooks[0]["command"])
-            self.assertIn("session-checkpoint.js", hooks[1]["command"])
+            pt = data["hooks"]["PostToolUse"]
+            matchers = [e["matcher"] for e in pt]
+            self.assertIn("Bash|Edit|Write", matchers, "tracker entry missing Bash|Edit|Write matcher")
+            self.assertIn(".*", matchers, "checkpoint entry missing .* matcher")
+            tracker_entry = next(e for e in pt if e["matcher"] == "Bash|Edit|Write")
+            checkpoint_entry = next(e for e in pt if e["matcher"] == ".*")
+            self.assertIn("post-tool-use-tracker.js", tracker_entry["hooks"][0]["command"])
+            self.assertIn("session-checkpoint.js", checkpoint_entry["hooks"][0]["command"])
+
+    def test_deploy_settings_has_status_line(self):
+        """deploySettings must write top-level statusLine key with session-status-monitor.js"""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            result = __import__("subprocess").run(
+                ["node", "-e",
+                 f"require('./lib/deploy/copy').deploySettings('{tmp.replace(chr(92), '/')}')"],
+                cwd=str(INFRA_ROOT), capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, f"deploySettings failed: {result.stderr}")
+            settings_path = tmp_path / ".claude" / "settings.json"
+            data = json.loads(settings_path.read_text(encoding="utf-8"))
+            self.assertIn("statusLine", data, "statusLine top-level key missing from deployed settings")
+            self.assertEqual(data["statusLine"]["type"], "command")
+            self.assertIn("session-status-monitor.js", data["statusLine"]["command"])
 
     def test_deploy_settings_preserves_mcp_servers(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -626,6 +672,43 @@ class TestCriticalAnalysisSkill(unittest.TestCase):
             result.stdout,
             "skill-activation-prompt.js did not inject critical-analysis for prompt with 2+ keywords"
         )
+
+
+class TestAgentFrontmatter(unittest.TestCase):
+    def test_all_agents_have_model_frontmatter(self):
+        agent_files = list(AGENTS_DIR.glob("*.md"))
+        self.assertGreater(len(agent_files), 0, "No agent files found in .claude/agents/")
+        for agent_file in agent_files:
+            content = agent_file.read_text(encoding="utf-8")
+            lines = content.splitlines()
+            first_10 = "\n".join(lines[:10])
+            self.assertIn(
+                "model:",
+                first_10,
+                f"{agent_file.name} is missing 'model:' in frontmatter (first 10 lines)"
+            )
+
+    def test_agent_model_values_are_known(self):
+        known_models = {
+            "claude-haiku-4-5-20251001",
+            "claude-sonnet-4-6",
+            "claude-opus-4-6",
+        }
+        agent_files = list(AGENTS_DIR.glob("*.md"))
+        for agent_file in agent_files:
+            content = agent_file.read_text(encoding="utf-8")
+            lines = content.splitlines()
+            model_line = next(
+                (l for l in lines[:10] if l.startswith("model:")), None
+            )
+            if model_line is None:
+                continue
+            model_value = model_line.split(":", 1)[1].strip()
+            self.assertIn(
+                model_value,
+                known_models,
+                f"{agent_file.name} has unknown model value: '{model_value}'"
+            )
 
 
 if __name__ == "__main__":

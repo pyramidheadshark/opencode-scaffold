@@ -20,7 +20,7 @@ function runHook(prompt, cwd = FIXTURE_CWD, sessionId = null) {
 }
 
 function getLoadedSkills(output) {
-  const addition = output.system_prompt_addition || "";
+  const addition = output.additionalContext || output.additionalContext || "";
   return addition
     .split("\n")
     .filter((l) => l.startsWith("## Skill:"))
@@ -40,7 +40,7 @@ describe("E2E — hook process output", () => {
 
   test("always injects python-project-standards (always_load:true)", () => {
     const output = runHook("write me a poem about clouds");
-    expect(output.system_prompt_addition).toBeDefined();
+    expect(output.additionalContext).toBeDefined();
     expect(getLoadedSkills(output)).toContain("python-project-standards");
   });
 
@@ -66,40 +66,40 @@ describe("E2E — hook process output", () => {
 
   test("injects plan mode reminder on RU planning keyword", () => {
     const output = runHook("давай запланируем новую фичу");
-    expect(output.system_prompt_addition).toContain("PLAN-MODE REQUIRED");
-    expect(output.system_prompt_addition).toContain("EnterPlanMode");
+    expect(output.additionalContext).toContain("PLAN-MODE REQUIRED");
+    expect(output.additionalContext).toContain("EnterPlanMode");
   });
 
   test("injects plan mode reminder on EN planning keyword", () => {
     const output = runHook("let's plan a multi-step refactor");
-    expect(output.system_prompt_addition).toContain("PLAN-MODE REQUIRED");
+    expect(output.additionalContext).toContain("PLAN-MODE REQUIRED");
   });
 
   test("injects plan mode reminder for EN scope keyword: refactor", () => {
     const output = runHook("let's refactor the auth module");
-    expect(output.system_prompt_addition).toContain("PLAN-MODE REQUIRED");
-    expect(output.system_prompt_addition).toContain("EnterPlanMode");
+    expect(output.additionalContext).toContain("PLAN-MODE REQUIRED");
+    expect(output.additionalContext).toContain("EnterPlanMode");
   });
 
   test("injects plan mode reminder for RU scope keyword: рефакторинг", () => {
     const output = runHook("давай спланируем архитектуру");
-    expect(output.system_prompt_addition).toContain("PLAN-MODE REQUIRED");
+    expect(output.additionalContext).toContain("PLAN-MODE REQUIRED");
   });
 
   test("does not inject plan mode reminder for simple questions", () => {
     const output = runHook("what does this function do?");
-    expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
-    expect(output.system_prompt_addition || "").not.toContain("EnterPlanMode");
+    expect(output.additionalContext || "").not.toContain("PLAN-MODE REQUIRED");
+    expect(output.additionalContext || "").not.toContain("EnterPlanMode");
   });
 
   test("does not inject plan mode reminder for generic prompts", () => {
     const output = runHook("fix the login bug");
-    expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
+    expect(output.additionalContext || "").not.toContain("PLAN-MODE REQUIRED");
   });
 
   test("plan-mode block includes clarifying survey questions", () => {
     const output = runHook("давай спланируем рефакторинг");
-    const addition = output.system_prompt_addition || "";
+    const addition = output.additionalContext || "";
     expect(addition).toContain("PLAN-MODE REQUIRED");
     expect(addition).toContain("Scope");
     expect(addition).toContain("Success criteria");
@@ -113,7 +113,7 @@ describe("E2E — hook process output", () => {
     ];
     for (const prompt of cases) {
       const output = runHook(prompt);
-      expect(output.system_prompt_addition || "").toContain("PLAN-MODE REQUIRED");
+      expect(output.additionalContext || "").toContain("PLAN-MODE REQUIRED");
     }
   });
 
@@ -124,7 +124,7 @@ describe("E2E — hook process output", () => {
     ];
     for (const prompt of cases) {
       const output = runHook(prompt);
-      expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
+      expect(output.additionalContext || "").not.toContain("PLAN-MODE REQUIRED");
     }
   });
 
@@ -137,7 +137,7 @@ describe("E2E — hook process output", () => {
     ];
     for (const prompt of cases) {
       const output = runHook(prompt);
-      expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
+      expect(output.additionalContext || "").not.toContain("PLAN-MODE REQUIRED");
     }
   });
 
@@ -148,7 +148,7 @@ describe("E2E — hook process output", () => {
     ];
     for (const prompt of cases) {
       const output = runHook(prompt);
-      expect(output.system_prompt_addition || "").not.toContain("PLAN-MODE REQUIRED");
+      expect(output.additionalContext || "").not.toContain("PLAN-MODE REQUIRED");
     }
   });
 });
@@ -156,23 +156,23 @@ describe("E2E — hook process output", () => {
 describe("E2E — commit rules injection", () => {
   test("injects commit rules on EN 'commit' keyword", () => {
     const output = runHook("let's commit the changes");
-    expect(output.system_prompt_addition || "").toContain("COMMIT RULES");
-    expect(output.system_prompt_addition || "").toContain("Co-Authored-By");
+    expect(output.additionalContext || "").toContain("COMMIT RULES");
+    expect(output.additionalContext || "").toContain("Co-Authored-By");
   });
 
   test("injects commit rules on RU 'коммит' keyword", () => {
     const output = runHook("давай сделаем коммит");
-    expect(output.system_prompt_addition || "").toContain("COMMIT RULES");
+    expect(output.additionalContext || "").toContain("COMMIT RULES");
   });
 
   test("injects commit rules on 'git commit' phrase", () => {
     const output = runHook("run git commit now");
-    expect(output.system_prompt_addition || "").toContain("COMMIT RULES");
+    expect(output.additionalContext || "").toContain("COMMIT RULES");
   });
 
   test("does NOT inject commit rules for unrelated prompts", () => {
     const output = runHook("fix the login bug");
-    expect(output.system_prompt_addition || "").not.toContain("COMMIT RULES");
+    expect(output.additionalContext || "").not.toContain("COMMIT RULES");
   });
 });
 
@@ -201,7 +201,7 @@ describe("E2E — security hint injection", () => {
 
   test("injects security hint when auth file is in git status", () => {
     const output = runHook("fix the bug", tmpDir);
-    expect(output.system_prompt_addition || "").toContain("SECURITY HINT");
+    expect(output.additionalContext || "").toContain("SECURITY HINT");
   });
 
   test("does NOT inject security hint when no security-sensitive files changed", () => {
@@ -219,7 +219,7 @@ describe("E2E — security hint injection", () => {
         path.join(skillsDir, "skill-rules.json")
       );
       const output = runHook("fix the bug", cleanDir);
-      expect(output.system_prompt_addition || "").not.toContain("SECURITY HINT");
+      expect(output.additionalContext || "").not.toContain("SECURITY HINT");
     } finally {
       fs.rmSync(cleanDir, { recursive: true, force: true });
     }
@@ -269,16 +269,77 @@ describe("E2E — session cache deduplication", () => {
     expect(skills2).not.toContain("python-project-standards");
   });
 
+  test("B1-02: non-skill injections (commit rules) still appear on second prompt after skill dedup", () => {
+    const sessionId = "test-b1-02-nonSkill";
+
+    runHook("write me a fastapi router", tmpCwd, sessionId);
+
+    const output2 = runHook("давай сделаем коммит", tmpCwd, sessionId);
+    const addition2 = output2.additionalContext || "";
+    const skills2 = getLoadedSkills(output2);
+    expect(skills2).not.toContain("python-project-standards");
+    expect(addition2).toMatch(/COMMIT|commit/);
+  });
+
   test("status not re-injected when hash unchanged between prompts", () => {
     const sessionId = "test-session-status-hash";
 
     const output1 = runHook("write some code", tmpCwd, sessionId);
-    const addition1 = output1.system_prompt_addition || "";
+    const addition1 = output1.additionalContext || "";
     expect(addition1).toContain("## Project Status");
 
     const output2 = runHook("write more code", tmpCwd, sessionId);
-    const addition2 = output2.system_prompt_addition || "";
+    const addition2 = output2.additionalContext || "";
     expect(addition2).not.toContain("## Project Status");
+  });
+});
+
+describe("E2E — injection size reduction across session (B1-size)", () => {
+  let tmpCwd;
+
+  beforeEach(() => {
+    tmpCwd = fs.mkdtempSync(path.join(os.tmpdir(), "e2e-b1size-"));
+    const claudeDir = path.join(tmpCwd, ".claude");
+    fs.mkdirSync(claudeDir, { recursive: true });
+    const devDir = path.join(tmpCwd, "dev");
+    fs.mkdirSync(devDir, { recursive: true });
+    fs.writeFileSync(path.join(devDir, "status.md"), "# Status\n\nGoal: test", "utf8");
+    const fixtureSkillsDir = path.join(FIXTURE_CWD, ".claude/skills");
+    const destSkillsDir = path.join(tmpCwd, ".claude/skills");
+    fs.mkdirSync(destSkillsDir, { recursive: true });
+    fs.copyFileSync(
+      path.join(fixtureSkillsDir, "skill-rules.json"),
+      path.join(destSkillsDir, "skill-rules.json")
+    );
+    for (const entry of fs.readdirSync(fixtureSkillsDir, { withFileTypes: true })) {
+      if (entry.isDirectory()) {
+        const src = path.join(fixtureSkillsDir, entry.name);
+        const dst = path.join(destSkillsDir, entry.name);
+        fs.mkdirSync(dst, { recursive: true });
+        for (const f of fs.readdirSync(src)) {
+          fs.copyFileSync(path.join(src, f), path.join(dst, f));
+        }
+      }
+    }
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpCwd, { recursive: true, force: true });
+  });
+
+  test("subsequent prompts inject significantly less than prompt 1 (threshold: 60%)", () => {
+    const sessionId = "b1-size-test-" + Date.now();
+
+    const out1 = runHook("help me write a fastapi router", tmpCwd, sessionId);
+    const size1 = (out1.additionalContext || "").length;
+    expect(size1).toBeGreaterThan(100);
+
+    let maxSubsequent = 0;
+    for (let i = 0; i < 4; i++) {
+      const out = runHook("write more fastapi code", tmpCwd, sessionId);
+      maxSubsequent = Math.max(maxSubsequent, (out.additionalContext || "").length);
+    }
+    expect(maxSubsequent).toBeLessThan(size1 * 0.6);
   });
 });
 
@@ -319,7 +380,7 @@ describe("E2E — no-git fallback", () => {
 describe("QA workflow injection", () => {
   test("plan keywords inject QA RECOMMENDED block BEFORE PLAN-MODE block", () => {
     const output = runHook("давай спланируем рефакторинг модуля авторизации");
-    const addition = output.system_prompt_addition || "";
+    const addition = output.additionalContext || "";
     const qaIdx = addition.indexOf("QA RECOMMENDED BEFORE PLAN");
     const planIdx = addition.indexOf("PLAN-MODE REQUIRED");
     expect(qaIdx).toBeGreaterThan(-1);
@@ -329,7 +390,7 @@ describe("QA workflow injection", () => {
 
   test("QA block contains clarifying questions", () => {
     const output = runHook("let's plan a migration to new database");
-    const addition = output.system_prompt_addition || "";
+    const addition = output.additionalContext || "";
     expect(addition).toContain("Scope:");
     expect(addition).toContain("Constraints:");
     expect(addition).toContain("Non-goals:");
@@ -337,7 +398,7 @@ describe("QA workflow injection", () => {
 
   test("non-plan prompt does not inject QA block", () => {
     const output = runHook("fix the typo in readme");
-    const addition = output.system_prompt_addition || "";
+    const addition = output.additionalContext || "";
     expect(addition).not.toContain("QA RECOMMENDED");
   });
 });

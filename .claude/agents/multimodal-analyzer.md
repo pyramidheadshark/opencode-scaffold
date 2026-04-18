@@ -1,3 +1,8 @@
+---
+description: Analyzes multimodal inputs (PDF, Word, Excel, images, audio, video) to extract structured requirements via Gemini Flash.
+model: claude-haiku-4-5-20251001
+---
+
 # Agent: multimodal-analyzer
 
 ## Purpose

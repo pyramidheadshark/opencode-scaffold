@@ -426,3 +426,36 @@ describe("E2E — spawned process", () => {
     expect(JSON.parse(result.stdout).action).toBe("continue");
   });
 });
+
+describe("block and snapshot logging", () => {
+  let gitDir;
+  beforeEach(() => { gitDir = makeGitDir(); });
+  afterEach(() => { cleanup(gitDir); });
+
+  function readSessionJsonl(dir) {
+    const sessDir = path.join(dir, ".claude", "logs", "sessions");
+    if (!fs.existsSync(sessDir)) return [];
+    const files = fs.readdirSync(sessDir).filter(f => f.endsWith(".jsonl"));
+    if (files.length === 0) return [];
+    return fs.readFileSync(path.join(sessDir, files[0]), "utf8")
+      .trim().split("\n").filter(Boolean).map(l => JSON.parse(l));
+  }
+
+  test("isOutOfCwd block appends block event to session JSONL", () => {
+    main(JSON.stringify({ tool_name: "Bash", tool_input: { command: "rm -rf /" }, session_id: "blk1" }), gitDir);
+    const events = readSessionJsonl(gitDir);
+    const blockEvent = events.find(e => e.type === "block");
+    expect(blockEvent).toBeDefined();
+    expect(blockEvent.reason).toBe("out_of_cwd");
+    expect(blockEvent.command).toContain("rm -rf /");
+  });
+
+  test("CRITICAL command snapshot appends snapshot_created event", () => {
+    main(JSON.stringify({ tool_name: "Bash", tool_input: { command: "git reset --hard HEAD~1" }, session_id: "snp1" }), gitDir);
+    const events = readSessionJsonl(gitDir);
+    const snapshotEvent = events.find(e => e.type === "snapshot_created");
+    expect(snapshotEvent).toBeDefined();
+    expect(snapshotEvent.tag).toMatch(/^claude\/s-/);
+    expect(snapshotEvent.command).toContain("git reset --hard");
+  });
+});

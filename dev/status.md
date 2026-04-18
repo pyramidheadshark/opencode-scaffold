@@ -8,108 +8,230 @@
 
 ## Business Goal
 
-Personal Claude Code infrastructure for ML engineering projects — reusable skills, hooks, agents, and templates that enforce the hexagonal architecture + TDD workflow across all Python/FastAPI projects.
+**v3.0 vision:** *Adapting Claude Code to modern Anthropic constraints + production infrastructure*
 
-Positioned around three pillars: **scaffolding** (deploy + sync), **token optimization** (71.4% savings measured), **multi-repo management** (update --all).
+Не просто скаффолдинг — полноценная инфраструктура для работы с Claude Code в условиях реальных ограничений: контекст, биллинг, multi-model routing, production-grade session protocol.
+
+Три старых столпа: **scaffolding** (deploy + sync), **token optimization** (71.4% savings), **multi-repo management** (update --all).
+
+Три новых столпа (v3.0): **model routing** (OpenRouter gateway, Gemini/Haiku/Opus by task), **session protocol** (Contract + Knowledge Manifest), **quality benchmarks** (lab tasks, model comparison).
 
 ---
 
 ## Current Phase
 
-**Active** — v2.2.0 planning. Ветка: `feature/wyndace-hub-profiles-tools` (контрибьютор: @wyndace).
+**v2.4.0 — ПОЛНОСТЬЮ ЗАВЕРШЕНО (2026-04-17, Session 8)**
 
-### Планируемые фичи v2.2.0
+- **npm@2.4.0 published** ✅ — publish.yml: `completed success`
+- **HEAD: `e70f1af`** (main, все CI зелёные)
+- **625 тестов** (563 Jest + 62 Python), 0 failed
+- **30 репо** задеплоены через `python scripts/deploy.py --update-all`
+- **README.md + README.ru.md + CHANGELOG.md** — актуализированы под v2.4.0
 
-| Приоритет | Фича | Описание | Статус |
-|---|---|---|---|
-| 🔴 1 | **Scaffold TUI inside Claude Code** | Интерактивный TUI как slash-команда `/scaffold` — управление проектами, профилями, тулзами прямо из Claude Code с Claude как бэкендом; встроенный оркестратор для параллельного/последовательного запуска нескольких `claude --print` инстансов по репо | 🔲 Не начато |
-| 🟡 2 | **Tools manager + Skill search** | Дать URL → авто-определить тип (MCP/OpenAPI/GitHub/docs) → сгенерировать skill + обновить `skill-rules.json` → инструмент сразу участвует в skill injection | 🔲 Не начато |
-| 🟡 3 | **Profile switcher** | `npx claude-scaffold switch <profile>` — смена профиля в уже задеплоенном проекте без полного переинита | 🔲 Не начато |
-| 🟢 4 | **Hub org-profile** | CLAUDE.md-шаблон для hub-типа в org-profiles + CLI-команда для переключения между проектами | 🔲 Не начато |
+**Что реализовано:**
+
+| Компонент | Суть |
+|-----------|------|
+| `session-status-monitor.js` | НОВЫЙ StatusLine хук: `ctx: ⚠ X%` в статусбаре, пишет `context_critical` в cache |
+| PostToolUse split | tracker → `Bash\|Edit\|Write`; checkpoint → `.*`. Фикс uv_spawn EUNKNOWN |
+| `session-checkpoint.js` | Убран threshold 25; compact по `context_critical: true` из cache |
+| i18n EN+RU | Убрано "COMPACT REQUIRED BEFORE STEP 1"; добавлена "Clear context button" |
+| `settings.json` | `statusLine` как top-level ключ (не внутри hooks — важно!) |
+| `CLAUDE.md` | Правила: MSYS_NO_PATHCONV=1 gh api + SSH alias вместо raw IP |
+| Docs | README badge/hooks/counts, CHANGELOG v2.4.0, README.ru.md раздел compact |
+
+**Критический аналитик (проведён в Session 8):**
+- Все 11 scope-пунктов v2.4.0 подтверждены как корректно реализованные
+- Единственная находка — ложное срабатывание на `DEFAULT_THRESHOLD` в мониторе (порог там и должен быть)
+
+### v2.3.1 — DONE (2026-04-15, Session 7)
+
+- npm@2.3.1 published, HEAD `5f94abc`
+- 554 Jest + 61 Python тестов, 0 failed
+- Thinking Defaults: `EFFORT=max`, `DISABLE_ADAPTIVE_THINKING=1`, `showThinkingSummaries=true`
+- 30 репо (29 registered + claude-scaffold сам) — tune applied, все ключи активны
+- `scripts/deploy.py` хотфикс: `apply_tuning_defaults` теперь пишет env-ключи (был исторический gap Python-пути)
+- `claude-scaffold tune` команда — оверрайт настроек в пост-деплой (без re-init)
+- README 522→345 строк, docs/REFERENCE + docs/CHANGELOG обновлены
+
+**Decisions:**
+- Канонический env var: `CLAUDE_CODE_EFFORT_LEVEL` (не `CLAUDE_REASONING_EFFORT`; `effortLevel` в settings.json broken per GH #35904)
+- Deploy: non-overwrite (мирроринг существующего `CLAUDE_CODE_DISABLE_1M_CONTEXT`); `tune`: overwrite
+- Флаг `off` на deploy = пропустить запись ключа (не писать blank)
+- Attribution: "Anthropic / Claude Code team" (HN thread, Boris)
 
 ---
 
-## Current State (2026-04-08)
+**Session 6 — DONE (2026-04-14). v2.2.1 опубликован, 29 репо обновлены.**
 
-- **v2.1.0 PUBLISHED** npm@2.1.0 — tagged, pushed to main, publish.yml triggered
-- main HEAD: `3d83c7d` (merge commit — feature/token-optimization)
-- **593 tests** (536 Jest + 57 Python), 0 failed
-- **29 repos updated** via `--update-all` — all `[up to date]`
-- **4 GitHub stars**, 0 forks
+Сессия выполнена полностью, осталось два деплой-действия:
 
-### v2.1.0 Completed Phases:
+1. ⏳ `git tag v2.2.0 && git push origin v2.2.0` → CI публикует npm@2.2.0 автоматически
+2. ⏳ `npx claude-scaffold update --all` → обновить 29 репо до HEAD `bade556`
 
-| Phase | Status | Summary |
-|---|---|---|
-| Phase 1 — Context defaults | ✅ Done | `deploySettings()` sets `DISABLE_1M_CONTEXT=1` + `showClearContextOnPlanAccept:true` as one-time defaults |
-| Phase 2 — Compact signal | ✅ Done | ExitPlanMode → /compact; one-shot at call 25 (was 40), `SCAFFOLD_COMPACT_THRESHOLD` |
-| Phase 3 — Bash output filter | ✅ Done | `bash-output-filter.js` + `filter_rules.json` (10 rules), `{ cmd; } filter \|\| true` syntax |
-| Phase 4 — Benchmark harness | ✅ Done | OpenRouter SDK, 25 tasks redesigned, **71.4% savings on Sonnet 4.6** |
-| Phase 5 — Agent model routing | ✅ Done | `status-updater.md` agent (haiku frontmatter), opt-in via `SCAFFOLD_LIGHT_AGENTS=true` |
-| Hardening — Hook bug fixes | ✅ Done | Braces syntax, pytest PASSED/PASS grep, `\|\| true` fallback, threshold 40→25 |
-| Documentation | ✅ Done | README.md + README.ru.md: three pillars, benchmark table, v2.1.0 changelog |
-| deploy.py dry-run | ✅ Done | `--dry-run` flag for update/update-all: MD5 diff preview, no writes |
+**Что делается в Session 6:**
 
-### Benchmark Results (v2.1.0, Sonnet 4.6 via OpenRouter):
+| Задача | Статус | Детали |
+|--------|--------|--------|
+| session-safety.js block logging | ✅ | appendSessionEvent при block + snapshot_created |
+| post-tool-use-tracker.js bash + count | ✅ | bash_command JSONL + tool_call_count в session cache |
+| +4 новых теста | ✅ | 2 в session-safety + 2 в post-tool-use-tracker |
+| README.md v2.2.0 features | ✅ | badges, счётчик, Session Management раздел |
+| README.ru.md v2.2.0 features | ✅ | то же на RU |
+| package.json 2.2.0→2.2.1 | ✅ | |
+| MEMORY.md актуализация | ✅ | версия, тесты, Key Paths, без стейла |
+| analyze_logs.py удалён | ✅ | временный скрипт |
+| git commit 1 (logging) | ✅ | `160157e` |
+| git commit 2 (docs) | ✅ | `589b9a6` |
+| git tag v2.2.1 + push | ✅ | npm@2.2.1 published |
+| python scripts/deploy.py --update-all | ✅ | 29/29 up to date |
 
-| Category | Tasks | Avg Baseline | Avg Optimized | Savings% |
-|---|---|---|---|---|
-| bash_filter | 10 | ~2 000 tok | ~407 tok | **~78%** |
-| skill_activation | 10 | ~2 500 tok | ~700 tok | **~72%** |
-| no_filter_expected | 5 | same | same | 0% (expected) |
-| **TOTAL** | **25** | **25 084 tok** | **7 178 tok** | **71.4%** |
+**Что было сделано в Session 5:**
 
-Model: `claude-sonnet-4-6` via OpenRouter.
+| Задача | Статус | Коммит / Детали |
+|--------|--------|-----------------|
+| GH Actions v5 | ✅ | `checkout@v4→v5`, `setup-node@v4→v5` в ci.yml + publish.yml |
+| WEIGHTS тесты удалены | ✅ | 4 вакуозных константных теста из session-utils.test.js |
+| Skill Discovery CLI | ✅ | `lib/commands/discover.js`: detectStack (16 детекторов), searchRegistry, runDiscover |
+| `claude-scaffold discover` команда | ✅ | `bin/cli.js` +discover; опции --install, --json |
+| session-start.js триггер | ✅ | `buildDiscoverySuggestionBlock`: session=1 + skills<4 → инжект подсказки |
+| 17 новых тестов | ✅ | 12 в `tests/cli/discover.test.js` + 5 в `tests/hook/session-start.test.js` |
+| package.json 2.1.0→2.2.0 | ✅ | |
+| Push в main | ✅ | HEAD `bade556` |
+
+---
+
+## Roadmap Sessions (История)
+
+| Сессия | Фазы | Статус | HEAD |
+|--------|------|--------|------|
+| **Session 1** (2026-04-14) | A1 billing guard + A2 hook API migration + Audit | ✅ DONE | `352798a` |
+| **Session 2** (2026-04-14) | B1 size test + B2 Haiku frontmatter + D1-D3 model router | ✅ DONE | (after S1) |
+| **Session 3** (2026-04-14) | C1 Session Contract + E1/E3/E5 Quality Benchmark | ✅ DONE | `7689210` |
+| **Session 5** (2026-04-14) | GH Actions v5 + Test cleanup + Skill Discovery + v2.2.0 bump | ✅ DONE | `bade556` |
+
+### Session 1 — детали
+
+| Задача | Что сделано | Файлы |
+|--------|-------------|-------|
+| **A1** | `export ANTHROPIC_MODEL=claude-sonnet-4-6` → `~/.bashrc` | `~/.bashrc` |
+| **A2** | Hook API: `system_prompt_addition` → `hookSpecificOutput.additionalContext` | 3 хука |
+| **A2+** | Post-Compact Resume Message: 3-step шаблон EN+RU | `lib/i18n.js`, `hooks/i18n.js` |
+| **CRITICAL FIX** | `deploy.py` не включал `PreToolUse` → bash-output-filter и session-safety не работали | `scripts/deploy.py` |
+| **BUG FIX** | `pending_notification` stale-cache: spread → mutate in-place | `skill-activation-prompt.js` |
+| **29 repos** | Обновлены до `352798a` со всеми фиксами | `deployed-repos.json` |
+
+### Session 2 — детали
+
+| Задача | Что сделано | Файлы |
+|--------|-------------|-------|
+| **D1-D3** | `claude-scaffold use <model>` / `install-aliases`; 5 профилей + 3 пресета; .sh + .ps1 | `lib/commands/model-router.js`, `bin/cli.js` |
+| **B2** | `model:` frontmatter в 8 агентских файлах | `.claude/agents/*.md` |
+| **B1-size** | E2E тест: 5 промптов подряд, max injection 2-5 < 60% от первого | `tests/hook/skill-activation-e2e.test.js` |
+
+### Session 3 — детали
+
+| Задача | Что сделано | Файлы |
+|--------|-------------|-------|
+| **C1** | Session Contract template + `claude-scaffold new-session` + session-start.js buildContractMissingBlock | `templates/session-contract.md`, `lib/commands/new-session.js`, `session-start.js` |
+| **E1/E3/E5** | Quality benchmark runner + lab fixtures (fibonacci, vulnerable_api, yaml_parser_spec) + 21 тест-кейс скорер | `scripts/benchmark/quality_runner.py`, `scripts/benchmark/lab/`, `tests/benchmark/` |
+
+---
+
+## Current State (2026-04-17)
+
+- **v2.4.0 PUBLISHED** npm@2.4.0 (2026-04-17), HEAD = `e70f1af`
+- **main HEAD: `e70f1af`**
+- **625 tests** (563 Jest + 62 Python infra), 0 failed
+- **30 repos** на `0042d55` (v2.4.0 impl hooks + statusLine) — все up to date. Docs-only коммиты после деплоя re-deploy не требуют.
+- `ANTHROPIC_MODEL=claude-sonnet-4-6` в `~/.bashrc` — billing guard активен
+- StatusLine хук активен во всех 30 репо — контекст отображается в статусбаре
+- PostToolUse split активен — нет лишних spawn на Read/Glob/Grep
+
+### npm publish path:
+```bash
+git tag vX.Y.Z && git push origin vX.Y.Z
+# → publish.yml запускается автоматически
+# НЕ используй npm publish (требует 2FA hardware key)
+```
+
+### Что деплоится в target репо:
+
+| Хук | Тип | Что делает |
+|-----|-----|------------|
+| `session-safety.js` | PreToolUse (Bash) | Деструктивные команды → block + git snapshot |
+| `bash-output-filter.js` | PreToolUse (Bash) | Verbose команды → whitelist фильтрация |
+| `session-start.js` | SessionStart | Platform detect + onboarding + Windows rules + Contract check + Discovery hint |
+| `skill-activation-prompt.js` | UserPromptSubmit | Skill injection + status hash dedup |
+| `post-tool-use-tracker.js` | PostToolUse (Bash\|Edit\|Write) | Weight accumulation + JSONL audit |
+| `session-checkpoint.js` | PostToolUse (.*) | ExitPlanMode → Resume Message; context_critical → compact signal |
+| `session-status-monitor.js` | StatusLine | Отображает `ctx: X%` в статусбаре, пишет context_critical в cache |
+| `python-quality-check.js` | Stop | End-of-session quality check |
 
 ---
 
 ## Key Architecture
 
-### Hook pipeline (PreToolUse Bash):
-1. `session-safety.js` — destructive pattern classification, git snapshot on CRITICAL
-2. `bash-output-filter.js` — whitelist wrapping verbose commands: `{ cmd; } 2>&1 | grep | tail || true`
+### Hook pipeline:
+```
+PreToolUse (Bash):           session-safety.js → bash-output-filter.js
+SessionStart:                session-start.js
+UserPromptSubmit:            skill-activation-prompt.js → skill-activation-logic.js
+PostToolUse (Bash|Edit|Write): post-tool-use-tracker.js
+PostToolUse (.*):            session-checkpoint.js
+StatusLine:                  session-status-monitor.js  [top-level key in settings.json]
+Stop:                        python-quality-check.js
+```
 
-### Skill injection (UserPromptSubmit):
-- `skill-activation-prompt.js` reads `filter_rules.json` + `skill-rules.json`
-- max 3 skills per session; `python-project-standards` always_load=true
-- i18n via `i18n.js` (EN+RU builder functions)
+### Hook output formats (CRITICAL — не регрессировать):
+```javascript
+// PostToolUse / SessionStart:
+{ continue: true, hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: "..." } }
+// UserPromptSubmit:
+{ continue: true, additionalContext: "..." }
+// PreToolUse — session-safety:
+{ action: "block" | "continue" }
+// PreToolUse — bash-output-filter:
+{ action: "continue", updatedInput: { command: wrappedCommand } }
+```
 
-### Compact signal (PostToolUse):
-- `session-checkpoint.js` fires once at call 25 (configurable: `SCAFFOLD_COMPACT_THRESHOLD`)
-- Also fires on `ExitPlanMode` event
+### Skill Discovery — архитектура (Session 5):
+- `lib/commands/discover.js` — читает `registry/skills.json` напрямую (не через кэш/HTTP)
+- `detectStack(cwd)` — 16 детекторов: React/Vue/Next/Express/TS/FastAPI/PyTorch/sklearn/LangChain/Anthropic SDK/Rust/Go/Terraform/Flutter/Python/Node
+- `searchRegistry(infraDir, tags)` — фильтр по tag intersection, сортировка по matchCount desc
+- `buildDiscoverySuggestionBlock(fsModule, cwd, sessionCount)` — инжект только session=1 И skill-rules.json < 4 rules
 
 ### Deploy:
-- `lib/deploy/copy.js` — `deployCore` + `deploySettings`, matcher-based hook merge
-- `scripts/deploy.py` — `--update`, `--update-all`, `--dry-run`
+- `lib/deploy/copy.js` — `deployCore` + `deploySettings`, matcher-based hook merge, 5 hook types
+- `scripts/deploy.py` — `--update`, `--update-all`, `--dry-run`; SHA-based skip
 - `deployed-repos.json` — local registry (gitignored)
 
 ---
 
-## Backlog
+## Backlog (приоритизировано)
 
+### Техдолг (не сделано в Session 5)
+- [ ] **deploy.py тесты** — самый опасный непокрытый файл. Python unittest: `--all` флаг, PreToolUse в settings.json, не перезаписывает status.md
+- [ ] **Интеграционный тест** `new-session` → `session-start` → напоминание исчезает (сейчас только unit)
+
+### v2.3.0 features
+- [ ] Session Contract архивация: `dev/active/` → `dev/archive/YYYY-MM/` после завершения
+- [ ] `claude-scaffold status` показывает contract state + last benchmark date
+- [ ] Quality benchmark интеграция в report.py (сейчас JSONL от quality_runner не читается bench:report)
+- [ ] Запустить реальный benchmark haiku vs sonnet (нужен OPENROUTER_API_KEY)
+- [ ] Новые скилы для registry: react-patterns, typescript-patterns, rust-patterns (чтобы `discover` давал результат для фронтенд/системных проектов)
+
+### Маркетинг / growth
 - [ ] Submit to `hesreallyhim/awesome-claude-code` via web UI issue form
-- [ ] PR to `anthropics/claude-plugins-official` external_plugins/
-- [ ] PRs to 4 more awesome-lists (ccplugins, rahulvrane, cassler, VoltAgent)
-- [ ] Ping 3 stale PRs (awesome-llm-skills, awesome-claude-plugins, awesome-ai-devtools)
+- [ ] PRs to 4 awesome-lists: ccplugins, rahulvrane, cassler, VoltAgent
+- [ ] Ping 3 stale PRs: awesome-llm-skills (#56), awesome-claude-plugins (#66), awesome-ai-devtools (#326)
 - [ ] Reddit post in r/ClaudeCode
 - [ ] Dev.to article — "Claude Code beyond CLAUDE.md"
+
+### Инфра / Репо
 - [ ] phs_calorie_app: history rewrite to remove .claude/ from git (commit 359761f)
-- [ ] GitHub Actions update: `actions/checkout@v4` → `@v5`, `setup-node@v4` → `@v5` (deadline: June 2026)
-- [ ] VHS demo gif re-render via `ssh yc-ctrl` (VHS hangs on Windows due to oh-my-posh)
 - [ ] techcon_infra_yac: AWS creds rotation (в git history)
-
----
-
-## Known Issues
-
-### VHS не работает на Windows
-VHS зависает из-за oh-my-posh в .bashrc. Решение: рендерить через `ssh yc-ctrl`.
-
-### Python infra tests UnicodeDecodeError на Windows
-`read_text()` использует cp1251 по умолчанию. Фикс: `encoding="utf-8"` везде.
-
-### Compact signal: tool_call_count — слабый proxy для размера контекста
-`git status` и `cat large_file.py` — оба 1 вызов, но 10 токен vs 50k. Порог 25 calls — ориентир.
+- [ ] VHS demo gif re-render via `ssh yc-ctrl`
 
 ---
 
@@ -126,12 +248,19 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 | Agent extensions | Concatenation at deploy time, idempotency guard | 2026-04-06 |
 | Token defaults deploy | `=== undefined` check — one-time, never overwrites user decision | 2026-04-07 |
 | Compact signal | Two-trigger: ExitPlanMode + one-shot threshold at call 25 | 2026-04-07 |
-| Bash output filter | PreToolUse `updatedInput` whitelist-only + `{ cmd; } || true` + log | 2026-04-08 |
+| Bash output filter | PreToolUse `updatedInput` whitelist-only + `{ cmd; } \|\| true` + log | 2026-04-08 |
 | deploySettings hook merge | Matcher-based dedup — scaffold owns matchers, user hooks preserved | 2026-04-08 |
 | i18n coverage | EN+RU builder functions in lib/i18n.js, lazy-loaded in hooks | 2026-04-08 |
 | Benchmark SDK | openai SDK → OpenRouter (not anthropic SDK) | 2026-04-08 |
-| Benchmark redesign | skill_activation = full injection vs env-only; no_filter_expected = regression check | 2026-04-08 |
-| deploy.py dry-run | MD5-based diff preview — shows new/modified files per repo without writing | 2026-04-08 |
+| Hook output API | system_prompt_addition deprecated → hookSpecificOutput.additionalContext / additionalContext | 2026-04-14 |
+| Post-Compact Resume | 3-step: Generate message → Tell user /compact → WAIT | 2026-04-14 |
+| PreToolUse in deploy.py | session-safety + bash-output-filter always deployed via Python path | 2026-04-14 |
+| pending_notification clear | Mutate cache in-place (not spread) to avoid stale read | 2026-04-14 |
+| Skill Discovery layers | discover.js → registry/skills.json direct (no cache); runRegistrySearch → cache+HTTP. Different layers, no duplication. | 2026-04-14 |
+| buildDiscoverySuggestionBlock | session=1 AND skill-rules.json < 4 rules — двойной guard против ложных триггеров | 2026-04-14 |
+| StatusLine config location | `statusLine` is a top-level key in settings.json, NOT inside `hooks` — schema validation rejects StatusLine as a hook event | 2026-04-17 |
+| PostToolUse split (v2.4.0) | tracker → `Bash\|Edit\|Write` (fixes uv_spawn EUNKNOWN on Windows); checkpoint → `.*` (ExitPlanMode detection still needed) | 2026-04-17 |
+| context_critical pipeline (v2.4.0) | StatusLine hook writes flag to cache; session-checkpoint reads on next PostToolUse; replaces 25-message threshold | 2026-04-17 |
 
 ---
 
@@ -148,4 +277,4 @@ VHS зависает из-за oh-my-posh в .bashrc. Решение: ренде
 
 ---
 
-*Last updated: 2026-04-08 (v2.1.0 published, all phases complete)*
+*Last updated: 2026-04-14 (Session 5 done — GH Actions v5 + Skill Discovery; v2.2.0 ready to tag)*

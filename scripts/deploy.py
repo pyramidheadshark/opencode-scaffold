@@ -46,9 +46,10 @@ REGISTRY_PATH = INFRA_DIR / "deployed-repos.json"
 def build_hooks_definition(target: Path) -> dict:
     h = (target / ".claude" / "hooks").resolve().as_posix()
     return {
+        "PreToolUse":       [{"matcher": "Bash", "hooks": [{"type": "command", "command": f'node "{h}/session-safety.js"'}, {"type": "command", "command": f'node "{h}/bash-output-filter.js"'}]}],
         "SessionStart":     [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/session-start.js"'}]}],
         "UserPromptSubmit": [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/skill-activation-prompt.js"'}]}],
-        "PostToolUse":      [{"matcher": ".*", "hooks": [{"type": "command", "command": f'node "{h}/post-tool-use-tracker.js"'}, {"type": "command", "command": f'node "{h}/session-checkpoint.js"'}]}],
+        "PostToolUse":      [{"matcher": "Bash|Edit|Write", "hooks": [{"type": "command", "command": f'node "{h}/post-tool-use-tracker.js"'}]}, {"matcher": ".*", "hooks": [{"type": "command", "command": f'node "{h}/session-checkpoint.js"'}]}],
         "Stop":             [{"matcher": "", "hooks": [{"type": "command", "command": f'node "{h}/python-quality-check.js"'}]}],
     }
 
@@ -448,6 +449,20 @@ def generate_skill_rules(
     return result
 
 
+def apply_tuning_defaults(existing: dict) -> None:
+    env = existing.setdefault("env", {})
+    if "CLAUDE_CODE_DISABLE_1M_CONTEXT" not in env:
+        env["CLAUDE_CODE_DISABLE_1M_CONTEXT"] = "1"
+    if "CLAUDE_CODE_EFFORT_LEVEL" not in env:
+        env["CLAUDE_CODE_EFFORT_LEVEL"] = "max"
+    if "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING" not in env:
+        env["CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING"] = "1"
+    if "showClearContextOnPlanAccept" not in existing:
+        existing["showClearContextOnPlanAccept"] = True
+    if "showThinkingSummaries" not in existing:
+        existing["showThinkingSummaries"] = True
+
+
 def deploy_settings(target: Path) -> None:
     settings_path = target / ".claude" / "settings.json"
     existing: dict = {}
@@ -457,6 +472,10 @@ def deploy_settings(target: Path) -> None:
         except (json.JSONDecodeError, OSError):
             existing = {}
     existing["hooks"] = build_hooks_definition(target)
+    if "statusLine" not in existing:
+        h = (target / ".claude" / "hooks").as_posix()
+        existing["statusLine"] = {"type": "command", "command": f'node "{h}/session-status-monitor.js"'}
+    apply_tuning_defaults(existing)
     settings_path.write_text(
         json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -584,7 +603,7 @@ def deploy(args: argparse.Namespace) -> None:
 
     print("[5c/5] Writing .claude/settings.json (hook registration)...")
     deploy_settings(target)
-    print("  hooks: SessionStart, UserPromptSubmit, PostToolUse, Stop")
+    print("  hooks: PreToolUse, SessionStart, UserPromptSubmit, PostToolUse, Stop")
 
     ext_dir = target / ".claude" / "agent-extensions"
     ext_dir.mkdir(parents=True, exist_ok=True)

@@ -190,7 +190,7 @@ function buildOutput(injections) {
   }
   return {
     continue: true,
-    system_prompt_addition: injections.join("\n\n---\n\n"),
+    additionalContext: injections.join("\n\n---\n\n"),
   };
 }
 

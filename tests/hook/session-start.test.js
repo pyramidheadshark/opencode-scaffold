@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -58,14 +58,14 @@ describe("main — first run (no config)", () => {
 
   test("returns env block in system_prompt_addition", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Session Environment");
-    expect(result.system_prompt_addition).toContain("win32");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Session Environment");
+    expect(result.hookSpecificOutput.additionalContext).toContain("win32");
   });
 
   test("includes onboarding block on first run", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Project Onboarding Required");
-    expect(result.system_prompt_addition).toContain("project-config.json");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Project Onboarding Required");
+    expect(result.hookSpecificOutput.additionalContext).toContain("project-config.json");
   });
 
   test("creates project-config.json with session_count=1", () => {
@@ -89,8 +89,8 @@ describe("main — subsequent runs (config exists)", () => {
 
   test("env block present without onboarding block", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Session Environment");
-    expect(result.system_prompt_addition).not.toContain("## Project Onboarding Required");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Session Environment");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("## Project Onboarding Required");
   });
 
   test("increments session_count", () => {
@@ -109,18 +109,18 @@ describe("main — Windows rules injection", () => {
 
   test("injects Windows rules on win32", () => {
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Windows Compatibility Rules");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Windows Compatibility Rules");
   });
 
   test("does NOT inject Windows rules on linux", () => {
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("## Windows Compatibility Rules");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("## Windows Compatibility Rules");
   });
 
   test("Windows rules injected on all win32 sessions, not just first", () => {
     saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 2 });
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Windows Compatibility Rules");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Windows Compatibility Rules");
   });
 });
 
@@ -160,20 +160,20 @@ describe("main — RU localization", () => {
   test("uses Russian onboarding when lang=ru and session_count=0 in config", () => {
     saveConfig(tmpDir, { platform: "linux", python_cmd: "python3", shell: "bash", session_count: 0, lang: "ru" });
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("## Требуется онбординг проекта");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Требуется онбординг проекта");
   });
 
   test("uses Russian windows block when lang=ru on win32", () => {
     saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 0, lang: "ru" });
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Правила совместимости с Windows");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Правила совместимости с Windows");
   });
 
   test("subsequent session lang=ru still uses Russian windows block", () => {
     saveConfig(tmpDir, { platform: "win32", python_cmd: "python", shell: "bash", session_count: 3, lang: "ru" });
     const result = main("{}", tmpDir, "win32", () => "python");
-    expect(result.system_prompt_addition).toContain("## Правила совместимости с Windows");
-    expect(result.system_prompt_addition).not.toContain("## Требуется онбординг проекта");
+    expect(result.hookSpecificOutput.additionalContext).toContain("## Правила совместимости с Windows");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("## Требуется онбординг проекта");
   });
 });
 
@@ -187,7 +187,7 @@ describe("detectPythonCmd — win32 shortcut", () => {
     const result = main("{}", tmpDir, "win32", null);
     const config = loadConfig(tmpDir);
     expect(config.python_cmd).toBe("python");
-    expect(result.system_prompt_addition).toContain("Python: python");
+    expect(result.hookSpecificOutput.additionalContext).toContain("Python: python");
   });
 });
 
@@ -280,13 +280,13 @@ describe("main — deps/infra injection", () => {
   test("injects deps block when deps.yaml exists", () => {
     fs.writeFileSync(path.join(tmpDir, "deps.yaml"), "project: test\ndepends_on:\n  - repo: hub\n    type: knowledge\n    description: KB", "utf8");
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("DEPENDENCIES");
-    expect(result.system_prompt_addition).toContain("hub");
+    expect(result.hookSpecificOutput.additionalContext).toContain("DEPENDENCIES");
+    expect(result.hookSpecificOutput.additionalContext).toContain("hub");
   });
 
   test("does not inject deps when no deps.yaml", () => {
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("DEPENDENCIES");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("DEPENDENCIES");
   });
 });
 
@@ -307,29 +307,125 @@ describe("main — SCAFFOLD_LIGHT_AGENTS", () => {
   test("injects light agents block when SCAFFOLD_LIGHT_AGENTS=true", () => {
     process.env.SCAFFOLD_LIGHT_AGENTS = "true";
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("Light Agents Active");
-    expect(result.system_prompt_addition).toContain("status-updater");
+    expect(result.hookSpecificOutput.additionalContext).toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).toContain("status-updater");
   });
 
   test("injects light agents block when SCAFFOLD_LIGHT_AGENTS=1", () => {
     process.env.SCAFFOLD_LIGHT_AGENTS = "1";
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).toContain("Light Agents Active");
   });
 
   test("does not inject when SCAFFOLD_LIGHT_AGENTS not set", () => {
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("Light Agents Active");
   });
 
   test("does not inject when SCAFFOLD_LIGHT_AGENTS=false", () => {
     process.env.SCAFFOLD_LIGHT_AGENTS = "false";
     const result = main("{}", tmpDir, "linux", () => "python3");
-    expect(result.system_prompt_addition).not.toContain("Light Agents Active");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("Light Agents Active");
   });
 
   test("LIGHT_AGENTS_BLOCK export contains status-updater reference", () => {
     expect(LIGHT_AGENTS_BLOCK).toContain("status-updater");
     expect(LIGHT_AGENTS_BLOCK).toContain("Light Agents Active");
+  });
+});
+
+describe("buildContractMissingBlock", () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ss-contract-test-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  test("returns null for session 1 (first run)", () => {
+    expect(buildContractMissingBlock(fs, tmpDir, 1)).toBeNull();
+  });
+
+  test("returns block for session 2+ when no contract file exists", () => {
+    const result = buildContractMissingBlock(fs, tmpDir, 2);
+    expect(result).not.toBeNull();
+    expect(result).toContain("SESSION CONTRACT MISSING");
+    expect(result).toContain("claude-scaffold new-session");
+  });
+
+  test("returns null when contract file exists for today", () => {
+    const today = new Date().toISOString().split("T")[0];
+    const activeDir = path.join(tmpDir, "dev", "active");
+    fs.mkdirSync(activeDir, { recursive: true });
+    fs.writeFileSync(path.join(activeDir, `session-${today}.md`), "# Session\n", "utf8");
+    expect(buildContractMissingBlock(fs, tmpDir, 2)).toBeNull();
+  });
+
+  test("main injects contract block when session > 1 and no contract", () => {
+    saveConfig(tmpDir, { session_count: 1, platform: "linux", python_cmd: "python3", shell: "bash", lang: "en" });
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.hookSpecificOutput.additionalContext).toContain("SESSION CONTRACT MISSING");
+  });
+
+  test("main does not inject contract block when contract exists", () => {
+    saveConfig(tmpDir, { session_count: 1, platform: "linux", python_cmd: "python3", shell: "bash", lang: "en" });
+    const today = new Date().toISOString().split("T")[0];
+    const activeDir = path.join(tmpDir, "dev", "active");
+    fs.mkdirSync(activeDir, { recursive: true });
+    fs.writeFileSync(path.join(activeDir, `session-${today}.md`), "# Session\n", "utf8");
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("SESSION CONTRACT MISSING");
+  });
+});
+
+describe("buildDiscoverySuggestionBlock", () => {
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ss-discover-test-"));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function makeMinimalSkillRules(tmpDir, ruleCount) {
+    const skillsDir = path.join(tmpDir, ".claude", "skills");
+    fs.mkdirSync(skillsDir, { recursive: true });
+    const rules = { rules: Array.from({ length: ruleCount }, (_, i) => ({ skill: `skill-${i}` })) };
+    fs.writeFileSync(path.join(skillsDir, "skill-rules.json"), JSON.stringify(rules), "utf8");
+  }
+
+  test("returns null for session > 1", () => {
+    makeMinimalSkillRules(tmpDir, 2);
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 2)).toBeNull();
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 10)).toBeNull();
+  });
+
+  test("returns null when skill-rules.json has >= 4 rules", () => {
+    makeMinimalSkillRules(tmpDir, 4);
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 1)).toBeNull();
+  });
+
+  test("returns null when skill-rules.json does not exist", () => {
+    expect(buildDiscoverySuggestionBlock(fs, tmpDir, 1)).toBeNull();
+  });
+
+  test("returns block for session 1 with < 4 rules", () => {
+    makeMinimalSkillRules(tmpDir, 2);
+    const result = buildDiscoverySuggestionBlock(fs, tmpDir, 1);
+    expect(result).not.toBeNull();
+    expect(result).toContain("SKILL DISCOVERY");
+    expect(result).toContain("claude-scaffold discover");
+  });
+
+  test("detects Node.js when package.json is present", () => {
+    makeMinimalSkillRules(tmpDir, 2);
+    fs.writeFileSync(path.join(tmpDir, "package.json"), "{}", "utf8");
+    const result = buildDiscoverySuggestionBlock(fs, tmpDir, 1);
+    expect(result).toContain("Node.js");
   });
 });

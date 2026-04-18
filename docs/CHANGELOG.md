@@ -5,6 +5,61 @@ Format: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.4.0 — 2026-04-17
+
+### Added
+- **StatusLine hook `session-status-monitor.js`** — displays `ctx: ⚠ X%` (or `ctx: X%`) in the Claude Code status bar after every API response. Writes `context_critical: bool` and `context_remaining_pct` to session checkpoint cache. Threshold default 20% remaining; configurable via `SCAFFOLD_CONTEXT_THRESHOLD` env var.
+- **Token-aware compact signal** — `session-checkpoint.js` reads `context_critical` from cache on each PostToolUse event. When `true`, injects a compact signal into `additionalContext` with instructions to update `dev/status.md` and use the "Clear context" button. Replaces the unreliable 25-message count heuristic.
+- `statusLine` top-level key written to `settings.json` on `init`/`update` (non-overwrite). Note: `statusLine` is a top-level settings.json property, not a hook event inside `hooks`.
+
+### Changed
+- **PostToolUse matchers split** — `post-tool-use-tracker.js` now fires on `Bash|Edit|Write` only (was `.*`). Fixes `uv_spawn EUNKNOWN` errors on Windows caused by spawning two Node processes on every Read/Glob/Grep.
+- `session-checkpoint.js` — removed `DEFAULT_THRESHOLD = 25`, `SCAFFOLD_COMPACT_THRESHOLD` env var, and `compact_signal_sent` one-shot logic. Now purely driven by the `context_critical` flag.
+- `i18n.js` (EN + RU, both copies) — `compact_required_body` no longer instructs `/compact` before Step 1; now references the "Clear context" button. `threshold_body` shows remaining `%` instead of threshold value. `buildThresholdCheckpointBlock(pct, lang)` signature updated.
+- `CLAUDE.md` — two new "What You Never Do" rules: `MSYS_NO_PATHCONV=1 gh api` for Windows Git Bash path mangling, and SSH host aliases instead of raw IPs.
+
+### Tests
+- +10 Jest (`tests/hook/session-status-monitor.test.js`) — context_critical flag, stdout format, custom threshold env, robustness, cache merge.
+- +3 Jest (`tests/hook/session-checkpoint.test.js`) — context_critical trigger, pct display, Clear context text, no false positive.
+- +1 Python (`tests/infra/test_infra.py`) — `test_deploy_settings_has_status_line`, `test_deploy_post_tool_use_split_matchers`.
+- Total: 563 Jest + 62 Python, all green.
+
+---
+
+## v2.3.1 — 2026-04-15
+
+### Fixed
+- **`scripts/deploy.py` parity** — Python deploy path now writes the same thinking defaults as the JS path (`CLAUDE_CODE_EFFORT_LEVEL=max`, `CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`, `CLAUDE_CODE_DISABLE_1M_CONTEXT=1`, `showThinkingSummaries=true`, `showClearContextOnPlanAccept=true`). Prior to this, `python scripts/deploy.py --update-all` shipped the hook block but no env/settings — leaving deployed repos without the v2.3.0 defaults despite the SHA showing "up to date".
+- `apply_tuning_defaults(existing)` added as a pure helper, mirroring `applyTuningDefaults` in `lib/deploy/copy.js`. Non-overwrite semantics preserved.
+
+### Tests
+- +2 Python (`test_deploy_writes_thinking_defaults`, `test_deploy_settings_preserves_existing_env_values`) — 554 Jest + 61 Python, all green.
+
+---
+
+## v2.3.0 — 2026-04-15
+
+### Added
+- **Thinking Defaults** — `deploySettings` writes three Anthropic-recommended keys on `init`/`update` (non-overwrite): `env.CLAUDE_CODE_EFFORT_LEVEL=max`, `env.CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING=1`, top-level `showThinkingSummaries=true`. Restores full thinking depth after Anthropic silently lowered defaults in Feb–Mar 2026.
+- **CLI flags** on `init` and `update`: `--effort <max|high|medium|off>`, `--adaptive-thinking <on|off>`, `--thinking-summaries <on|off>`. `off` on deploy = skip the key (keep whatever Claude Code defaults to).
+- **`claude-scaffold tune` command** — post-deploy explicit overwrite of the three settings. Uses `applyTuningOverwrite` (in contrast to the non-overwrite `applyTuningDefaults` used by deploy).
+- `lib/commands/tune.js` with 10 Jest cases covering overwrite, key deletion, corrupt-JSON recovery, and hook preservation.
+
+### Changed
+- `lib/deploy/copy.js` refactored: `applyTuningDefaults(existing, tuning)` and `applyTuningOverwrite(existing, tuning)` extracted as pure exported functions. `DEFAULT_TUNING = { effort: 'max', adaptiveThinking: 'off', thinkingSummaries: 'on' }`.
+- `deploySettings(targetDir)` → `deploySettings(targetDir, tuning)`. Old call sites still work (tuning is optional).
+- `updateOne`/`updateAll` accept an optional `tuning` argument threaded through to `deploySettings`.
+- README slimmed from 522 to 345 lines; removed version-stamped section headings; added "Thinking Defaults" section.
+
+### Tests
+- 554 Jest + 59 Python (all green), +20 from 2.2.1 baseline.
+
+### Notes
+- Canonical env var is `CLAUDE_CODE_EFFORT_LEVEL` — not `CLAUDE_REASONING_EFFORT`, and not the `effortLevel` top-level setting (broken per GH #35904).
+- Attribution: defaults follow Anthropic / Claude Code team recommendations (HN thread with Boris).
+
+---
+
 ## v1.4.1 — 2026-03-23
 
 ### Added

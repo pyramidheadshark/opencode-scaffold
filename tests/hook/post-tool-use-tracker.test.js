@@ -280,3 +280,26 @@ describe("session JSONL — file_change", () => {
     expect(events.filter(e => e.type === "file_change")).toHaveLength(0);
   });
 });
+
+describe("bash_command tracking", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("Bash tool call appends bash_command event to session JSONL", () => {
+    main(JSON.stringify({ tool_name: "Bash", session_id: "bc1", tool_input: { command: "npm test" } }), tmpDir);
+    const events = readSessionJsonl(tmpDir);
+    const bashEvent = events.find(e => e.type === "bash_command");
+    expect(bashEvent).toBeDefined();
+    expect(bashEvent.command).toBe("npm test");
+    expect(bashEvent.tool).toBe("Bash");
+  });
+
+  test("increments tool_call_count in session cache for every tool", () => {
+    main(JSON.stringify({ tool_name: "Read", session_id: "tc1" }), tmpDir);
+    main(JSON.stringify({ tool_name: "Edit", session_id: "tc1" }), tmpDir);
+    main(JSON.stringify({ tool_name: "Bash", session_id: "tc1", tool_input: { command: "ls" } }), tmpDir);
+    const cache = readSessionCache(tmpDir, "tc1");
+    expect(cache.tool_call_count).toBe(3);
+  });
+});
