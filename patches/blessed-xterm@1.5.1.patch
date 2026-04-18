@@ -1,5 +1,5 @@
 diff --git a/blessed-xterm.js b/blessed-xterm.js
-index 2a2c631ee38b6b003ba161b2b5416bab18939d9c..ffe8f0b020cc86cb57807aee82f759207fe073aa 100644
+index 2a2c631ee38b6b003ba161b2b5416bab18939d9c..09b4d366fc9ff75cadd72dc6e986a92755d9607c 100644
 --- a/blessed-xterm.js
 +++ b/blessed-xterm.js
 @@ -43,7 +43,7 @@ class XTerm extends blessed.Box {
@@ -11,3 +11,11 @@ index 2a2c631ee38b6b003ba161b2b5416bab18939d9c..ffe8f0b020cc86cb57807aee82f75920
  
          /*  disable the special "scrollable" feature of Blessed's Element
              which would use a ScrolledBox instead of a Box under the surface  */
+@@ -387,6 +387,7 @@ class XTerm extends blessed.Box {
+                 /*  read terminal attribute and character  */
+                 let x0 = tline[x - xi][0]
+                 let x1 = tline[x - xi][1]
++                x0 = x0 & ~(2 << 18)
+ 
+                 /*  handle cursor  */
+                 if (x === cursor) {
