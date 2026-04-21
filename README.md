@@ -10,8 +10,8 @@ Three things in one repo: **scaffolding** (22 skills, profiles, hooks deployed t
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
 ![Token Savings](https://img.shields.io/badge/token%20savings-71.4%25-brightgreen)
-![Jest Tests](https://img.shields.io/badge/Jest-568%20tests-brightgreen)
-![Python Tests](https://img.shields.io/badge/Python-62%20tests-blue)
+![Jest Tests](https://img.shields.io/badge/Jest-720%2B%20tests-brightgreen)
+![Python Tests](https://img.shields.io/badge/Python-68%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -264,6 +264,8 @@ Trust levels: `verified` (auto-install), `community` (confirmation required), `u
 
 ## Model Routing
 
+### External providers (for non-code tasks)
+
 | Task | Model | Provider |
 |---|---|---|
 | Code, architecture, tests, refactoring | `claude-sonnet-4-6` | Claude Code subscription |
@@ -271,6 +273,43 @@ Trust levels: `verified` (auto-install), `community` (confirmation required), `u
 | Documents > 400k tokens | `google/gemini-3-flash-preview` | OpenRouter |
 
 Routing is **explicit** — triggered manually via `multimodal-router` skill, never automatic.
+
+### Per-repo model routing (v2.6+)
+
+Each registered repo has a **base profile** (`power` / `standard` / `balanced`) that determines which model it uses under each global **mode**:
+
+| Mode | `power` repos | `standard` repos | `balanced` repos |
+|------|---------------|------------------|------------------|
+| `default` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 |
+| `economy` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 |
+| `no-sonnet` | **Opus 4.6** | Haiku 4.5 | Haiku 4.5 |
+
+Switch globally:
+
+```bash
+claude-scaffold mode status                  # show active mode + per-repo drift
+claude-scaffold mode default                 # sonnet for non-standard repos
+claude-scaffold mode economy                 # haiku everywhere (low quota)
+claude-scaffold mode no-sonnet               # opus for power repos, haiku for rest
+claude-scaffold mode auto-assign             # bulk profile assignment by repo name
+claude-scaffold mode set-profile power path/to/repo   # per-repo override
+```
+
+You can also **just tell Claude** in natural language — phrases like "переходим в экономный режим", "switch to economy mode", "делаем задачу в no-sonnet" are caught by the `mode-detector` hook and mapped to the right action (persistent mode switch or session-local `/model` swap).
+
+**Hub repos** (base_profile: power) receive an automatic `## [MODE ROUTING GUIDE]` injection on session start, instructing the agent to proactively suggest mode switches based on task complexity.
+
+### Weekly quota tracker (v2.6.1+)
+
+Uses [`ccusage`](https://www.npmjs.com/package/ccusage) (installed as `optionalDependency`) for local analysis of `~/.claude/projects/**/*.jsonl`:
+
+```bash
+claude-scaffold quota init-budget       # scaffold ~/.claude/quota-budget.json
+claude-scaffold quota status            # weekly usage vs budget
+claude-scaffold quota refresh           # force re-scan (bypass 5-min cache)
+```
+
+When weekly usage crosses the warn threshold (default 80%) or block threshold (default 95%), the `SessionStart` hook injects a `## [QUOTA WARNING]` block. The statusbar shows `│ 🟡 Week: 85%` or `│ 🔴 Week: 97%` next to context and model.
 
 ---
 

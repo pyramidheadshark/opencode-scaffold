@@ -49,7 +49,30 @@ MODEL_IDS = {
     "opus":   "claude-opus-4-6",
 }
 VALID_MODEL_PROFILES = list(MODEL_IDS.keys())
-VALID_ROLES = ["hub", "worker", "default"]
+VALID_BASE_PROFILES = ["power", "standard", "balanced"]
+
+DEPRECATED_ROLES = {"hub": "power", "worker": "balanced", "default": "balanced"}
+
+POWER_REPOS = {"techcon_hub", "rgs_hub", "claude-scaffold", "dumpster"}
+
+
+def normalize_base_profile(value):
+    if not value:
+        return "balanced"
+    if value in VALID_BASE_PROFILES:
+        return value
+    if value in DEPRECATED_ROLES:
+        return DEPRECATED_ROLES[value]
+    return "balanced"
+
+
+def auto_detect_base_profile(repo_path):
+    name = Path(repo_path).name.lower()
+    if name in POWER_REPOS:
+        return "power"
+    if name.startswith("techcon_"):
+        return "standard"
+    return "balanced"
 
 def build_hooks_definition(target: Path) -> dict:
     h = (target / ".claude" / "hooks").resolve().as_posix()
@@ -129,7 +152,7 @@ def _register_deploy(
     ci_profile: str,
     deploy_target: str,
     model: str | None = None,
-    role: str | None = None,
+    base_profile: str | None = None,
 ) -> None:
     sha = _get_current_sha()
     version_file = target / ".claude" / "infra-version"
@@ -139,6 +162,13 @@ def _register_deploy(
     existing_entries = [e for e in registry["deployed"] if e["path"] == str(target)]
     prior = existing_entries[0] if existing_entries else {}
 
+    effective_profile = (
+        base_profile
+        or prior.get("base_profile")
+        or (normalize_base_profile(prior.get("role")) if prior.get("role") else None)
+        or auto_detect_base_profile(target)
+    )
+
     entry = {
         "path": str(target),
         "skills": selected,
@@ -146,15 +176,21 @@ def _register_deploy(
         "deploy_target": deploy_target,
         "deployed_at": date.today().isoformat(),
         "infra_sha": sha,
-        "model": model or prior.get("model") or "sonnet",
-        "role":  role  or prior.get("role")  or "default",
+        "base_profile": effective_profile,
     }
+
+    chosen_model = model or prior.get("model_profile") or prior.get("model")
+    if chosen_model and chosen_model in VALID_MODEL_PROFILES:
+        entry["model_profile"] = chosen_model
+        entry["model_id"] = MODEL_IDS[chosen_model]
+
     if existing_entries:
         registry["deployed"][registry["deployed"].index(existing_entries[0])] = entry
     else:
         registry["deployed"].append(entry)
     _save_registry(registry)
-    print(f"  Registered in deployed-repos.json (sha: {sha}, model: {entry['model']}, role: {entry['role']})")
+    model_note = f", model: {entry.get('model_profile', '—')}"
+    print(f"  Registered in deployed-repos.json (sha: {sha}{model_note}, profile: {effective_profile})")
 
 
 def status_cmd() -> None:
@@ -185,7 +221,7 @@ def status_cmd() -> None:
         print()
 
 
-def update_cmd(target_path: str, model: str | None = None, role: str | None = None) -> None:
+def update_cmd(target_path: str, model: str | None = None, base_profile: str | None = None) -> None:
     target = Path(target_path).expanduser().resolve()
     registry = _load_registry()
     entries = [e for e in registry["deployed"] if Path(e["path"]) == target]
@@ -196,8 +232,17 @@ def update_cmd(target_path: str, model: str | None = None, role: str | None = No
 
     entry = entries[0]
     print(f"\n  Updating: {target.name}")
-    effective_model = model or entry.get("model") or "sonnet"
-    effective_role = role or entry.get("role") or "default"
+    effective_model = (
+        model
+        or entry.get("model_profile")
+        or entry.get("model")
+    )
+    effective_profile = (
+        base_profile
+        or entry.get("base_profile")
+        or normalize_base_profile(entry.get("role"))
+        or auto_detect_base_profile(target)
+    )
     args = argparse.Namespace(
         target=str(target),
         all=False,
@@ -207,7 +252,7 @@ def update_cmd(target_path: str, model: str | None = None, role: str | None = No
         ci_profile="",
         deploy_target="none",
         model=effective_model,
-        role=effective_role,
+        base_profile=effective_profile,
     )
     deploy(args)
 
@@ -234,6 +279,21 @@ def update_all_cmd(model: str | None = None) -> None:
     print(f"  Updating {len(to_update)} of {len(registry['deployed'])} repos...\n")
     for entry in to_update:
         update_cmd(entry["path"], model=model)
+
+
+def apply_model_profile_to_target(target: Path, model_profile: str) -> None:
+    deploy_settings(target, model=model_profile)
+
+
+def _update_call_register(args):
+    _register_deploy(
+        args["target"],
+        args["selected"],
+        args["ci_profile"],
+        args["deploy_target"],
+        model=args.get("model"),
+        base_profile=args.get("base_profile"),
+    )
 
 
 def _file_md5(path: Path) -> str:
@@ -682,7 +742,7 @@ def deploy(args: argparse.Namespace) -> None:
         ci_profile,
         getattr(args, "deploy_target", "none"),
         model=getattr(args, "model", None),
-        role=getattr(args, "role", None),
+        base_profile=getattr(args, "base_profile", None),
     )
 
     print()
@@ -728,9 +788,9 @@ def main() -> None:
     if model_flag is not None and model_flag not in VALID_MODEL_PROFILES:
         print(f"ERROR: --model must be one of {VALID_MODEL_PROFILES}", file=sys.stderr)
         sys.exit(1)
-    role_flag = _extract_flag_value("--role")
-    if role_flag is not None and role_flag not in VALID_ROLES:
-        print(f"ERROR: --role must be one of {VALID_ROLES}", file=sys.stderr)
+    profile_flag = _extract_flag_value("--base-profile")
+    if profile_flag is not None and profile_flag not in VALID_BASE_PROFILES:
+        print(f"ERROR: --base-profile must be one of {VALID_BASE_PROFILES}", file=sys.stderr)
         sys.exit(1)
 
     if "--update-all" in sys.argv:
@@ -749,7 +809,7 @@ def main() -> None:
         if dry_run:
             dry_run_cmd(target_arg)
         else:
-            update_cmd(target_arg, model=model_flag, role=role_flag)
+            update_cmd(target_arg, model=model_flag, base_profile=profile_flag)
         return
 
     parser = argparse.ArgumentParser(
@@ -799,11 +859,11 @@ def main() -> None:
         help="Model profile: sonnet|haiku|opus (writes to .claude/settings.json model key)",
     )
     parser.add_argument(
-        "--role",
-        dest="role",
+        "--base-profile",
+        dest="base_profile",
         default=None,
-        choices=VALID_ROLES,
-        help="Role for mode routing: hub|worker|default",
+        choices=VALID_BASE_PROFILES,
+        help="Repo base profile: power|standard|balanced (default: auto-detected from repo name)",
     )
 
     args = parser.parse_args()

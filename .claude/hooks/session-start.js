@@ -205,6 +205,109 @@ function loadSettings(cwd, fsModule) {
   }
 }
 
+function loadRegistryEntry(cwd, fsModule) {
+  try {
+    const os = require("os");
+    const candidates = [
+      path.join(cwd, "deployed-repos.json"),
+      path.join(os.homedir(), ".claude", "deployed-repos.json"),
+    ];
+    for (const p of candidates) {
+      if (fsModule.existsSync(p)) {
+        const registry = JSON.parse(fsModule.readFileSync(p, "utf8"));
+        const entry = (registry.deployed || []).find(e => path.resolve(e.path) === path.resolve(cwd));
+        if (entry) return { entry, activeMode: registry.active_mode || null };
+      }
+    }
+  } catch { /* best-effort */ }
+  return { entry: null, activeMode: null };
+}
+
+function buildHubModeGuideBlock(baseProfile, activeMode, lang) {
+  if (baseProfile !== "power") return null;
+  const mode = activeMode || "default";
+  if (lang === "ru") {
+    return `## [ГИД ПО РЕЖИМАМ — HUB REPO]
+Это **hub-репо** (base_profile: power). Текущий активный режим: \`${mode}\`.
+
+**Доступные режимы scaffold:**
+
+| Режим | power-репо | standard-репо | balanced-репо | Когда использовать |
+|-------|-----------|---------------|---------------|--------------------|
+| \`default\` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 | Обычная разработка |
+| \`economy\` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 | Квота Sonnet кончается, простые задачи |
+| \`no-sonnet\` | **Opus 4.6** | Haiku 4.5 | Haiku 4.5 | Sonnet недоступен, критические решения в hub-репо требуют Opus |
+
+**Твоя роль как hub-агента:**
+- Ты работаешь в репозитории стратегического значения (hub) — поэтому у тебя повышенный «мыслительный бюджет»
+- Если видишь задачу, требующую **более мощной модели** (архитектура, критический рефакторинг, сложный ML) — предложи пользователю переключиться на \`no-sonnet\` (Opus для hub)
+- Если видишь задачу, подходящую под **экономный режим** (рутинная документация, простые правки) — предложи \`economy\`
+- Переключение: команда \`claude-scaffold mode <режим>\` или через \`/mode-switch\` slash command
+- После переключения напомни, что текущую сессию нужно перезапустить`;
+  }
+  return `## [MODE ROUTING GUIDE — HUB REPO]
+This is a **hub repo** (base_profile: power). Active mode: \`${mode}\`.
+
+**Available scaffold modes:**
+
+| Mode | power repos | standard repos | balanced repos | When to use |
+|------|------------|----------------|----------------|-------------|
+| \`default\` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 | Regular development |
+| \`economy\` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 | Sonnet quota draining, simple tasks |
+| \`no-sonnet\` | **Opus 4.6** | Haiku 4.5 | Haiku 4.5 | Sonnet unavailable, critical hub-repo decisions need Opus |
+
+**Your role as a hub agent:**
+- You work in a strategic-importance repo (hub) — therefore you have an elevated "thinking budget"
+- If you see a task that needs a **more capable model** (architecture, critical refactor, complex ML) — suggest the user switch to \`no-sonnet\` (Opus for hub repos)
+- If you see a task suitable for **economy mode** (routine docs, simple tweaks) — suggest \`economy\`
+- Switch via: Bash \`claude-scaffold mode <name>\` or \`/mode-switch\` slash command
+- After switching, remind the user to restart the current session`;
+}
+
+function buildQuotaWarningBlock(quotaCache, lang) {
+  if (!quotaCache || !quotaCache.available) return null;
+  const os = require("os");
+  const fsMod = require("fs");
+  let budget = { weekly_usd: 100, warn_threshold_pct: 80, block_threshold_pct: 95, currency: "usd" };
+  try {
+    const bp = path.join(os.homedir(), ".claude", "quota-budget.json");
+    if (fsMod.existsSync(bp)) budget = { ...budget, ...JSON.parse(fsMod.readFileSync(bp, "utf8")) };
+  } catch { /* defaults */ }
+  if (budget.weekly_usd <= 0) return null;
+  const pct = Math.round((quotaCache.weekly_usd / budget.weekly_usd) * 1000) / 10;
+  if (pct < budget.warn_threshold_pct) return null;
+
+  const severe = pct >= budget.block_threshold_pct;
+  if (lang === "ru") {
+    const hdr = severe ? "## [КВОТА ПОЧТИ ИСЧЕРПАНА]" : "## [ПРЕДУПРЕЖДЕНИЕ О КВОТЕ]";
+    return `${hdr}
+Недельная квота Claude Code: **${quotaCache.weekly_usd} / ${budget.weekly_usd} ${budget.currency.toUpperCase()} (${pct}%)**.
+${severe
+  ? "Порог блокировки превышен. Дальнейшие запросы могут идти как extra usage (платно сверх подписки)."
+  : "Квота приближается к лимиту — рассмотри переключение в режим \`economy\`: \`claude-scaffold mode economy\`."}
+Источник: ccusage (локальный анализ JSONL, approximate). Детали: \`claude-scaffold quota status\``;
+  }
+  const hdr = severe ? "## [QUOTA ALMOST EXHAUSTED]" : "## [QUOTA WARNING]";
+  return `${hdr}
+Weekly Claude Code usage: **${quotaCache.weekly_usd} / ${budget.weekly_usd} ${budget.currency.toUpperCase()} (${pct}%)**.
+${severe
+  ? "Block threshold exceeded. Further requests may count as extra usage (paid beyond subscription)."
+  : "Usage approaching limit — consider switching to \`economy\` mode: \`claude-scaffold mode economy\`."}
+Source: ccusage (local JSONL analysis, approximate). Details: \`claude-scaffold quota status\``;
+}
+
+function readQuotaCache() {
+  try {
+    const os = require("os");
+    const p = path.join(os.homedir(), ".claude", "quota-cache.json");
+    if (!fs.existsSync(p)) return null;
+    const raw = JSON.parse(fs.readFileSync(p, "utf8"));
+    const TTL = 10 * 60 * 1000;
+    if (Date.now() - raw.cached_at > TTL) return null;
+    return raw;
+  } catch { return null; }
+}
+
 function buildModelConflictBlockFallback(envModel, projectModel) {
   return `## [MODEL CONFLICT]\n` +
     `\`ANTHROPIC_MODEL=${envModel}\` in your shell overrides project model \`${projectModel}\` from .claude/settings.json.\n` +
@@ -271,6 +374,16 @@ function main(inputStr, cwd, platform, detectPython) {
   const settings = loadSettings(effectiveCwd, fs);
   const modelConflictBlock = buildModelConflictAddition(settings, process.env.ANTHROPIC_MODEL, lang);
   if (modelConflictBlock) additions.push(modelConflictBlock);
+
+  const { entry: registryEntry, activeMode } = loadRegistryEntry(effectiveCwd, fs);
+  const baseProfile = registryEntry && registryEntry.base_profile ? registryEntry.base_profile : null;
+  const hubGuideBlock = buildHubModeGuideBlock(baseProfile, activeMode, lang);
+  if (hubGuideBlock) additions.push(hubGuideBlock);
+
+  const quotaCache = readQuotaCache();
+  const quotaBlock = buildQuotaWarningBlock(quotaCache, lang);
+  if (quotaBlock) additions.push(quotaBlock);
+
   if (process.env.SCAFFOLD_LIGHT_AGENTS === "true" || process.env.SCAFFOLD_LIGHT_AGENTS === "1") {
     additions.push(LIGHT_AGENTS_BLOCK);
   }
@@ -287,4 +400,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, buildModelConflictAddition, buildModelConflictBlockFallback, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, loadRegistryEntry, buildModelConflictAddition, buildModelConflictBlockFallback, buildHubModeGuideBlock, buildQuotaWarningBlock, readQuotaCache, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };

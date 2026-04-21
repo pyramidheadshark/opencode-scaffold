@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, buildModelConflictAddition, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, loadRegistryEntry, buildModelConflictAddition, buildHubModeGuideBlock, buildQuotaWarningBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -505,5 +505,68 @@ describe("model conflict — loadSettings / buildModelConflictAddition", () => {
     process.env.ANTHROPIC_MODEL = "claude-sonnet-4-6";
     const result = main("{}", tmpDir, "linux", () => "python3");
     expect(result.hookSpecificOutput.additionalContext).not.toContain("[MODEL CONFLICT]");
+  });
+});
+
+describe("hub mode guide — buildHubModeGuideBlock", () => {
+  test("returns null for non-power profiles", () => {
+    expect(buildHubModeGuideBlock("balanced", "default", "en")).toBeNull();
+    expect(buildHubModeGuideBlock("standard", "default", "en")).toBeNull();
+    expect(buildHubModeGuideBlock(null, "default", "en")).toBeNull();
+  });
+
+  test("returns EN guide for power profile", () => {
+    const b = buildHubModeGuideBlock("power", "default", "en");
+    expect(b).toContain("[MODE ROUTING GUIDE — HUB REPO]");
+    expect(b).toContain("Opus 4.6");
+    expect(b).toContain("claude-scaffold mode");
+  });
+
+  test("returns RU guide for power profile", () => {
+    const b = buildHubModeGuideBlock("power", "no-sonnet", "ru");
+    expect(b).toContain("[ГИД ПО РЕЖИМАМ — HUB REPO]");
+    expect(b).toContain("no-sonnet");
+  });
+
+  test("includes active mode in output", () => {
+    const b = buildHubModeGuideBlock("power", "economy", "en");
+    expect(b).toContain("Active mode: `economy`");
+  });
+});
+
+describe("quota warning — buildQuotaWarningBlock", () => {
+  test("returns null when quota cache missing", () => {
+    expect(buildQuotaWarningBlock(null, "en")).toBeNull();
+    expect(buildQuotaWarningBlock({ available: false }, "en")).toBeNull();
+  });
+
+  test("returns null when usage below warn threshold", () => {
+    const origBudget = process.env.HOME;
+    const b = buildQuotaWarningBlock({ available: true, weekly_usd: 10 }, "en");
+    expect(b).toBeNull();
+  });
+});
+
+describe("loadRegistryEntry", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("returns null entry when no registry", () => {
+    const { entry, activeMode } = loadRegistryEntry(tmpDir, fs);
+    expect(entry).toBeNull();
+    expect(activeMode).toBeNull();
+  });
+
+  test("finds entry by path match", () => {
+    const registryPath = path.join(tmpDir, "deployed-repos.json");
+    fs.writeFileSync(registryPath, JSON.stringify({
+      active_mode: "no-sonnet",
+      deployed: [{ path: tmpDir, base_profile: "power" }],
+    }), "utf8");
+    const { entry, activeMode } = loadRegistryEntry(tmpDir, fs);
+    expect(entry).not.toBeNull();
+    expect(entry.base_profile).toBe("power");
+    expect(activeMode).toBe("no-sonnet");
   });
 });

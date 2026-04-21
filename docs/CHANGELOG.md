@@ -5,6 +5,45 @@ Format: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.6.1 — 2026-04-21
+
+### Added
+
+- **Base profiles** (`power` / `standard` / `balanced`) replace functional role tags. Each registered repo carries a `base_profile` field in `deployed-repos.json`, auto-detected by repo name:
+  - `power`: `techcon_hub`, `rgs_hub`, `claude-scaffold`, `dumpster`
+  - `standard`: repos with `techcon_` prefix (non-hub)
+  - `balanced`: repos with `rgs_` prefix or no prefix
+  Manual override: `claude-scaffold mode set-profile <power|standard|balanced> <repo-path>`.
+- **Three user-friendly modes**: `default` (Sonnet everywhere except standard-profile → Haiku), `economy` (Haiku everywhere), `no-sonnet` (power → Opus, rest → Haiku). Deprecated names `lean` → `economy` and `quota-save` → `no-sonnet` are still accepted with a one-time warning.
+- **Natural-language mode switching** — `mode-detector.js` hook catches phrases like "переходим в экономный режим", "делаем задачу в no-sonnet", "switch to economy" in `UserPromptSubmit` and injects instructions for Claude to run `claude-scaffold mode <name>` (persistent) or the `/model` slash command (transient).
+- **Hub mode routing guide** — `SessionStart` hook injects `## [MODE ROUTING GUIDE]` block **only** in repos with `base_profile: power`. The block explains all three modes, the profile × mode matrix, and instructs the hub agent to proactively suggest mode switches based on the task.
+- **Weekly quota tracker** — new `claude-scaffold quota` command with subcommands `status`, `init-budget`, `refresh`. Integrates with [`ccusage`](https://www.npmjs.com/package/ccusage) as an `optionalDependency` (v18.x): parses `~/.claude/projects/**/*.jsonl` for local usage cost, compares against `~/.claude/quota-budget.json` thresholds, caches for 5 min. `SessionStart` injects `## [QUOTA WARNING]` when usage ≥ 80 % and `## [QUOTA ALMOST EXHAUSTED]` when ≥ 95 %.
+- **Slash command `/mode-switch`** — explicit fallback when the natural-language detector misses. Instructs Claude to run the persistent Bash switch or the session-local `/model` command depending on user intent.
+
+### Changed
+
+- **Statusline redesign** — `session-status-monitor.js` output is now `Context: ⚠ 18% │ 🔵 Sonnet 4.6 │ 🟢 Week: 45%` with model emoji (🔵 Sonnet / 🟣 Opus / 🟢 Haiku) and weekly quota indicator. `SCAFFOLD_STATUSLINE_PLAIN=1` falls back to ASCII (`Context: ! 18% | son | Week: ~85%`) for terminals without emoji support.
+- `lib/models.js` is now the canonical source for mode × profile → model-id resolution, with `PROFILE_MATRIX`, `normalizeMode`, `normalizeProfile`, `resolveProfile`, `autoDetectProfile`, `labelFromModelId`, `emojiFromModelId`. `scripts/deploy.py` mirrors the same constants.
+- `lib/commands/mode.js` — `applyMode()` uses `base_profile`, stores `model_profile` + `model_id` per entry, sets `active_mode` in registry; `setProfile()` replaces `setRole()` (kept as alias); new `autoAssignProfiles()`.
+- `lib/deploy/registry.js` — entries now carry `base_profile` + `model_profile` + `model_id` instead of `role` / `model`.
+- `bin/cli.js` — `mode` subcommand help updated; new `quota` subcommand wired.
+
+### Tests
+
+- +32 Jest in `tests/cli/models.test.js` (profile matrix, normalization, auto-detection).
+- +26 Jest in `tests/cli/mode.test.js` (new matrix-based `applyMode`, deprecation migration, `autoAssignProfiles`).
+- +23 Jest in `tests/cli/quota.test.js` (budget I/O, `computeStatus`, formatters).
+- +15 Jest in `tests/hook/mode-detector.test.js` (RU/EN prompt detection, transient vs persistent).
+- +9 Jest in `tests/hook/session-start.test.js` (hub guide, quota warning, registry lookup).
+- Statusline tests rewritten for new format — +18 Jest.
+- Total: 720+ Jest + 68 Python, all green.
+
+### Migration
+
+Existing `deployed-repos.json` entries with `role: hub|worker|default` and `model: sonnet|haiku|opus` are read transparently and upgraded on the next `deploy.py --update-all` or `mode` invocation. No manual action required.
+
+---
+
 ## v2.5.0 — 2026-04-21
 
 ### Fixed

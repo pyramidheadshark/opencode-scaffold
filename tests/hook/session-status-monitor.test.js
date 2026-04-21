@@ -2,7 +2,15 @@ const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
-const { main, getModelShortName } = require("../../.claude/hooks/session-status-monitor");
+const {
+  main,
+  getModelShortName,
+  getModelInfo,
+  readQuotaCache,
+  formatContext,
+  formatModel,
+  formatQuota,
+} = require("../../.claude/hooks/session-status-monitor");
 
 const HOOK_PATH = path.resolve(__dirname, "../../.claude/hooks/session-status-monitor.js");
 
@@ -27,6 +35,12 @@ function runHook(tmpDir, input, env) {
     cwd: tmpDir,
     env: { ...process.env, ...(env || {}) },
   });
+}
+
+function writeSettings(tmpDir, model) {
+  const dir = path.join(tmpDir, ".claude");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify({ model }), "utf8");
 }
 
 describe("context_critical flag — E2E", () => {
@@ -68,7 +82,7 @@ describe("rounding — threshold comparison uses rounded value", () => {
 
   test("remaining=30.6 rounds to 31 — no warning (just above threshold)", () => {
     const result = runHook(tmpDir, { session_id: "rnd1", context_window: { remaining_percentage: 30.6 } });
-    expect(result.stdout).toBe("ctx: 31%");
+    expect(result.stdout).toBe("Context: 31%");
     const cache = readCache(tmpDir, "rnd1");
     expect(cache.context_critical).toBe(false);
     expect(cache.context_remaining_pct).toBe(31);
@@ -76,37 +90,73 @@ describe("rounding — threshold comparison uses rounded value", () => {
 
   test("remaining=30.4 rounds to 30 — warning fires (at threshold)", () => {
     const result = runHook(tmpDir, { session_id: "rnd2", context_window: { remaining_percentage: 30.4 } });
-    expect(result.stdout).toBe("ctx: ⚠ 30%");
+    expect(result.stdout).toBe("Context: ⚠ 30%");
     const cache = readCache(tmpDir, "rnd2");
     expect(cache.context_critical).toBe(true);
     expect(cache.context_remaining_pct).toBe(30);
   });
 });
 
-describe("stdout output — E2E", () => {
+describe("stdout output — E2E with new format", () => {
   let tmpDir;
   beforeEach(() => { tmpDir = makeTempDir(); });
   afterEach(() => { cleanup(tmpDir); });
 
-  test("stdout = 'ctx: ⚠ 18%' when critical", () => {
-    const result = runHook(tmpDir, { session_id: "out1", context_window: { remaining_percentage: 18 } });
-    expect(result.status).toBe(0);
-    expect(result.stdout).toBe("ctx: ⚠ 18%");
-  });
-
-  test("stdout = 'ctx: 82%' when normal", () => {
+  test("no model settings → stdout = 'Context: 82%'", () => {
     const result = runHook(tmpDir, { session_id: "out2", context_window: { remaining_percentage: 82 } });
     expect(result.status).toBe(0);
-    expect(result.stdout).toBe("ctx: 82%");
+    expect(result.stdout).toBe("Context: 82%");
   });
 
-  test("SCAFFOLD_CONTEXT_THRESHOLD=40 → triggers at 38% (above default 30)", () => {
+  test("critical + no model → 'Context: ⚠ 18%'", () => {
+    const result = runHook(tmpDir, { session_id: "out1", context_window: { remaining_percentage: 18 } });
+    expect(result.stdout).toBe("Context: ⚠ 18%");
+  });
+
+  test("with sonnet model → 'Context: 55% │ 🔵 Sonnet 4.6'", () => {
+    writeSettings(tmpDir, "claude-sonnet-4-6");
+    const result = runHook(tmpDir, { session_id: "son1", context_window: { remaining_percentage: 55 } });
+    expect(result.stdout).toBe("Context: 55% │ 🔵 Sonnet 4.6");
+  });
+
+  test("with haiku model → 'Context: 82% │ 🟢 Haiku 4.5'", () => {
+    writeSettings(tmpDir, "claude-haiku-4-5-20251001");
+    const result = runHook(tmpDir, { session_id: "hai1", context_window: { remaining_percentage: 82 } });
+    expect(result.stdout).toBe("Context: 82% │ 🟢 Haiku 4.5");
+  });
+
+  test("with opus model + critical → 'Context: ⚠ 18% │ 🟣 Opus 4.6'", () => {
+    writeSettings(tmpDir, "claude-opus-4-6");
+    const result = runHook(tmpDir, { session_id: "op1", context_window: { remaining_percentage: 18 } });
+    expect(result.stdout).toBe("Context: ⚠ 18% │ 🟣 Opus 4.6");
+  });
+
+  test("SCAFFOLD_STATUSLINE_PLAIN=1 → fallback без эмодзи", () => {
+    writeSettings(tmpDir, "claude-sonnet-4-6");
+    const result = runHook(
+      tmpDir,
+      { session_id: "pl1", context_window: { remaining_percentage: 55 } },
+      { SCAFFOLD_STATUSLINE_PLAIN: "1" },
+    );
+    expect(result.stdout).toBe("Context: 55% | son");
+  });
+
+  test("plain mode uses '!' marker for critical", () => {
+    const result = runHook(
+      tmpDir,
+      { session_id: "pl2", context_window: { remaining_percentage: 18 } },
+      { SCAFFOLD_STATUSLINE_PLAIN: "1" },
+    );
+    expect(result.stdout).toBe("Context: ! 18%");
+  });
+
+  test("SCAFFOLD_CONTEXT_THRESHOLD=40 → triggers at 38%", () => {
     const result = runHook(
       tmpDir,
       { session_id: "thr1", context_window: { remaining_percentage: 38 } },
       { SCAFFOLD_CONTEXT_THRESHOLD: "40" }
     );
-    expect(result.stdout).toBe("ctx: ⚠ 38%");
+    expect(result.stdout).toBe("Context: ⚠ 38%");
     const cache = readCache(tmpDir, "thr1");
     expect(cache.context_critical).toBe(true);
   });
@@ -142,81 +192,86 @@ describe("robustness", () => {
   });
 });
 
-describe("unit — main function", () => {
-  let tmpDir;
-  beforeEach(() => { tmpDir = makeTempDir(); });
-  afterEach(() => { cleanup(tmpDir); });
+describe("unit — formatContext / formatModel / formatQuota", () => {
+  test("formatContext without critical", () => {
+    expect(formatContext(55, false, false)).toBe("Context: 55%");
+  });
 
-  test("main() with remaining=15 writes context_critical: true", () => {
-    const output = { text: "" };
-    const origWrite = process.stdout.write.bind(process.stdout);
-    process.stdout.write = (s) => { output.text += s; return true; };
-    try {
-      main(JSON.stringify({ session_id: "unit1", context_window: { remaining_percentage: 15 } }), tmpDir);
-    } finally {
-      process.stdout.write = origWrite;
-    }
-    const cache = readCache(tmpDir, "unit1");
-    expect(cache.context_critical).toBe(true);
-    expect(output.text).toBe("ctx: ⚠ 15%");
+  test("formatContext with critical uses ⚠", () => {
+    expect(formatContext(18, true, false)).toBe("Context: ⚠ 18%");
+  });
+
+  test("formatContext plain uses '!'", () => {
+    expect(formatContext(18, true, true)).toBe("Context: ! 18%");
+  });
+
+  test("formatModel sonnet has blue circle emoji", () => {
+    expect(formatModel({ label: "Sonnet 4.6", emoji: "🔵" }, false)).toBe(" │ 🔵 Sonnet 4.6");
+  });
+
+  test("formatModel plain uses short name with pipe", () => {
+    expect(formatModel({ label: "Sonnet 4.6", emoji: "🔵", short: "son" }, true)).toBe(" | son");
+  });
+
+  test("formatModel null → empty string", () => {
+    expect(formatModel(null, false)).toBe("");
+  });
+
+  test("formatQuota null → empty string", () => {
+    expect(formatQuota(null, false)).toBe("");
+  });
+
+  test("formatQuota ok state → green circle", () => {
+    expect(formatQuota({ pct: 45, state: "ok" }, false)).toBe(" │ 🟢 Week: 45%");
+  });
+
+  test("formatQuota warn state → yellow circle", () => {
+    expect(formatQuota({ pct: 85, state: "warn" }, false)).toBe(" │ 🟡 Week: 85%");
+  });
+
+  test("formatQuota block state → red circle", () => {
+    expect(formatQuota({ pct: 97, state: "block" }, false)).toBe(" │ 🔴 Week: 97%");
+  });
+
+  test("formatQuota plain mode", () => {
+    expect(formatQuota({ pct: 85, state: "warn" }, true)).toBe(" | Week: ~85%");
   });
 });
 
-describe("model short-name indicator", () => {
+describe("getModelInfo / getModelShortName (backward compat)", () => {
   let tmpDir;
   beforeEach(() => { tmpDir = makeTempDir(); });
   afterEach(() => { cleanup(tmpDir); });
 
-  function writeSettings(model) {
-    const dir = path.join(tmpDir, ".claude");
-    fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify({ model }), "utf8");
-  }
-
-  test("getModelShortName returns 'son' for sonnet model ID", () => {
-    writeSettings("claude-sonnet-4-6");
+  test("getModelShortName returns 'son' for sonnet", () => {
+    writeSettings(tmpDir, "claude-sonnet-4-6");
     expect(getModelShortName(tmpDir)).toBe("son");
   });
 
-  test("getModelShortName returns 'hai' for haiku model ID", () => {
-    writeSettings("claude-haiku-4-5-20251001");
+  test("getModelShortName returns 'hai' for haiku", () => {
+    writeSettings(tmpDir, "claude-haiku-4-5-20251001");
     expect(getModelShortName(tmpDir)).toBe("hai");
   });
 
-  test("getModelShortName returns 'ops' for opus model ID", () => {
-    writeSettings("claude-opus-4-6");
+  test("getModelShortName returns 'ops' for opus", () => {
+    writeSettings(tmpDir, "claude-opus-4-6");
     expect(getModelShortName(tmpDir)).toBe("ops");
   });
 
-  test("getModelShortName returns empty string when no settings.json", () => {
+  test("getModelShortName empty when no settings", () => {
     expect(getModelShortName(tmpDir)).toBe("");
   });
 
-  test("getModelShortName returns empty string when no model key in settings", () => {
-    writeSettings(undefined);
-    expect(getModelShortName(tmpDir)).toBe("");
+  test("getModelInfo returns label for known model", () => {
+    writeSettings(tmpDir, "claude-opus-4-6");
+    const info = getModelInfo(tmpDir);
+    expect(info.label).toBe("Opus 4.6");
+    expect(info.emoji).toBe("🟣");
   });
 
-  test("stdout includes '| hai' suffix for haiku settings", () => {
-    writeSettings("claude-haiku-4-5-20251001");
-    const result = runHook(tmpDir, { session_id: "mod1", context_window: { remaining_percentage: 55 } });
-    expect(result.stdout).toBe("ctx: 55% | hai");
-  });
-
-  test("stdout includes '| ops' suffix for opus settings", () => {
-    writeSettings("claude-opus-4-6");
-    const result = runHook(tmpDir, { session_id: "mod2", context_window: { remaining_percentage: 82 } });
-    expect(result.stdout).toBe("ctx: 82% | ops");
-  });
-
-  test("stdout has no model suffix when settings.json absent", () => {
-    const result = runHook(tmpDir, { session_id: "mod3", context_window: { remaining_percentage: 55 } });
-    expect(result.stdout).toBe("ctx: 55%");
-  });
-
-  test("stdout combines warning icon + model suffix", () => {
-    writeSettings("claude-sonnet-4-6");
-    const result = runHook(tmpDir, { session_id: "mod4", context_window: { remaining_percentage: 18 } });
-    expect(result.stdout).toBe("ctx: ⚠ 18% | son");
+  test("getModelInfo null when no model key", () => {
+    fs.mkdirSync(path.join(tmpDir, ".claude"), { recursive: true });
+    fs.writeFileSync(path.join(tmpDir, ".claude", "settings.json"), "{}", "utf8");
+    expect(getModelInfo(tmpDir)).toBeNull();
   });
 });

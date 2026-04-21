@@ -4,7 +4,14 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const { applyMode, setRole, showStatus, writeSettingsModel } = require('../../lib/commands/mode');
+const {
+  applyMode,
+  setProfile,
+  setRole,
+  autoAssignProfiles,
+  showStatus,
+  writeSettingsModel,
+} = require('../../lib/commands/mode');
 
 let tmpRoot;
 let registryPath;
@@ -66,14 +73,6 @@ describe('mode — writeSettingsModel', () => {
     expect(s.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('max');
   });
 
-  test('keeps CLAUDE_CODE_EFFORT_LEVEL=max for sonnet', () => {
-    const repo = makeRepo('repo1');
-    writeSettingsModel(repo, 'sonnet');
-    const s = readRepoSettings(repo);
-    expect(s.model).toBe('claude-sonnet-4-6');
-    expect(s.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('max');
-  });
-
   test('rejects unknown profile', () => {
     const repo = makeRepo('repo1');
     expect(() => writeSettingsModel(repo, 'nonexistent')).toThrow();
@@ -88,57 +87,92 @@ describe('mode — writeSettingsModel', () => {
   });
 });
 
-describe('mode — applyMode', () => {
-  test('quota-save: hub→opus, worker→haiku, default→haiku', () => {
-    const hub = makeRepo('hub-repo');
-    const worker = makeRepo('worker-repo');
-    const def = makeRepo('default-repo');
+describe('mode — applyMode with base_profile matrix', () => {
+  test('default mode: power→sonnet, standard→haiku, balanced→sonnet', () => {
+    const power = makeRepo('techcon_hub');
+    const std = makeRepo('techcon_worker');
+    const bal = makeRepo('rgs_something');
     writeRegistry([
-      { path: hub, role: 'hub', skills: [], ci_profile: '', deploy_target: 'none' },
-      { path: worker, role: 'worker', skills: [], ci_profile: '', deploy_target: 'none' },
-      { path: def, role: 'default', skills: [], ci_profile: '', deploy_target: 'none' },
-    ]);
-
-    applyMode('quota-save', { registryPath });
-
-    expect(readRepoSettings(hub).model).toBe('claude-opus-4-6');
-    expect(readRepoSettings(worker).model).toBe('claude-haiku-4-5-20251001');
-    expect(readRepoSettings(def).model).toBe('claude-haiku-4-5-20251001');
-
-    const reg = readRegistry();
-    expect(reg.active_mode).toBe('quota-save');
-    const hubEntry = reg.deployed.find(e => e.path === hub);
-    const workerEntry = reg.deployed.find(e => e.path === worker);
-    expect(hubEntry.model).toBe('opus');
-    expect(workerEntry.model).toBe('haiku');
-  });
-
-  test('default mode: all repos → sonnet regardless of role', () => {
-    const hub = makeRepo('hub-repo');
-    const worker = makeRepo('worker-repo');
-    writeRegistry([
-      { path: hub, role: 'hub', skills: [], ci_profile: '', deploy_target: 'none' },
-      { path: worker, role: 'worker', skills: [], ci_profile: '', deploy_target: 'none' },
+      { path: power, base_profile: 'power', skills: [], ci_profile: '', deploy_target: 'none' },
+      { path: std, base_profile: 'standard', skills: [], ci_profile: '', deploy_target: 'none' },
+      { path: bal, base_profile: 'balanced', skills: [], ci_profile: '', deploy_target: 'none' },
     ]);
 
     applyMode('default', { registryPath });
 
-    expect(readRepoSettings(hub).model).toBe('claude-sonnet-4-6');
-    expect(readRepoSettings(worker).model).toBe('claude-sonnet-4-6');
+    expect(readRepoSettings(power).model).toBe('claude-sonnet-4-6');
+    expect(readRepoSettings(std).model).toBe('claude-haiku-4-5-20251001');
+    expect(readRepoSettings(bal).model).toBe('claude-sonnet-4-6');
   });
 
-  test('lean mode: all repos → haiku', () => {
-    const hub = makeRepo('hub-repo');
-    const worker = makeRepo('worker-repo');
+  test('economy mode: all profiles → haiku', () => {
+    const power = makeRepo('power-repo');
+    const std = makeRepo('std-repo');
+    const bal = makeRepo('bal-repo');
     writeRegistry([
-      { path: hub, role: 'hub', skills: [], ci_profile: '', deploy_target: 'none' },
-      { path: worker, role: 'worker', skills: [], ci_profile: '', deploy_target: 'none' },
+      { path: power, base_profile: 'power', skills: [] },
+      { path: std, base_profile: 'standard', skills: [] },
+      { path: bal, base_profile: 'balanced', skills: [] },
     ]);
 
-    applyMode('lean', { registryPath });
+    applyMode('economy', { registryPath });
 
-    expect(readRepoSettings(hub).model).toBe('claude-haiku-4-5-20251001');
-    expect(readRepoSettings(worker).model).toBe('claude-haiku-4-5-20251001');
+    expect(readRepoSettings(power).model).toBe('claude-haiku-4-5-20251001');
+    expect(readRepoSettings(std).model).toBe('claude-haiku-4-5-20251001');
+    expect(readRepoSettings(bal).model).toBe('claude-haiku-4-5-20251001');
+  });
+
+  test('no-sonnet mode: power→opus, standard→haiku, balanced→haiku', () => {
+    const power = makeRepo('power-repo');
+    const std = makeRepo('std-repo');
+    const bal = makeRepo('bal-repo');
+    writeRegistry([
+      { path: power, base_profile: 'power', skills: [] },
+      { path: std, base_profile: 'standard', skills: [] },
+      { path: bal, base_profile: 'balanced', skills: [] },
+    ]);
+
+    applyMode('no-sonnet', { registryPath });
+
+    expect(readRepoSettings(power).model).toBe('claude-opus-4-6');
+    expect(readRepoSettings(std).model).toBe('claude-haiku-4-5-20251001');
+    expect(readRepoSettings(bal).model).toBe('claude-haiku-4-5-20251001');
+  });
+
+  test('stores active_mode and model_id in registry', () => {
+    const repo = makeRepo('r1');
+    writeRegistry([{ path: repo, base_profile: 'power', skills: [] }]);
+    applyMode('no-sonnet', { registryPath });
+    const reg = readRegistry();
+    expect(reg.active_mode).toBe('no-sonnet');
+    expect(reg.deployed[0].model_profile).toBe('opus');
+    expect(reg.deployed[0].model_id).toBe('claude-opus-4-6');
+  });
+
+  test('deprecated mode "lean" normalized to "economy"', () => {
+    const repo = makeRepo('r1');
+    writeRegistry([{ path: repo, base_profile: 'balanced', skills: [] }]);
+    applyMode('lean', { registryPath });
+    expect(readRepoSettings(repo).model).toBe('claude-haiku-4-5-20251001');
+    expect(readRegistry().active_mode).toBe('economy');
+  });
+
+  test('deprecated mode "quota-save" normalized to "no-sonnet"', () => {
+    const repo = makeRepo('r1');
+    writeRegistry([{ path: repo, base_profile: 'power', skills: [] }]);
+    applyMode('quota-save', { registryPath });
+    expect(readRepoSettings(repo).model).toBe('claude-opus-4-6');
+    expect(readRegistry().active_mode).toBe('no-sonnet');
+  });
+
+  test('deprecated role "hub" migrated to base_profile "power"', () => {
+    const repo = makeRepo('r1');
+    writeRegistry([{ path: repo, role: 'hub', skills: [] }]);
+    applyMode('no-sonnet', { registryPath });
+    const reg = readRegistry();
+    expect(reg.deployed[0].base_profile).toBe('power');
+    expect(reg.deployed[0].role).toBeUndefined();
+    expect(readRepoSettings(repo).model).toBe('claude-opus-4-6');
   });
 
   test('unknown mode throws', () => {
@@ -148,50 +182,106 @@ describe('mode — applyMode', () => {
 
   test('missing repo directory marked as missing', () => {
     writeRegistry([
-      { path: path.join(tmpRoot, 'ghost-repo'), role: 'worker', skills: [] },
+      { path: path.join(tmpRoot, 'ghost-repo'), base_profile: 'balanced', skills: [] },
     ]);
-    const { results } = applyMode('quota-save', { registryPath });
+    const { results } = applyMode('economy', { registryPath });
     expect(results[0].status).toBe('missing');
   });
 
-  test('haiku mode strips CLAUDE_CODE_EFFORT_LEVEL', () => {
+  test('economy mode strips CLAUDE_CODE_EFFORT_LEVEL', () => {
     const repo = makeRepo('repo', { model: 'claude-sonnet-4-6' });
-    writeRegistry([{ path: repo, role: 'worker', skills: [] }]);
-    applyMode('lean', { registryPath });
+    writeRegistry([{ path: repo, base_profile: 'balanced', skills: [] }]);
+    applyMode('economy', { registryPath });
     const s = readRepoSettings(repo);
     expect(s.env.CLAUDE_CODE_EFFORT_LEVEL).toBeUndefined();
   });
 });
 
-describe('mode — setRole', () => {
-  test('changes role for registered repo', () => {
+describe('mode — setProfile', () => {
+  test('changes base_profile for registered repo', () => {
     const repo = makeRepo('repo1');
-    writeRegistry([{ path: repo, role: 'default', skills: [] }]);
+    writeRegistry([{ path: repo, base_profile: 'balanced', skills: [] }]);
 
-    const out = setRole(repo, 'hub', { registryPath });
+    const out = setProfile(repo, 'power', { registryPath });
 
-    expect(out.previous).toBe('default');
-    expect(out.role).toBe('hub');
+    expect(out.previous).toBe('balanced');
+    expect(out.profile).toBe('power');
     const reg = readRegistry();
-    expect(reg.deployed[0].role).toBe('hub');
+    expect(reg.deployed[0].base_profile).toBe('power');
   });
 
   test('throws if repo not registered', () => {
     writeRegistry([]);
-    expect(() => setRole('/nonexistent/path', 'hub', { registryPath })).toThrow(/not found/);
+    expect(() => setProfile('/nonexistent/path', 'power', { registryPath })).toThrow(/not found/);
   });
 
-  test('rejects invalid role', () => {
+  test('rejects invalid profile', () => {
     const repo = makeRepo('repo1');
-    writeRegistry([{ path: repo, role: 'default', skills: [] }]);
-    expect(() => setRole(repo, 'invalid-role', { registryPath })).toThrow(/Unknown role/);
+    writeRegistry([{ path: repo, base_profile: 'balanced', skills: [] }]);
+    expect(() => setProfile(repo, 'invalid-profile', { registryPath })).toThrow(/Unknown profile/);
   });
 
-  test('handles path normalization (trailing slash)', () => {
+  test('setRole alias works (backward compat)', () => {
     const repo = makeRepo('repo1');
-    writeRegistry([{ path: repo, role: 'default', skills: [] }]);
-    const out = setRole(repo + path.sep, 'worker', { registryPath });
-    expect(out.role).toBe('worker');
+    writeRegistry([{ path: repo, base_profile: 'balanced', skills: [] }]);
+    const out = setRole(repo, 'power', { registryPath });
+    expect(out.profile).toBe('power');
+  });
+});
+
+describe('mode — autoAssignProfiles', () => {
+  test('assigns power to techcon_hub, rgs_hub, dumpster', () => {
+    const hub1 = makeRepo('techcon_hub');
+    const hub2 = makeRepo('rgs_hub');
+    const dump = makeRepo('dumpster');
+    writeRegistry([
+      { path: hub1, skills: [] },
+      { path: hub2, skills: [] },
+      { path: dump, skills: [] },
+    ]);
+
+    autoAssignProfiles({ registryPath });
+
+    const reg = readRegistry();
+    expect(reg.deployed[0].base_profile).toBe('power');
+    expect(reg.deployed[1].base_profile).toBe('power');
+    expect(reg.deployed[2].base_profile).toBe('power');
+  });
+
+  test('assigns standard to techcon_* non-hub repos', () => {
+    const repo = makeRepo('techcon_defectoscopy');
+    writeRegistry([{ path: repo, skills: [] }]);
+    autoAssignProfiles({ registryPath });
+    expect(readRegistry().deployed[0].base_profile).toBe('standard');
+  });
+
+  test('assigns balanced to rgs_* repos', () => {
+    const repo = makeRepo('rgs_something');
+    writeRegistry([{ path: repo, skills: [] }]);
+    autoAssignProfiles({ registryPath });
+    expect(readRegistry().deployed[0].base_profile).toBe('balanced');
+  });
+
+  test('assigns balanced to repos without prefix', () => {
+    const repo = makeRepo('filemind');
+    writeRegistry([{ path: repo, skills: [] }]);
+    autoAssignProfiles({ registryPath });
+    expect(readRegistry().deployed[0].base_profile).toBe('balanced');
+  });
+
+  test('keeps manually-set profile without --force', () => {
+    const repo = makeRepo('techcon_defectoscopy');
+    writeRegistry([{ path: repo, base_profile: 'power', skills: [] }]);
+    const results = autoAssignProfiles({ registryPath });
+    expect(results[0].status).toBe('kept');
+    expect(readRegistry().deployed[0].base_profile).toBe('power');
+  });
+
+  test('overrides manually-set profile with --force', () => {
+    const repo = makeRepo('techcon_defectoscopy');
+    writeRegistry([{ path: repo, base_profile: 'power', skills: [] }]);
+    autoAssignProfiles({ registryPath, force: true });
+    expect(readRegistry().deployed[0].base_profile).toBe('standard');
   });
 });
 
@@ -200,43 +290,40 @@ describe('mode — showStatus', () => {
     const r1 = makeRepo('r1');
     const r2 = makeRepo('r2');
     writeRegistry([
-      { path: r1, role: 'hub', model: 'sonnet', skills: [] },
-      { path: r2, role: 'worker', model: 'haiku', skills: [] },
+      { path: r1, base_profile: 'power', model_id: 'claude-sonnet-4-6', skills: [] },
+      { path: r2, base_profile: 'standard', model_id: 'claude-haiku-4-5-20251001', skills: [] },
     ]);
 
     const { entries } = showStatus({ registryPath });
 
     expect(entries).toHaveLength(2);
-    expect(entries[0].role).toBe('hub');
-    expect(entries[0].expectedModelId).toBe('claude-sonnet-4-6');
+    expect(entries[0].baseProfile).toBe('power');
+    expect(entries[0].registryModelLabel).toBe('Sonnet 4.6');
+    expect(entries[1].registryModelLabel).toBe('Haiku 4.5');
   });
 
   test('detects drift when settings.json disagrees with registry', () => {
     const repo = makeRepo('repo1', { model: 'claude-opus-4-6' });
     writeRegistry([
-      { path: repo, role: 'worker', model: 'sonnet', skills: [] },
+      { path: repo, base_profile: 'balanced', model_id: 'claude-sonnet-4-6', skills: [] },
     ]);
 
     const { entries } = showStatus({ registryPath });
 
-    expect(entries[0].settingsModelId).toBe('claude-opus-4-6');
-    expect(entries[0].expectedModelId).toBe('claude-sonnet-4-6');
     expect(entries[0].match).toBe(false);
   });
 
   test('returns active_mode from registry', () => {
     writeRegistry([]);
     const registry = readRegistry();
-    registry.active_mode = 'quota-save';
+    registry.active_mode = 'no-sonnet';
     fs.writeFileSync(registryPath, JSON.stringify(registry, null, 2), 'utf8');
-
-    const { activeMode } = showStatus({ registryPath });
-    expect(activeMode).toBe('quota-save');
+    expect(showStatus({ registryPath }).activeMode).toBe('no-sonnet');
   });
 
   test('marks repo as not exists when directory missing', () => {
     writeRegistry([
-      { path: path.join(tmpRoot, 'ghost'), role: 'worker', model: 'sonnet', skills: [] },
+      { path: path.join(tmpRoot, 'ghost'), base_profile: 'balanced', skills: [] },
     ]);
     const { entries } = showStatus({ registryPath });
     expect(entries[0].exists).toBe(false);

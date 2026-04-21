@@ -10,8 +10,8 @@
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
 ![Token Savings](https://img.shields.io/badge/экономия%20токенов-71.4%25-brightgreen)
-![Jest Tests](https://img.shields.io/badge/Jest-568%20tests-brightgreen)
-![Python Tests](https://img.shields.io/badge/Python-62%20tests-blue)
+![Jest Tests](https://img.shields.io/badge/Jest-720%2B%20tests-brightgreen)
+![Python Tests](https://img.shields.io/badge/Python-68%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
 ![Node](https://img.shields.io/badge/node-18%2B-green)
@@ -418,6 +418,8 @@ echo '{"prompt":"pyproject.toml ruff setup"}' | node .claude/hooks/skill-activat
 
 ## Маршрутизация моделей
 
+### Внешние провайдеры (для не-кодовых задач)
+
 | Задача | Модель | Провайдер |
 |---|---|---|
 | Код, архитектура, тесты, рефакторинг | `claude-sonnet-4-6` | Claude Code подписка |
@@ -425,6 +427,43 @@ echo '{"prompt":"pyproject.toml ruff setup"}' | node .claude/hooks/skill-activat
 | Документы > 400k токенов | `google/gemini-3-flash-preview` | OpenRouter |
 
 Маршрутизация **явная** — запускается вручную через скилл `multimodal-router`, никогда автоматически.
+
+### Per-repo маршрутизация моделей (v2.6+)
+
+Каждый зарегистрированный репо имеет **base profile** (`power` / `standard` / `balanced`), который определяет, какая модель будет использоваться в каждом глобальном **режиме**:
+
+| Режим | `power` репо | `standard` репо | `balanced` репо |
+|-------|--------------|-----------------|-----------------|
+| `default` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 |
+| `economy` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 |
+| `no-sonnet` | **Opus 4.6** | Haiku 4.5 | Haiku 4.5 |
+
+Переключение глобально:
+
+```bash
+claude-scaffold mode status                  # показать активный режим + дрифт
+claude-scaffold mode default                 # sonnet для power/balanced, haiku для standard
+claude-scaffold mode economy                 # haiku везде (низкая квота)
+claude-scaffold mode no-sonnet               # opus для power, haiku для остальных
+claude-scaffold mode auto-assign             # массовое назначение профилей по имени
+claude-scaffold mode set-profile power path/to/repo   # override per-repo
+```
+
+Также можно **просто сказать Claude** на естественном языке — фразы «переходим в экономный режим», «делаем задачу в no-sonnet», «switch to economy mode» ловит хук `mode-detector` и маппит в нужное действие (постоянное переключение или сессионная команда `/model`).
+
+**Hub-репо** (base_profile: power) при старте сессии автоматически получают блок `## [ГИД ПО РЕЖИМАМ]`, инструктирующий агента проактивно предлагать смену режима под задачу.
+
+### Недельный квота-трекер (v2.6.1+)
+
+Использует [`ccusage`](https://www.npmjs.com/package/ccusage) (установлен как `optionalDependency`) для локального анализа `~/.claude/projects/**/*.jsonl`:
+
+```bash
+claude-scaffold quota init-budget       # создать ~/.claude/quota-budget.json
+claude-scaffold quota status            # недельное потребление vs бюджет
+claude-scaffold quota refresh           # форсировать пересчёт (обход 5-мин кэша)
+```
+
+Когда недельное потребление пересекает warn-порог (default 80%) или block-порог (default 95%), `SessionStart` хук инжектит блок `## [QUOTA WARNING]`. В статус-баре появляется `│ 🟡 Week: 85%` или `│ 🔴 Week: 97%` рядом с контекстом и моделью.
 
 ---
 

@@ -95,6 +95,14 @@ if (fs.existsSync(pitfallsPath)) {
 if (cache.pending_notification) {
   injections.unshift(cache.pending_notification);
 }
+
+try {
+  const { detectMode, buildModeSwitchBlock } = require("./mode-detector");
+  const detection = detectMode(prompt);
+  if (detection) {
+    injections.unshift(buildModeSwitchBlock(detection, lang));
+  }
+} catch (e) { process.stderr.write(`[skill-activation] mode-detector: ${e.message}\n`); }
 if (cache.pending_plan_warning) {
   injections.push(i18n ? i18n.buildPlanModeRecommendedBlock(lang) :
     "## [PLAN MODE RECOMMENDED]\n" +

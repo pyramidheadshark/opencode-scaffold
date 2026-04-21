@@ -211,10 +211,18 @@ program
 
 program
   .command('mode [action] [arg1] [arg2]')
-  .description('Manage per-repo model routing: status | default | quota-save | lean | set-role <role> <path>')
+  .description('Manage per-repo model routing: status | default | economy | no-sonnet | set-profile <power|standard|balanced> <path> | auto-assign')
   .action((action, arg1, arg2) => {
     const args = [action, arg1, arg2].filter(v => v !== undefined);
     require('../lib/commands/mode').run(args);
+  });
+
+program
+  .command('quota [action]')
+  .description('Weekly quota tracker (via ccusage): status | init-budget | refresh')
+  .action((action) => {
+    const args = action ? [action] : [];
+    require('../lib/commands/quota').run(args);
   });
 
 program
