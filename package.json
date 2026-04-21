@@ -1,6 +1,6 @@
 {
   "name": "claude-scaffold",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "Claude Code infrastructure for ML and AI engineers — skills, hooks, agents, and CI profiles.",
   "bin": {
     "claude-scaffold": "bin/cli.js"

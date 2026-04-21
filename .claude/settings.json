@@ -1,5 +1,20 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/session-safety.js"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/bash-output-filter.js"
+          }
+        ]
+      }
+    ],
     "SessionStart": [
       {
         "matcher": "",
@@ -62,5 +77,6 @@
     "CLAUDE_CODE_EFFORT_LEVEL": "max",
     "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1"
   },
-  "showThinkingSummaries": true
+  "showThinkingSummaries": true,
+  "showClearContextOnPlanAccept": true
 }

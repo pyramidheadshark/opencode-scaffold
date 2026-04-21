@@ -48,16 +48,38 @@ describe("context_critical flag — E2E", () => {
     expect(cache.context_critical).toBe(false);
   });
 
-  test("remaining=20 (boundary) → context_critical: true (<=)", () => {
-    runHook(tmpDir, { session_id: "m3", context_window: { remaining_percentage: 20 } });
+  test("remaining=30 (boundary) → context_critical: true (<=)", () => {
+    runHook(tmpDir, { session_id: "m3", context_window: { remaining_percentage: 30 } });
     const cache = readCache(tmpDir, "m3");
     expect(cache.context_critical).toBe(true);
   });
 
-  test("remaining=21 → context_critical: false (above default threshold)", () => {
-    runHook(tmpDir, { session_id: "m4", context_window: { remaining_percentage: 21 } });
+  test("remaining=31 → context_critical: false (above default threshold)", () => {
+    runHook(tmpDir, { session_id: "m4", context_window: { remaining_percentage: 31 } });
     const cache = readCache(tmpDir, "m4");
     expect(cache.context_critical).toBe(false);
+  });
+});
+
+describe("rounding — threshold comparison uses rounded value", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  test("remaining=30.6 rounds to 31 — no warning (just above threshold)", () => {
+    const result = runHook(tmpDir, { session_id: "rnd1", context_window: { remaining_percentage: 30.6 } });
+    expect(result.stdout).toBe("ctx: 31%");
+    const cache = readCache(tmpDir, "rnd1");
+    expect(cache.context_critical).toBe(false);
+    expect(cache.context_remaining_pct).toBe(31);
+  });
+
+  test("remaining=30.4 rounds to 30 — warning fires (at threshold)", () => {
+    const result = runHook(tmpDir, { session_id: "rnd2", context_window: { remaining_percentage: 30.4 } });
+    expect(result.stdout).toBe("ctx: ⚠ 30%");
+    const cache = readCache(tmpDir, "rnd2");
+    expect(cache.context_critical).toBe(true);
+    expect(cache.context_remaining_pct).toBe(30);
   });
 });
 
@@ -78,13 +100,13 @@ describe("stdout output — E2E", () => {
     expect(result.stdout).toBe("ctx: 82%");
   });
 
-  test("SCAFFOLD_CONTEXT_THRESHOLD=30 → triggers at 28%", () => {
+  test("SCAFFOLD_CONTEXT_THRESHOLD=40 → triggers at 38% (above default 30)", () => {
     const result = runHook(
       tmpDir,
-      { session_id: "thr1", context_window: { remaining_percentage: 28 } },
-      { SCAFFOLD_CONTEXT_THRESHOLD: "30" }
+      { session_id: "thr1", context_window: { remaining_percentage: 38 } },
+      { SCAFFOLD_CONTEXT_THRESHOLD: "40" }
     );
-    expect(result.stdout).toBe("ctx: ⚠ 28%");
+    expect(result.stdout).toBe("ctx: ⚠ 38%");
     const cache = readCache(tmpDir, "thr1");
     expect(cache.context_critical).toBe(true);
   });

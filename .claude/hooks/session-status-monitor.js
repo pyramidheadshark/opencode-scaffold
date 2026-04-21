@@ -3,7 +3,7 @@
 const fs = require("fs");
 const path = require("path");
 
-const DEFAULT_THRESHOLD = 20;
+const DEFAULT_THRESHOLD = 30;
 const ENV_THRESHOLD = "SCAFFOLD_CONTEXT_THRESHOLD";
 
 function main(inputStr, cwd) {
@@ -20,13 +20,14 @@ function main(inputStr, cwd) {
     return;
   }
 
-  const critical = remaining <= threshold;
+  const roundedRemaining = Math.round(remaining);
+  const critical = roundedRemaining <= threshold;
 
   const cacheDir = path.join(cwd, ".claude", "cache");
   const cachePath = path.join(cacheDir, `checkpoint-${sessionId}.json`);
   let cache = {};
   try { cache = JSON.parse(fs.readFileSync(cachePath, "utf8")); } catch {}
-  cache.context_remaining_pct = Math.round(remaining);
+  cache.context_remaining_pct = roundedRemaining;
   cache.context_critical = critical;
   try {
     fs.mkdirSync(cacheDir, { recursive: true });
@@ -34,7 +35,7 @@ function main(inputStr, cwd) {
   } catch {}
 
   const icon = critical ? "⚠ " : "";
-  process.stdout.write(`ctx: ${icon}${Math.round(remaining)}%`);
+  process.stdout.write(`ctx: ${icon}${roundedRemaining}%`);
 }
 
 if (require.main === module) {
