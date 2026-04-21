@@ -20,7 +20,46 @@
 
 ## Current Phase
 
-**v2.6.0 — DONE local (2026-04-21, Session 10)**
+**v2.6.1 — PUBLISHED (2026-04-21, Session 10 continued)**
+
+### Итог v2.6.1
+
+- **npm@2.6.1 published** ✅ — publish.yml: `success`
+- **HEAD: `3f44807`** (main, tag v2.6.1)
+- **783 теста** (715 Jest + 68 Python), 0 failed
+- **30 репо** на v2.6.1 через `python scripts/deploy.py --update-all`
+
+**Что переделано относительно v2.6.0:**
+
+| Фаза | Суть |
+|------|------|
+| Modes renamed | `lean → economy`, `quota-save → no-sonnet`. Старые имена — с deprecation warning. |
+| Roles → base_profiles | `hub/worker/default` → `power/standard/balanced`. Миграция на лету. |
+| Auto-detect by repo name | `techcon_hub/rgs_hub/claude-scaffold/dumpster`→power; `techcon_*` (non-hub)→standard; `rgs_*` и без префикса → balanced |
+| Profile × mode matrix | power: sonnet/haiku/opus; standard: haiku/haiku/haiku; balanced: sonnet/haiku/haiku |
+| ccusage optional dep | `package.json.optionalDependencies.ccusage ^18.0.11`. `lib/commands/quota.js` парсит `--json` output, weekly из daily aggregation |
+| Quota warnings | SessionStart инжектит `[QUOTA WARNING]` при >80% и `[QUOTA ALMOST EXHAUSTED]` при >95% |
+| Statusline redesign | `Context: ⚠ 18% │ 🔵 Sonnet 4.6 │ 🟢 Week: 45%` с эмодзи 🔵/🟣/🟢 и 🟢/🟡/🔴 для квоты. `SCAFFOLD_STATUSLINE_PLAIN=1` → ASCII fallback |
+| Natural-language mode switch | `.claude/hooks/mode-detector.js` — regex детектор на RU+EN фразы. `skill-activation-prompt.js` инжектит инструкцию для Claude |
+| Hub mode routing guide | SessionStart инжектит `[MODE ROUTING GUIDE]` только в repos с base_profile=power — даёт агенту таблицу режимов + инструкцию проактивно предлагать смену |
+| Slash `/mode-switch` | Fallback slash command в `.claude/commands/mode-switch.md` |
+
+**UX переключения (критически важное решение):**
+
+| Сценарий | Что делает Claude |
+|----------|-------------------|
+| «Переходим в экономный режим» | detectMode → persistent — Bash `claude-scaffold mode economy` + «перезапусти сессию» |
+| «Делаем задачу в экономном режиме» | detectMode → transient — Claude Code `/model claude-haiku-4-5-20251001` |
+| `/mode-switch economy` | Slash-команда как fallback если детектор промахнулся |
+
+**Базовые профили 30 репо:**
+- 4 power: techcon_hub, rgs_hub, claude-scaffold, dumpster
+- 10 standard: все techcon_* кроме hub
+- 16 balanced: rgs_* + без префикса
+
+---
+
+**v2.6.0 — DONE (2026-04-21, Session 10)**
 
 ### Итог сессии
 
