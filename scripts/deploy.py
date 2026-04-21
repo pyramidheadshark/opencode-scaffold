@@ -43,6 +43,14 @@ SKILLS_DIR = INFRA_DIR / ".claude" / "skills"
 CI_TEMPLATES_DIR = INFRA_DIR / "templates" / "github-actions"
 REGISTRY_PATH = INFRA_DIR / "deployed-repos.json"
 
+MODEL_IDS = {
+    "sonnet": "claude-sonnet-4-6",
+    "haiku":  "claude-haiku-4-5-20251001",
+    "opus":   "claude-opus-4-6",
+}
+VALID_MODEL_PROFILES = list(MODEL_IDS.keys())
+VALID_ROLES = ["hub", "worker", "default"]
+
 def build_hooks_definition(target: Path) -> dict:
     h = (target / ".claude" / "hooks").resolve().as_posix()
     return {
@@ -115,12 +123,22 @@ def _save_registry(registry: dict) -> None:
         json.dump(registry, f, ensure_ascii=False, indent=2)
 
 
-def _register_deploy(target: Path, selected: list[str], ci_profile: str, deploy_target: str) -> None:
+def _register_deploy(
+    target: Path,
+    selected: list[str],
+    ci_profile: str,
+    deploy_target: str,
+    model: str | None = None,
+    role: str | None = None,
+) -> None:
     sha = _get_current_sha()
     version_file = target / ".claude" / "infra-version"
     version_file.write_text(sha, encoding="utf-8")
 
     registry = _load_registry()
+    existing_entries = [e for e in registry["deployed"] if e["path"] == str(target)]
+    prior = existing_entries[0] if existing_entries else {}
+
     entry = {
         "path": str(target),
         "skills": selected,
@@ -128,14 +146,15 @@ def _register_deploy(target: Path, selected: list[str], ci_profile: str, deploy_
         "deploy_target": deploy_target,
         "deployed_at": date.today().isoformat(),
         "infra_sha": sha,
+        "model": model or prior.get("model") or "sonnet",
+        "role":  role  or prior.get("role")  or "default",
     }
-    existing = [e for e in registry["deployed"] if e["path"] == str(target)]
-    if existing:
-        registry["deployed"][registry["deployed"].index(existing[0])] = entry
+    if existing_entries:
+        registry["deployed"][registry["deployed"].index(existing_entries[0])] = entry
     else:
         registry["deployed"].append(entry)
     _save_registry(registry)
-    print(f"  Registered in deployed-repos.json (sha: {sha})")
+    print(f"  Registered in deployed-repos.json (sha: {sha}, model: {entry['model']}, role: {entry['role']})")
 
 
 def status_cmd() -> None:
@@ -166,7 +185,7 @@ def status_cmd() -> None:
         print()
 
 
-def update_cmd(target_path: str) -> None:
+def update_cmd(target_path: str, model: str | None = None, role: str | None = None) -> None:
     target = Path(target_path).expanduser().resolve()
     registry = _load_registry()
     entries = [e for e in registry["deployed"] if Path(e["path"]) == target]
@@ -177,6 +196,8 @@ def update_cmd(target_path: str) -> None:
 
     entry = entries[0]
     print(f"\n  Updating: {target.name}")
+    effective_model = model or entry.get("model") or "sonnet"
+    effective_role = role or entry.get("role") or "default"
     args = argparse.Namespace(
         target=str(target),
         all=False,
@@ -185,11 +206,13 @@ def update_cmd(target_path: str) -> None:
         include_meta=entry.get("include_meta", False),
         ci_profile="",
         deploy_target="none",
+        model=effective_model,
+        role=effective_role,
     )
     deploy(args)
 
 
-def update_all_cmd() -> None:
+def update_all_cmd(model: str | None = None) -> None:
     registry = _load_registry()
     if not registry["deployed"]:
         print("  No deployed repos registered.")
@@ -210,7 +233,7 @@ def update_all_cmd() -> None:
 
     print(f"  Updating {len(to_update)} of {len(registry['deployed'])} repos...\n")
     for entry in to_update:
-        update_cmd(entry["path"])
+        update_cmd(entry["path"], model=model)
 
 
 def _file_md5(path: Path) -> str:
@@ -463,7 +486,20 @@ def apply_tuning_defaults(existing: dict) -> None:
         existing["showThinkingSummaries"] = True
 
 
-def deploy_settings(target: Path) -> None:
+def apply_model_profile(existing: dict, model_profile: str | None) -> None:
+    if not model_profile:
+        return
+    model_id = MODEL_IDS.get(model_profile)
+    if not model_id:
+        return
+    existing["model"] = model_id
+    if model_profile == "haiku":
+        env = existing.get("env", {})
+        if "CLAUDE_CODE_EFFORT_LEVEL" in env:
+            del env["CLAUDE_CODE_EFFORT_LEVEL"]
+
+
+def deploy_settings(target: Path, model: str | None = None) -> None:
     settings_path = target / ".claude" / "settings.json"
     existing: dict = {}
     if settings_path.exists():
@@ -476,6 +512,7 @@ def deploy_settings(target: Path) -> None:
         h = (target / ".claude" / "hooks").as_posix()
         existing["statusLine"] = {"type": "command", "command": f'node "{h}/session-status-monitor.js"'}
     apply_tuning_defaults(existing)
+    apply_model_profile(existing, model)
     settings_path.write_text(
         json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -602,8 +639,10 @@ def deploy(args: argparse.Namespace) -> None:
         print("  Created .gitignore with .claude/ exclusion")
 
     print("[5c/5] Writing .claude/settings.json (hook registration)...")
-    deploy_settings(target)
-    print("  hooks: PreToolUse, SessionStart, UserPromptSubmit, PostToolUse, Stop")
+    model_profile = getattr(args, "model", None)
+    deploy_settings(target, model=model_profile)
+    model_note = f", model: {model_profile}" if model_profile else ""
+    print(f"  hooks: PreToolUse, SessionStart, UserPromptSubmit, PostToolUse, Stop{model_note}")
 
     ext_dir = target / ".claude" / "agent-extensions"
     ext_dir.mkdir(parents=True, exist_ok=True)
@@ -637,7 +676,14 @@ def deploy(args: argparse.Namespace) -> None:
         shutil.copy2(INFRA_DIR / "package.json", target / "package.json")
 
     print("[7/7] Registering deploy...")
-    _register_deploy(target, selected, ci_profile, getattr(args, "deploy_target", "none"))
+    _register_deploy(
+        target,
+        selected,
+        ci_profile,
+        getattr(args, "deploy_target", "none"),
+        model=getattr(args, "model", None),
+        role=getattr(args, "role", None),
+    )
 
     print()
     _header("Done!")
@@ -658,6 +704,15 @@ def deploy(args: argparse.Namespace) -> None:
     print()
 
 
+def _extract_flag_value(flag: str) -> str | None:
+    if flag not in sys.argv:
+        return None
+    idx = sys.argv.index(flag)
+    if idx + 1 >= len(sys.argv):
+        return None
+    return sys.argv[idx + 1]
+
+
 def main() -> None:
     if len(sys.argv) == 1:
         args = interactive_wizard()
@@ -669,12 +724,20 @@ def main() -> None:
         return
 
     dry_run = "--dry-run" in sys.argv
+    model_flag = _extract_flag_value("--model")
+    if model_flag is not None and model_flag not in VALID_MODEL_PROFILES:
+        print(f"ERROR: --model must be one of {VALID_MODEL_PROFILES}", file=sys.stderr)
+        sys.exit(1)
+    role_flag = _extract_flag_value("--role")
+    if role_flag is not None and role_flag not in VALID_ROLES:
+        print(f"ERROR: --role must be one of {VALID_ROLES}", file=sys.stderr)
+        sys.exit(1)
 
     if "--update-all" in sys.argv:
         if dry_run:
             dry_run_all_cmd()
         else:
-            update_all_cmd()
+            update_all_cmd(model=model_flag)
         return
 
     if "--update" in sys.argv:
@@ -686,7 +749,7 @@ def main() -> None:
         if dry_run:
             dry_run_cmd(target_arg)
         else:
-            update_cmd(target_arg)
+            update_cmd(target_arg, model=model_flag, role=role_flag)
         return
 
     parser = argparse.ArgumentParser(
@@ -727,6 +790,20 @@ def main() -> None:
         default="none",
         choices=["none", "yc", "vps"],
         help="Deploy stage: yc (Yandex Cloud), vps (SSH+docker-compose), none (default)",
+    )
+    parser.add_argument(
+        "--model",
+        dest="model",
+        default=None,
+        choices=VALID_MODEL_PROFILES,
+        help="Model profile: sonnet|haiku|opus (writes to .claude/settings.json model key)",
+    )
+    parser.add_argument(
+        "--role",
+        dest="role",
+        default=None,
+        choices=VALID_ROLES,
+        help="Role for mode routing: hub|worker|default",
     )
 
     args = parser.parse_args()

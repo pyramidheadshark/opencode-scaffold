@@ -456,6 +456,86 @@ class TestDeployScript(unittest.TestCase):
             self.assertIn("hooks", data, "hooks missing after merge")
 
 
+class TestDeployModelProfile(unittest.TestCase):
+    def _run_deploy_settings_with_model(self, target: Path, model: str) -> None:
+        scripts_dir = INFRA_ROOT / "scripts"
+        sys.path.insert(0, str(scripts_dir))
+        try:
+            import importlib
+            deploy_mod = importlib.import_module("deploy")
+            deploy_mod.deploy_settings(target, model=model)
+        finally:
+            sys.path.pop(0)
+
+    def test_deploy_with_model_haiku_writes_model_key(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            self._run_deploy_settings_with_model(target, "haiku")
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["model"], "claude-haiku-4-5-20251001")
+
+    def test_deploy_with_model_opus_writes_opus_id(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            self._run_deploy_settings_with_model(target, "opus")
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["model"], "claude-opus-4-6")
+
+    def test_deploy_with_model_haiku_removes_effort_level(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            self._run_deploy_settings_with_model(target, "haiku")
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertNotIn(
+                "CLAUDE_CODE_EFFORT_LEVEL", data["env"],
+                "CLAUDE_CODE_EFFORT_LEVEL must be removed for haiku — effort is ignored by haiku model"
+            )
+
+    def test_deploy_with_model_sonnet_keeps_effort_level(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            self._run_deploy_settings_with_model(target, "sonnet")
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "max")
+            self.assertEqual(data["model"], "claude-sonnet-4-6")
+
+    def test_deploy_without_model_does_not_write_model_key(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            scripts_dir = INFRA_ROOT / "scripts"
+            sys.path.insert(0, str(scripts_dir))
+            try:
+                import importlib
+                deploy_mod = importlib.import_module("deploy")
+                deploy_mod.deploy_settings(target)
+            finally:
+                sys.path.pop(0)
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertNotIn(
+                "model", data,
+                "deploy_settings without model param must not write model key (preserves user's manual choice)"
+            )
+
+    def test_js_deploy_settings_model_profile_via_node(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            result = __import__("subprocess").run(
+                ["node", "-e",
+                 f"require('./lib/deploy/copy').deploySettings('{tmp.replace(chr(92), '/')}', undefined, 'haiku')"],
+                cwd=str(INFRA_ROOT), capture_output=True, text=True
+            )
+            self.assertEqual(result.returncode, 0, f"deploySettings failed: {result.stderr}")
+            settings_path = tmp_path / ".claude" / "settings.json"
+            data = json.loads(settings_path.read_text(encoding="utf-8"))
+            self.assertEqual(data["model"], "claude-haiku-4-5-20251001")
+            self.assertNotIn("CLAUDE_CODE_EFFORT_LEVEL", data["env"])
+
+
 PROFILES_DIR = TEMPLATES_DIR / "profiles"
 
 EXPECTED_PROFILES = {
