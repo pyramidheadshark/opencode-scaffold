@@ -5,6 +5,29 @@ Format: [Semantic Versioning](https://semver.org/).
 
 ---
 
+## v2.5.0 — 2026-04-21
+
+### Fixed
+
+- **Bug A — session_id cache key mismatch** (`session-safety.js`): `sanitizeSessionId()` was applied to the raw session ID in `main()`. Since production UUIDs are 36 chars (> 32), they were hashed to a 16-char MD5 key. The cache file was written at `session-{MD5}.json` but every other hook read `session-{UUID}.json` — always a different file. Result: `snapshot_tag` was `null` in 100% of `session_end` events despite snapshots being created. Fix: use raw UUID as the cache key; `createSnapshot()` already calls `sanitizeSessionId` internally for the git tag name.
+
+- **Bug B — session_end missing for non-Python repos** (`python-quality-check.js`): `appendSessionEvent(session_end)` was inside the `pyproject.toml` guard — any JS/infra repo exited before reaching it. Extracted `writeSessionEnd()` as a standalone function, called unconditionally at the top of `main()` before any guard. Fix: `session_end` is now written for all repos regardless of project type.
+
+- **Bug C — context threshold fires too late** (`session-status-monitor.js`): `DEFAULT_THRESHOLD` was 20%, the same point where Claude Code's built-in auto-compact fires. With 2–5% context burn per turn, users saw `ctx: 21%`, took one action, then got silently compacted. Additionally, the comparison used an unrounded float (`20.6 <= 20 → false`), so the status bar showed `ctx: 21%` without a warning icon even at 20.6%. Fix: `DEFAULT_THRESHOLD` raised to 30%; `Math.round()` applied before the threshold comparison and before writing to cache, so the displayed value always matches the trigger logic.
+
+### Added
+
+- **Scaffold self-hooks** (`.claude/settings.json`): scaffold itself now has `PreToolUse` hooks (`session-safety.js` + `bash-output-filter.js`) and `showClearContextOnPlanAccept: true`. Previously scaffold deployed these to all target repos but didn't apply them to its own sessions.
+
+### Tests
+
+- +1 Jest (`tests/hook/session-safety.test.js`) — UUID session_id writes cache with raw key, not MD5 hash; snapshot_tag is recoverable.
+- +2 Jest (`tests/hook/python-quality-check.test.js`) — E2E: `session_end` written without `pyproject.toml`; `session_end` carries `snapshot_tag` from cache.
+- +3 Jest (`tests/hook/session-status-monitor.test.js`) — rounding: `30.4 → ⚠ 30%`, `30.6 → 31%` no warning; boundary tests updated to new threshold=30.
+- Total: 568 Jest + 62 Python, all green.
+
+---
+
 ## v2.4.0 — 2026-04-17
 
 ### Added
