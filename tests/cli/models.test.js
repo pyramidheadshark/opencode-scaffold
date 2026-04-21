@@ -161,8 +161,8 @@ describe('models — labelFromModelId', () => {
     expect(labelFromModelId(MODEL_IDS.haiku)).toBe('Haiku 4.5');
   });
 
-  test('opus full ID → Opus 4.6', () => {
-    expect(labelFromModelId(MODEL_IDS.opus)).toBe('Opus 4.6');
+  test('opus full ID → Opus 4.7', () => {
+    expect(labelFromModelId(MODEL_IDS.opus)).toBe('Opus 4.7');
   });
 
   test('unknown ID passes through as-is', () => {

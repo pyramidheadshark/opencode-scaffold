@@ -2,15 +2,17 @@
 
 const MODE_PATTERNS = {
   economy:     /(эконом(?:ны(?:й|м|е)|ом|ный режим)|в экономн[оы]м|switch to economy|economy mode|переходим на (?:хайку|haiku)|все на хайку|всё на хайку|cheap mode)/i,
-  'no-sonnet': /(no-?sonnet|без сонета|без соннета|переключи на опус|убери сонет|убери сонне?т|режим без сонета)/i,
+  'no-sonnet': /(no-?sonnet|без сонета|без соннета|переключи на опус|убери сонет|убери сонне?т|режим без сонета|(?:смени|переключи)\s+(?:текущ[а-я]+\s+)?(?:сессию\s+)?(?:на|в)\s+(?:опус|opus)|switch\s+(?:current\s+)?(?:session\s+)?to\s+opus)/i,
   default:     /(обычны(?:й|м) режим|default mode|на сонет|sonnet mode|верни сонет|обратно на сонет|нормальн(?:ый|ом) режим)/i,
 };
 
 const TRANSIENT_PATTERNS = [
-  /делаем задачу в (экономн[оа-я]+|no-?sonnet|default) режим/i,
+  /делаем задачу в (экономн[оа-я]+|no-?sonnet|default)(?: режим)?/i,
   /прост[оа-я]* на (хайку|опус|сонет) для этой задачи/i,
   /task in (economy|no-?sonnet|default) mode/i,
   /(?:just|только) (?:this|эт[оа][гй][оа]) (task|задач[ау]) (?:in|в) (economy|no-?sonnet|default)/i,
+  /(?:смени|переключи).*текущ[а-я]+\s+сессию\s+на/i,
+  /switch.*current\s+session\s+to/i,
 ];
 
 function detectMode(prompt) {
@@ -37,7 +39,7 @@ function buildModeSwitchBlock(detection, lang) {
 Действия:
 1. Используй slash-команду Claude Code \`/model\` для смены модели **только в текущей сессии**:
    - \`economy\` → \`/model claude-haiku-4-5-20251001\`
-   - \`no-sonnet\` → \`/model claude-opus-4-6\` (если репо имеет base_profile=power) или \`/model claude-haiku-4-5-20251001\`
+   - \`no-sonnet\` → \`/model claude-opus-4-7\` (если репо имеет base_profile=power) или \`/model claude-haiku-4-5-20251001\`
    - \`default\` → \`/model claude-sonnet-4-6\`
 2. Выполни задачу
 3. После завершения **напомни** пользователю, что модель в текущей сессии временная — для возврата: \`/model\` без аргумента сбросит до project default`;
@@ -61,7 +63,7 @@ User wants **this specific task** in \`${mode}\` mode without switching globally
 Actions:
 1. Use Claude Code slash command \`/model\` for current-session model swap:
    - \`economy\` → \`/model claude-haiku-4-5-20251001\`
-   - \`no-sonnet\` → \`/model claude-opus-4-6\` (if base_profile=power) or \`/model claude-haiku-4-5-20251001\`
+   - \`no-sonnet\` → \`/model claude-opus-4-7\` (if base_profile=power) or \`/model claude-haiku-4-5-20251001\`
    - \`default\` → \`/model claude-sonnet-4-6\`
 2. Perform the task
 3. After finishing, **remind** the user this is session-local — \`/model\` with no arg resets to project default`;

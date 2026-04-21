@@ -282,7 +282,7 @@ Each registered repo has a **base profile** (`power` / `standard` / `balanced`) 
 |------|---------------|------------------|------------------|
 | `default` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 |
 | `economy` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 |
-| `no-sonnet` | **Opus 4.6** | Haiku 4.5 | Haiku 4.5 |
+| `no-sonnet` | **Opus 4.7** | Haiku 4.5 | Haiku 4.5 |
 
 Switch globally:
 

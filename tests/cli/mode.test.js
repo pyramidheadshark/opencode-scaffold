@@ -65,11 +65,19 @@ describe('mode — writeSettingsModel', () => {
     expect(s.env.CLAUDE_CODE_EFFORT_LEVEL).toBeUndefined();
   });
 
-  test('keeps CLAUDE_CODE_EFFORT_LEVEL=max for opus', () => {
+  test('sets CLAUDE_CODE_EFFORT_LEVEL=medium for opus', () => {
     const repo = makeRepo('repo1');
     writeSettingsModel(repo, 'opus');
     const s = readRepoSettings(repo);
-    expect(s.model).toBe('claude-opus-4-6');
+    expect(s.model).toBe('claude-opus-4-7');
+    expect(s.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('medium');
+  });
+
+  test('keeps CLAUDE_CODE_EFFORT_LEVEL=max for sonnet', () => {
+    const repo = makeRepo('repo1');
+    writeSettingsModel(repo, 'sonnet');
+    const s = readRepoSettings(repo);
+    expect(s.model).toBe('claude-sonnet-4-6');
     expect(s.env.CLAUDE_CODE_EFFORT_LEVEL).toBe('max');
   });
 
@@ -134,7 +142,7 @@ describe('mode — applyMode with base_profile matrix', () => {
 
     applyMode('no-sonnet', { registryPath });
 
-    expect(readRepoSettings(power).model).toBe('claude-opus-4-6');
+    expect(readRepoSettings(power).model).toBe('claude-opus-4-7');
     expect(readRepoSettings(std).model).toBe('claude-haiku-4-5-20251001');
     expect(readRepoSettings(bal).model).toBe('claude-haiku-4-5-20251001');
   });
@@ -146,7 +154,7 @@ describe('mode — applyMode with base_profile matrix', () => {
     const reg = readRegistry();
     expect(reg.active_mode).toBe('no-sonnet');
     expect(reg.deployed[0].model_profile).toBe('opus');
-    expect(reg.deployed[0].model_id).toBe('claude-opus-4-6');
+    expect(reg.deployed[0].model_id).toBe('claude-opus-4-7');
   });
 
   test('deprecated mode "lean" normalized to "economy"', () => {
@@ -161,7 +169,7 @@ describe('mode — applyMode with base_profile matrix', () => {
     const repo = makeRepo('r1');
     writeRegistry([{ path: repo, base_profile: 'power', skills: [] }]);
     applyMode('quota-save', { registryPath });
-    expect(readRepoSettings(repo).model).toBe('claude-opus-4-6');
+    expect(readRepoSettings(repo).model).toBe('claude-opus-4-7');
     expect(readRegistry().active_mode).toBe('no-sonnet');
   });
 
@@ -172,7 +180,7 @@ describe('mode — applyMode with base_profile matrix', () => {
     const reg = readRegistry();
     expect(reg.deployed[0].base_profile).toBe('power');
     expect(reg.deployed[0].role).toBeUndefined();
-    expect(readRepoSettings(repo).model).toBe('claude-opus-4-6');
+    expect(readRepoSettings(repo).model).toBe('claude-opus-4-7');
   });
 
   test('unknown mode throws', () => {
@@ -303,7 +311,7 @@ describe('mode — showStatus', () => {
   });
 
   test('detects drift when settings.json disagrees with registry', () => {
-    const repo = makeRepo('repo1', { model: 'claude-opus-4-6' });
+    const repo = makeRepo('repo1', { model: 'claude-opus-4-7' });
     writeRegistry([
       { path: repo, base_profile: 'balanced', model_id: 'claude-sonnet-4-6', skills: [] },
     ]);

@@ -518,7 +518,7 @@ describe("hub mode guide — buildHubModeGuideBlock", () => {
   test("returns EN guide for power profile", () => {
     const b = buildHubModeGuideBlock("power", "default", "en");
     expect(b).toContain("[MODE ROUTING GUIDE — HUB REPO]");
-    expect(b).toContain("Opus 4.6");
+    expect(b).toContain("Opus 4.7");
     expect(b).toContain("claude-scaffold mode");
   });
 

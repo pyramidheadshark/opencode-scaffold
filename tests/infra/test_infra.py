@@ -481,7 +481,7 @@ class TestDeployModelProfile(unittest.TestCase):
             (target / ".claude").mkdir()
             self._run_deploy_settings_with_model(target, "opus")
             data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
-            self.assertEqual(data["model"], "claude-opus-4-6")
+            self.assertEqual(data["model"], "claude-opus-4-7")
 
     def test_deploy_with_model_haiku_removes_effort_level(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -502,6 +502,18 @@ class TestDeployModelProfile(unittest.TestCase):
             data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
             self.assertEqual(data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "max")
             self.assertEqual(data["model"], "claude-sonnet-4-6")
+
+    def test_deploy_with_model_opus_uses_medium_effort(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir)
+            (target / ".claude").mkdir()
+            self._run_deploy_settings_with_model(target, "opus")
+            data = json.loads((target / ".claude" / "settings.json").read_text(encoding="utf-8"))
+            self.assertEqual(
+                data["env"]["CLAUDE_CODE_EFFORT_LEVEL"], "medium",
+                "opus effort default must be 'medium' — 'max' would burn tokens too fast"
+            )
+            self.assertEqual(data["model"], "claude-opus-4-7")
 
     def test_deploy_without_model_does_not_write_model_key(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -772,7 +784,7 @@ class TestAgentFrontmatter(unittest.TestCase):
         known_models = {
             "claude-haiku-4-5-20251001",
             "claude-sonnet-4-6",
-            "claude-opus-4-6",
+            "claude-opus-4-7",
         }
         agent_files = list(AGENTS_DIR.glob("*.md"))
         for agent_file in agent_files:

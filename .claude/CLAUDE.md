@@ -157,7 +157,7 @@ Skills are loaded automatically by `skill-activation-prompt.js` based on file pa
 
 | Agent | Purpose | Model |
 |---|---|---|
-| `design-doc-architect` | Creates design-doc.md from raw requirements | `claude-opus-4-6` |
+| `design-doc-architect` | Creates design-doc.md from raw requirements | `claude-opus-4-7` |
 | `test-architect` | Generates full test suite skeleton from design doc | `claude-sonnet-4-6` |
 | `multimodal-analyzer` | Extracts structured data from PDFs, DOCX, XLSX, video | `claude-haiku-4-5-20251001` |
 | `code-reviewer` | Reviews code for architectural consistency | `claude-sonnet-4-6` |
