@@ -20,7 +20,32 @@
 
 ## Current Phase
 
-**v2.7.0 — IN PROGRESS (2026-04-21, Session 151)**
+**v2.7.1 — READY TO PUBLISH (2026-04-21)**
+
+### v2.7.1 Scope
+
+Два добавления к v2.7.0 (обе ветки основаны на пользовательском фидбеке по ходу сессии):
+
+1. **Runtime model indicator (⚡ override marker)** — statusline теперь читает `input.model` из stdin StatusLine hook'а. Если `/model <id>` слэш-команда перекрыла модель из `settings.json` — показывается маркер `⚡` (emoji) / `(!)` (plain). Решает проблему "я переключился на opus через /model, а статусбар показывает sonnet". Backward compat: без runtime id фолбэчит на `settings.model`.
+
+2. **Default профиль → haiku для balanced** — `PROFILE_MATRIX[balanced]`: `default: sonnet → haiku`, `no-sonnet: haiku → opus`. Причина: пользователь хочет экономить Sonnet-квоту на power-репо. Сохранено различение профилей: balanced теперь отличается от standard в `no-sonnet` режиме (opus vs haiku).
+
+**Итоговая матрица v2.7.1**:
+
+| Profile  | default     | economy  | no-sonnet |
+|----------|-------------|----------|-----------|
+| power    | Sonnet 4.6  | Haiku 4.5 | Opus 4.7  |
+| standard | Haiku 4.5   | Haiku 4.5 | Haiku 4.5 |
+| balanced | Haiku 4.5   | Haiku 4.5 | Opus 4.7  |
+
+**Applied to**: 4 power репо (techcon_hub, rgs_hub, claude-scaffold, dumpster) остаются на Sonnet в default; все остальные 26 репо — Haiku по умолчанию.
+
+### Post-v2.7.1 Checklist
+
+- [ ] `git push origin main` — пушит 8b50a0f + 36c2fda (v2.7.0) + новые 2 коммита v2.7.1
+- [ ] `git tag v2.7.1 && git push --tags`
+- [ ] `npm publish` (scope: public)
+- [ ] `node bin/cli.js mode default` — пропагирует haiku в 26 не-power репо (перезапишет их settings.json)
 
 ### Resume Note — v2.7.0 Implementation Progress
 

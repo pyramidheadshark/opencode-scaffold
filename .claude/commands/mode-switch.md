@@ -11,9 +11,9 @@ fallback when the detector misses or the user prefers explicit invocation.
 
 | Mode | power repos | standard repos | balanced repos | When to use |
 |------|-------------|----------------|----------------|-------------|
-| `default` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 | Regular development |
+| `default` | Sonnet 4.6 | Haiku 4.5 | Haiku 4.5 | Regular development |
 | `economy` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 | Sonnet quota draining, simple tasks |
-| `no-sonnet` | **Opus 4.7** | Haiku 4.5 | Haiku 4.5 | Sonnet unavailable, critical hub decisions need Opus |
+| `no-sonnet` | **Opus 4.7** | Haiku 4.5 | **Opus 4.7** | Sonnet unavailable, critical decisions need Opus |
 
 ## Instructions for Claude Code
 
@@ -45,8 +45,8 @@ persistent), do **not** run `claude-scaffold mode`. Instead use Claude Code's
 session-local `/model` slash command:
 
 - economy → `/model claude-haiku-4-5-20251001`
-- no-sonnet → `/model claude-opus-4-7` (if base_profile=power) or `/model claude-haiku-4-5-20251001`
-- default → `/model claude-sonnet-4-6`
+- no-sonnet → `/model claude-opus-4-7` (power/balanced) or `/model claude-haiku-4-5-20251001` (standard)
+- default → `/model claude-sonnet-4-6` (power) or `/model claude-haiku-4-5-20251001` (standard/balanced)
 
 After the task, remind the user `/model` with no argument resets to project default.
 

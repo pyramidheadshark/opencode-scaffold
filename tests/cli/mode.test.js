@@ -96,7 +96,7 @@ describe('mode — writeSettingsModel', () => {
 });
 
 describe('mode — applyMode with base_profile matrix', () => {
-  test('default mode: power→sonnet, standard→haiku, balanced→sonnet', () => {
+  test('default mode: power→sonnet, standard→haiku, balanced→haiku', () => {
     const power = makeRepo('techcon_hub');
     const std = makeRepo('techcon_worker');
     const bal = makeRepo('rgs_something');
@@ -110,7 +110,7 @@ describe('mode — applyMode with base_profile matrix', () => {
 
     expect(readRepoSettings(power).model).toBe('claude-sonnet-4-6');
     expect(readRepoSettings(std).model).toBe('claude-haiku-4-5-20251001');
-    expect(readRepoSettings(bal).model).toBe('claude-sonnet-4-6');
+    expect(readRepoSettings(bal).model).toBe('claude-haiku-4-5-20251001');
   });
 
   test('economy mode: all profiles → haiku', () => {
@@ -130,7 +130,7 @@ describe('mode — applyMode with base_profile matrix', () => {
     expect(readRepoSettings(bal).model).toBe('claude-haiku-4-5-20251001');
   });
 
-  test('no-sonnet mode: power→opus, standard→haiku, balanced→haiku', () => {
+  test('no-sonnet mode: power→opus, standard→haiku, balanced→opus', () => {
     const power = makeRepo('power-repo');
     const std = makeRepo('std-repo');
     const bal = makeRepo('bal-repo');
@@ -144,7 +144,7 @@ describe('mode — applyMode with base_profile matrix', () => {
 
     expect(readRepoSettings(power).model).toBe('claude-opus-4-7');
     expect(readRepoSettings(std).model).toBe('claude-haiku-4-5-20251001');
-    expect(readRepoSettings(bal).model).toBe('claude-haiku-4-5-20251001');
+    expect(readRepoSettings(bal).model).toBe('claude-opus-4-7');
   });
 
   test('stores active_mode and model_id in registry', () => {

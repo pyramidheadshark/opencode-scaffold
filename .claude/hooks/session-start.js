@@ -234,9 +234,9 @@ function buildHubModeGuideBlock(baseProfile, activeMode, lang) {
 
 | Режим | power-репо | standard-репо | balanced-репо | Когда использовать |
 |-------|-----------|---------------|---------------|--------------------|
-| \`default\` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 | Обычная разработка |
+| \`default\` | Sonnet 4.6 | Haiku 4.5 | Haiku 4.5 | Обычная разработка |
 | \`economy\` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 | Квота Sonnet кончается, простые задачи |
-| \`no-sonnet\` | **Opus 4.7** | Haiku 4.5 | Haiku 4.5 | Sonnet недоступен, критические решения в hub-репо требуют Opus |
+| \`no-sonnet\` | **Opus 4.7** | Haiku 4.5 | **Opus 4.7** | Sonnet недоступен, критические решения требуют Opus |
 
 **Твоя роль как hub-агента:**
 - Ты работаешь в репозитории стратегического значения (hub) — поэтому у тебя повышенный «мыслительный бюджет»
@@ -252,9 +252,9 @@ This is a **hub repo** (base_profile: power). Active mode: \`${mode}\`.
 
 | Mode | power repos | standard repos | balanced repos | When to use |
 |------|------------|----------------|----------------|-------------|
-| \`default\` | Sonnet 4.6 | Haiku 4.5 | Sonnet 4.6 | Regular development |
+| \`default\` | Sonnet 4.6 | Haiku 4.5 | Haiku 4.5 | Regular development |
 | \`economy\` | Haiku 4.5 | Haiku 4.5 | Haiku 4.5 | Sonnet quota draining, simple tasks |
-| \`no-sonnet\` | **Opus 4.7** | Haiku 4.5 | Haiku 4.5 | Sonnet unavailable, critical hub-repo decisions need Opus |
+| \`no-sonnet\` | **Opus 4.7** | Haiku 4.5 | **Opus 4.7** | Sonnet unavailable, critical decisions need Opus |
 
 **Your role as a hub agent:**
 - You work in a strategic-importance repo (hub) — therefore you have an elevated "thinking budget"

@@ -28,10 +28,10 @@ describe('models — PROFILE_MATRIX', () => {
     expect(PROFILE_MATRIX.standard['no-sonnet']).toBe('haiku');
   });
 
-  test('balanced profile: default→sonnet, economy→haiku, no-sonnet→haiku', () => {
-    expect(PROFILE_MATRIX.balanced.default).toBe('sonnet');
+  test('balanced profile: default→haiku, economy→haiku, no-sonnet→opus', () => {
+    expect(PROFILE_MATRIX.balanced.default).toBe('haiku');
     expect(PROFILE_MATRIX.balanced.economy).toBe('haiku');
-    expect(PROFILE_MATRIX.balanced['no-sonnet']).toBe('haiku');
+    expect(PROFILE_MATRIX.balanced['no-sonnet']).toBe('opus');
   });
 });
 
@@ -105,7 +105,7 @@ describe('models — resolveProfile (matrix resolution)', () => {
 
   test('deprecated role resolves correctly', () => {
     expect(resolveProfile('no-sonnet', 'hub')).toBe('opus');
-    expect(resolveProfile('default', 'worker')).toBe('sonnet');
+    expect(resolveProfile('default', 'worker')).toBe('haiku');
   });
 });
 
