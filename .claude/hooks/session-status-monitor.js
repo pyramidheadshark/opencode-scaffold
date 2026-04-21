@@ -82,8 +82,35 @@ function formatContext(roundedRemaining, critical, plain) {
 
 function formatModel(info, plain) {
   if (!info) return "";
-  if (plain) return ` | ${info.short || info.label}`;
-  return ` │ ${info.emoji ? info.emoji + " " : ""}${info.label}`;
+  const overrideMark = info.override ? (plain ? " (!)" : " ⚡") : "";
+  if (plain) return ` | ${info.short || info.label}${overrideMark}`;
+  return ` │ ${info.emoji ? info.emoji + " " : ""}${info.label}${overrideMark}`;
+}
+
+function extractRuntimeModelId(input) {
+  if (!input || !input.model) return null;
+  if (typeof input.model === "string") return input.model;
+  if (typeof input.model === "object") {
+    return input.model.id || input.model.display_name || null;
+  }
+  return null;
+}
+
+function resolveModelInfo(input, cwd) {
+  const runtimeId = extractRuntimeModelId(input);
+  const settings = readSettings(cwd);
+  const settingsId = settings && settings.model;
+
+  if (runtimeId) {
+    const base = MODEL_MAP[runtimeId] || { label: runtimeId, emoji: "", short: "" };
+    const override = Boolean(settingsId && settingsId !== runtimeId);
+    return { ...base, override };
+  }
+  if (settingsId) {
+    const base = MODEL_MAP[settingsId] || { label: settingsId, emoji: "", short: "" };
+    return { ...base, override: false };
+  }
+  return null;
 }
 
 function formatQuota(quota, plain) {
@@ -145,7 +172,7 @@ function main(inputStr, cwd) {
   } catch {}
 
   const contextPart = formatContext(roundedRemaining, critical, plain);
-  const modelPart = formatModel(getModelInfo(cwd), plain);
+  const modelPart = formatModel(resolveModelInfo(input, cwd), plain);
   const blockPart = formatBlock(readBlockStatus(), plain);
   const costPart = formatWeeklyCost(readWeeklyCost(), plain);
   process.stdout.write(`${contextPart}${modelPart}${blockPart}${costPart}`);
@@ -161,4 +188,4 @@ if (require.main === module) {
   main(inputStr, process.cwd());
 }
 
-module.exports = { main, getModelShortName, getModelInfo, readQuotaCache, readWeeklyCost, readBlockStatus, formatContext, formatModel, formatQuota, formatBlock, formatWeeklyCost, MODEL_MAP };
+module.exports = { main, getModelShortName, getModelInfo, resolveModelInfo, extractRuntimeModelId, readQuotaCache, readWeeklyCost, readBlockStatus, formatContext, formatModel, formatQuota, formatBlock, formatWeeklyCost, MODEL_MAP };

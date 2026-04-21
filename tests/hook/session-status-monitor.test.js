@@ -133,6 +133,46 @@ describe("stdout output — E2E with new format", () => {
     expect(result.stdout).toBe("Context: ⚠ 18% │ 🟣 Opus 4.7");
   });
 
+  test("runtime model (input.model string) overrides settings — adds ⚡", () => {
+    writeSettings(tmpDir, "claude-sonnet-4-6");
+    const result = runHook(tmpDir, {
+      session_id: "ovr1",
+      context_window: { remaining_percentage: 55 },
+      model: "claude-opus-4-7",
+    });
+    expect(result.stdout).toBe("Context: 55% │ 🟣 Opus 4.7 ⚡");
+  });
+
+  test("runtime model (input.model object with id) overrides settings", () => {
+    writeSettings(tmpDir, "claude-sonnet-4-6");
+    const result = runHook(tmpDir, {
+      session_id: "ovr2",
+      context_window: { remaining_percentage: 55 },
+      model: { id: "claude-haiku-4-5-20251001", display_name: "Haiku 4.5" },
+    });
+    expect(result.stdout).toBe("Context: 55% │ 🟢 Haiku 4.5 ⚡");
+  });
+
+  test("runtime model matches settings → no ⚡ marker", () => {
+    writeSettings(tmpDir, "claude-sonnet-4-6");
+    const result = runHook(tmpDir, {
+      session_id: "ovr3",
+      context_window: { remaining_percentage: 55 },
+      model: "claude-sonnet-4-6",
+    });
+    expect(result.stdout).toBe("Context: 55% │ 🔵 Sonnet 4.6");
+  });
+
+  test("override mark in plain mode uses (!)", () => {
+    writeSettings(tmpDir, "claude-sonnet-4-6");
+    const result = runHook(
+      tmpDir,
+      { session_id: "ovr4", context_window: { remaining_percentage: 55 }, model: "claude-opus-4-7" },
+      { SCAFFOLD_STATUSLINE_PLAIN: "1" },
+    );
+    expect(result.stdout).toBe("Context: 55% | ops (!)");
+  });
+
   test("SCAFFOLD_STATUSLINE_PLAIN=1 → fallback без эмодзи", () => {
     writeSettings(tmpDir, "claude-sonnet-4-6");
     const result = runHook(
