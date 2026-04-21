@@ -10,7 +10,7 @@ Three things in one repo: **scaffolding** (22 skills, profiles, hooks deployed t
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
 ![Token Savings](https://img.shields.io/badge/token%20savings-71.4%25-brightgreen)
-![Jest Tests](https://img.shields.io/badge/Jest-563%20tests-brightgreen)
+![Jest Tests](https://img.shields.io/badge/Jest-568%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-62%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
@@ -317,7 +317,7 @@ echo '{"prompt":"pyproject.toml ruff setup"}' | node .claude/hooks/skill-activat
 ## Running Tests
 
 ```bash
-npm test                          # 563 Jest + 62 Python
+npm test                          # 568 Jest + 62 Python
 npm run test:hook                 # hook tests only
 npm run check:budget              # verify all skills under 300 lines
 npm run metrics                   # skill load frequency report

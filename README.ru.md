@@ -10,7 +10,7 @@
 [![npm](https://img.shields.io/npm/v/claude-scaffold?label=npm&color=blue)](https://www.npmjs.com/package/claude-scaffold)
 [![npm downloads](https://img.shields.io/npm/dm/claude-scaffold?color=blue)](https://www.npmjs.com/package/claude-scaffold)
 ![Token Savings](https://img.shields.io/badge/экономия%20токенов-71.4%25-brightgreen)
-![Jest Tests](https://img.shields.io/badge/Jest-563%20tests-brightgreen)
+![Jest Tests](https://img.shields.io/badge/Jest-568%20tests-brightgreen)
 ![Python Tests](https://img.shields.io/badge/Python-62%20tests-blue)
 ![Skills](https://img.shields.io/badge/skills-22-orange)
 ![Python](https://img.shields.io/badge/python-3.11%2B-blue)
@@ -490,7 +490,7 @@ claude-scaffold/
 ## Запуск тестов
 
 ```bash
-npm test                          # 563 Jest + 62 Python
+npm test                          # 568 Jest + 62 Python
 npm run test:hook                 # только тесты хуков
 npm run check:budget              # проверить что все скиллы < 300 строк
 npm run metrics                   # отчёт по частоте загрузки скиллов
