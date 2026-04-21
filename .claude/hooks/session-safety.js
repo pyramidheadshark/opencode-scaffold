@@ -93,7 +93,7 @@ function main(inputStr, cwd) {
   try { input = JSON.parse(inputStr); } catch { }
 
   const command = ((input.tool_input || {}).command || "").trim();
-  const sessionId = sanitizeSessionId(input.session_id || "unknown");
+  const sessionId = input.session_id || "unknown";
 
   if (isOutOfCwd(command, cwd)) {
     appendSessionEvent(cwd, sessionId, {

@@ -149,3 +149,66 @@ describe('python-quality-check hook', () => {
     expect(mypyCall[1]).toEqual(['run', 'mypy', 'src/', '--quiet']);
   });
 });
+
+describe('session_end logging — E2E (real fs)', () => {
+  const fsReal = jest.requireActual('fs');
+  const { spawnSync: spawnSyncReal } = jest.requireActual('child_process');
+  const pathModule = require('path');
+  const osModule = require('os');
+  const HOOK_PATH = pathModule.resolve(__dirname, '../../.claude/hooks/python-quality-check.js');
+
+  let tmpDir;
+
+  beforeEach(() => {
+    tmpDir = fsReal.mkdtempSync(pathModule.join(osModule.tmpdir(), 'quality-e2e-'));
+  });
+
+  afterEach(() => {
+    fsReal.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function readSessionLogs(dir) {
+    const logsDir = pathModule.join(dir, '.claude', 'logs', 'sessions');
+    if (!fsReal.existsSync(logsDir)) return [];
+    const files = fsReal.readdirSync(logsDir);
+    const events = [];
+    for (const f of files) {
+      const lines = fsReal.readFileSync(pathModule.join(logsDir, f), 'utf8').trim().split('\n');
+      for (const l of lines) {
+        try { events.push(JSON.parse(l)); } catch { }
+      }
+    }
+    return events;
+  }
+
+  test('writes session_end even when no pyproject.toml', () => {
+    spawnSyncReal('node', [HOOK_PATH], {
+      input: JSON.stringify({ session_id: 'e2e-noproject' }),
+      encoding: 'utf8',
+      cwd: tmpDir,
+    });
+    const events = readSessionLogs(tmpDir);
+    const endEvent = events.find((e) => e.type === 'session_end');
+    expect(endEvent).toBeDefined();
+    expect(endEvent.session_id).toBe('e2e-noproject');
+  });
+
+  test('session_end carries snapshot_tag from cache', () => {
+    const cacheDir = pathModule.join(tmpDir, '.claude', 'cache');
+    fsReal.mkdirSync(cacheDir, { recursive: true });
+    fsReal.writeFileSync(
+      pathModule.join(cacheDir, 'session-e2e-withtag.json'),
+      JSON.stringify({ snapshot_tag: 'claude/s-abc12345', weight: 10 }),
+      'utf8'
+    );
+    spawnSyncReal('node', [HOOK_PATH], {
+      input: JSON.stringify({ session_id: 'e2e-withtag' }),
+      encoding: 'utf8',
+      cwd: tmpDir,
+    });
+    const events = readSessionLogs(tmpDir);
+    const endEvent = events.find((e) => e.type === 'session_end');
+    expect(endEvent).toBeDefined();
+    expect(endEvent.snapshot_tag).toBe('claude/s-abc12345');
+  });
+});

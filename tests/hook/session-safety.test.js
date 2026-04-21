@@ -399,6 +399,17 @@ describe("main — snapshot logic", () => {
     const tags = spawnSync("git", ["tag", "-l", "claude/s-*"], { cwd: gitDir, encoding: "utf8" });
     expect(tags.stdout.trim()).not.toContain("..");
   });
+
+  test("UUID session_id (>32 chars) writes cache with raw key, not MD5 hash", () => {
+    const longUuid = "887b9519-2676-4cc8-a153-252b2625e1eb"; // 36 chars — sanitizeSessionId would hash this
+    main(JSON.stringify({ tool_name: "Bash", tool_input: { command: "git reset --hard" }, session_id: longUuid }), gitDir);
+    const cache = readSessionCache(gitDir, longUuid);
+    expect(cache.snapshot_tag).toBeTruthy();
+    // Verify NOT stored at hashed path
+    const hashedId = sanitizeSessionId(longUuid);
+    const wrongCache = readSessionCache(gitDir, hashedId);
+    expect(wrongCache.snapshot_tag).toBeUndefined();
+  });
 });
 
 describe("E2E — spawned process", () => {

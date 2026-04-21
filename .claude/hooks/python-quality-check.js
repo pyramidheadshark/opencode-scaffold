@@ -14,10 +14,32 @@ function loadSessionCache(cwd, sessionId) {
   }
 }
 
+function writeSessionEnd(cwd, sessionId) {
+  if (!sessionId) return;
+  try {
+    const cache = loadSessionCache(cwd, sessionId);
+    if (cache.snapshot_tag) {
+      process.stderr.write(`→ Session snapshot: ${cache.snapshot_tag}\n`);
+    }
+    appendSessionEvent(cwd, sessionId, {
+      type: "session_end",
+      session_id: sessionId,
+      timestamp: new Date().toISOString(),
+      snapshot_tag: cache.snapshot_tag || null,
+      tool_call_count: cache.tool_call_count || null,
+      weight: cache.weight || 0,
+    });
+    const logsDir = path.join(cwd, ".claude", "logs", "sessions");
+    deleteOldSessionLogs(logsDir, 30);
+  } catch (e) { process.stderr.write(`[quality-check] sessionEnd: ${e.message}\n`); }
+}
+
 function main(inputStr, cwd) {
   let input = {};
   try { input = JSON.parse(inputStr); } catch { }
   const sessionId = input.session_id || null;
+
+  writeSessionEnd(cwd, sessionId);
 
   const pyprojectPath = path.join(cwd, "pyproject.toml");
   if (!fs.existsSync(pyprojectPath)) {
@@ -74,25 +96,6 @@ function main(inputStr, cwd) {
     process.stderr.write("This does not block the session — it is a reminder only.\n");
   }
 
-  try {
-    if (sessionId) {
-      const cache = loadSessionCache(cwd, sessionId);
-      if (cache.snapshot_tag) {
-        process.stderr.write(`\u2192 Session snapshot: ${cache.snapshot_tag}\n`);
-      }
-      appendSessionEvent(cwd, sessionId, {
-        type: "session_end",
-        session_id: sessionId,
-        timestamp: new Date().toISOString(),
-        snapshot_tag: cache.snapshot_tag || null,
-        tool_call_count: cache.tool_call_count || null,
-        weight: cache.weight || 0,
-      });
-      const logsDir = path.join(cwd, ".claude", "logs", "sessions");
-      deleteOldSessionLogs(logsDir, 30);
-    }
-  } catch (e) { process.stderr.write(`[quality-check] sessionEnd: ${e.message}\n`); }
-
   return { continue: true };
 }
 
@@ -102,4 +105,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main };
+module.exports = { main, writeSessionEnd };
