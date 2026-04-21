@@ -1,7 +1,7 @@
 const path = require("path");
 const os = require("os");
 const fs = require("fs");
-const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
+const { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, buildModelConflictAddition, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK } = require("../../.claude/hooks/session-start");
 
 function makeTempDir() {
   return fs.mkdtempSync(path.join(os.tmpdir(), "session-start-test-"));
@@ -427,5 +427,83 @@ describe("buildDiscoverySuggestionBlock", () => {
     fs.writeFileSync(path.join(tmpDir, "package.json"), "{}", "utf8");
     const result = buildDiscoverySuggestionBlock(fs, tmpDir, 1);
     expect(result).toContain("Node.js");
+  });
+});
+
+describe("model conflict — loadSettings / buildModelConflictAddition", () => {
+  let tmpDir;
+  const originalEnvModel = process.env.ANTHROPIC_MODEL;
+
+  beforeEach(() => {
+    tmpDir = makeTempDir();
+    delete process.env.ANTHROPIC_MODEL;
+  });
+  afterEach(() => {
+    cleanup(tmpDir);
+    if (originalEnvModel === undefined) {
+      delete process.env.ANTHROPIC_MODEL;
+    } else {
+      process.env.ANTHROPIC_MODEL = originalEnvModel;
+    }
+  });
+
+  function writeSettings(tmp, settings) {
+    const dir = path.join(tmp, ".claude");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify(settings), "utf8");
+  }
+
+  test("loadSettings returns null when no settings.json", () => {
+    expect(loadSettings(tmpDir, fs)).toBeNull();
+  });
+
+  test("loadSettings reads JSON", () => {
+    writeSettings(tmpDir, { model: "claude-haiku-4-5-20251001" });
+    expect(loadSettings(tmpDir, fs).model).toBe("claude-haiku-4-5-20251001");
+  });
+
+  test("buildModelConflictAddition returns null when no env model", () => {
+    const settings = { model: "claude-sonnet-4-6" };
+    expect(buildModelConflictAddition(settings, undefined, "en")).toBeNull();
+  });
+
+  test("buildModelConflictAddition returns null when no project model", () => {
+    expect(buildModelConflictAddition({}, "claude-haiku-4-5-20251001", "en")).toBeNull();
+  });
+
+  test("buildModelConflictAddition returns null when models match", () => {
+    const settings = { model: "claude-sonnet-4-6" };
+    expect(buildModelConflictAddition(settings, "claude-sonnet-4-6", "en")).toBeNull();
+  });
+
+  test("buildModelConflictAddition returns EN block when mismatch", () => {
+    const settings = { model: "claude-sonnet-4-6" };
+    const block = buildModelConflictAddition(settings, "claude-haiku-4-5-20251001", "en");
+    expect(block).toContain("[MODEL CONFLICT]");
+    expect(block).toContain("claude-haiku-4-5-20251001");
+    expect(block).toContain("claude-sonnet-4-6");
+    expect(block).toContain("unset ANTHROPIC_MODEL");
+  });
+
+  test("buildModelConflictAddition returns RU block when lang=ru", () => {
+    const settings = { model: "claude-sonnet-4-6" };
+    const block = buildModelConflictAddition(settings, "claude-haiku-4-5-20251001", "ru");
+    expect(block).toContain("[КОНФЛИКТ МОДЕЛИ]");
+  });
+
+  test("main injects model conflict block when env overrides project model", () => {
+    saveConfig(tmpDir, { platform: "linux", python_cmd: "python3", shell: "bash", session_count: 3 });
+    writeSettings(tmpDir, { model: "claude-sonnet-4-6" });
+    process.env.ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.hookSpecificOutput.additionalContext).toContain("[MODEL CONFLICT]");
+  });
+
+  test("main does NOT inject conflict block when env and project model agree", () => {
+    saveConfig(tmpDir, { platform: "linux", python_cmd: "python3", shell: "bash", session_count: 3 });
+    writeSettings(tmpDir, { model: "claude-sonnet-4-6" });
+    process.env.ANTHROPIC_MODEL = "claude-sonnet-4-6";
+    const result = main("{}", tmpDir, "linux", () => "python3");
+    expect(result.hookSpecificOutput.additionalContext).not.toContain("[MODEL CONFLICT]");
   });
 });

@@ -2,7 +2,7 @@ const path = require("path");
 const os = require("os");
 const fs = require("fs");
 const { spawnSync } = require("child_process");
-const { main } = require("../../.claude/hooks/session-status-monitor");
+const { main, getModelShortName } = require("../../.claude/hooks/session-status-monitor");
 
 const HOOK_PATH = path.resolve(__dirname, "../../.claude/hooks/session-status-monitor.js");
 
@@ -159,5 +159,64 @@ describe("unit — main function", () => {
     const cache = readCache(tmpDir, "unit1");
     expect(cache.context_critical).toBe(true);
     expect(output.text).toBe("ctx: ⚠ 15%");
+  });
+});
+
+describe("model short-name indicator", () => {
+  let tmpDir;
+  beforeEach(() => { tmpDir = makeTempDir(); });
+  afterEach(() => { cleanup(tmpDir); });
+
+  function writeSettings(model) {
+    const dir = path.join(tmpDir, ".claude");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "settings.json"), JSON.stringify({ model }), "utf8");
+  }
+
+  test("getModelShortName returns 'son' for sonnet model ID", () => {
+    writeSettings("claude-sonnet-4-6");
+    expect(getModelShortName(tmpDir)).toBe("son");
+  });
+
+  test("getModelShortName returns 'hai' for haiku model ID", () => {
+    writeSettings("claude-haiku-4-5-20251001");
+    expect(getModelShortName(tmpDir)).toBe("hai");
+  });
+
+  test("getModelShortName returns 'ops' for opus model ID", () => {
+    writeSettings("claude-opus-4-6");
+    expect(getModelShortName(tmpDir)).toBe("ops");
+  });
+
+  test("getModelShortName returns empty string when no settings.json", () => {
+    expect(getModelShortName(tmpDir)).toBe("");
+  });
+
+  test("getModelShortName returns empty string when no model key in settings", () => {
+    writeSettings(undefined);
+    expect(getModelShortName(tmpDir)).toBe("");
+  });
+
+  test("stdout includes '| hai' suffix for haiku settings", () => {
+    writeSettings("claude-haiku-4-5-20251001");
+    const result = runHook(tmpDir, { session_id: "mod1", context_window: { remaining_percentage: 55 } });
+    expect(result.stdout).toBe("ctx: 55% | hai");
+  });
+
+  test("stdout includes '| ops' suffix for opus settings", () => {
+    writeSettings("claude-opus-4-6");
+    const result = runHook(tmpDir, { session_id: "mod2", context_window: { remaining_percentage: 82 } });
+    expect(result.stdout).toBe("ctx: 82% | ops");
+  });
+
+  test("stdout has no model suffix when settings.json absent", () => {
+    const result = runHook(tmpDir, { session_id: "mod3", context_window: { remaining_percentage: 55 } });
+    expect(result.stdout).toBe("ctx: 55%");
+  });
+
+  test("stdout combines warning icon + model suffix", () => {
+    writeSettings("claude-sonnet-4-6");
+    const result = runHook(tmpDir, { session_id: "mod4", context_window: { remaining_percentage: 18 } });
+    expect(result.stdout).toBe("ctx: ⚠ 18% | son");
   });
 });

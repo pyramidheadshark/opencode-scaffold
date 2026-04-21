@@ -194,6 +194,36 @@ function buildLocalizedBlocks(lang) {
   };
 }
 
+function loadSettings(cwd, fsModule) {
+  const p = path.join(cwd, ".claude", "settings.json");
+  if (!fsModule.existsSync(p)) return null;
+  try {
+    return JSON.parse(fsModule.readFileSync(p, "utf8"));
+  } catch (e) {
+    process.stderr.write(`[session-start] settings.json: ${e.message}\n`);
+    return null;
+  }
+}
+
+function buildModelConflictBlockFallback(envModel, projectModel) {
+  return `## [MODEL CONFLICT]\n` +
+    `\`ANTHROPIC_MODEL=${envModel}\` in your shell overrides project model \`${projectModel}\` from .claude/settings.json.\n` +
+    `To use the project model for this repo, unset the env var:\n` +
+    `  unset ANTHROPIC_MODEL   # bash/zsh\n` +
+    `  Remove-Item Env:ANTHROPIC_MODEL   # PowerShell\n` +
+    `Then restart Claude Code.`;
+}
+
+function buildModelConflictAddition(settings, envModel, lang) {
+  if (!settings || !settings.model || !envModel) return null;
+  if (settings.model === envModel) return null;
+  const i18n = resolveI18n();
+  if (i18n && typeof i18n.buildModelConflictBlock === "function") {
+    return i18n.buildModelConflictBlock(envModel, settings.model, lang);
+  }
+  return buildModelConflictBlockFallback(envModel, settings.model);
+}
+
 function main(inputStr, cwd, platform, detectPython) {
   let input = {};
   try {
@@ -238,6 +268,9 @@ function main(inputStr, cwd, platform, detectPython) {
   if (contractBlock) additions.push(contractBlock);
   const discoveryBlock = buildDiscoverySuggestionBlock(fs, effectiveCwd, sessionCount);
   if (discoveryBlock) additions.push(discoveryBlock);
+  const settings = loadSettings(effectiveCwd, fs);
+  const modelConflictBlock = buildModelConflictAddition(settings, process.env.ANTHROPIC_MODEL, lang);
+  if (modelConflictBlock) additions.push(modelConflictBlock);
   if (process.env.SCAFFOLD_LIGHT_AGENTS === "true" || process.env.SCAFFOLD_LIGHT_AGENTS === "1") {
     additions.push(LIGHT_AGENTS_BLOCK);
   }
@@ -254,4 +287,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, buildModelConflictAddition, buildModelConflictBlockFallback, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };
