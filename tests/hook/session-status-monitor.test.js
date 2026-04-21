@@ -35,7 +35,7 @@ function runHook(tmpDir, input, env) {
     input: JSON.stringify(input),
     encoding: "utf8",
     cwd: tmpDir,
-    env: { ...process.env, ...(env || {}) },
+    env: { ...process.env, HOME: tmpDir, USERPROFILE: tmpDir, ...(env || {}) },
   });
 }
 
