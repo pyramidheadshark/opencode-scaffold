@@ -149,7 +149,7 @@ The SDK retries on 429 and 529 by default. For production, add exponential backo
 | Task | Model |
 |------|-------|
 | Code, architecture, tests | `claude-sonnet-4-6` |
-| Complex reasoning, long docs | `claude-opus-4-6` |
+| Complex reasoning, long docs | `claude-opus-4-7` |
 | Fast classification, routing | `claude-haiku-4-5-20251001` |
 
 Routing must be explicit in code — never auto-escalate based on vague heuristics.

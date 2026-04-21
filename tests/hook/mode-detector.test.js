@@ -18,6 +18,24 @@ describe('mode-detector — detectMode', () => {
     expect(detectMode('переключи на опус').mode).toBe('no-sonnet');
   });
 
+  test('detects no-sonnet mode via "смени текущую сессию на opus"', () => {
+    const d = detectMode('смени текущую сессию на opus');
+    expect(d.mode).toBe('no-sonnet');
+    expect(d.transient).toBe(true);
+  });
+
+  test('detects no-sonnet mode via "switch current session to opus"', () => {
+    const d = detectMode('switch current session to opus');
+    expect(d.mode).toBe('no-sonnet');
+    expect(d.transient).toBe(true);
+  });
+
+  test('detects transient "делаем задачу в no-sonnet" (no "режим" word)', () => {
+    const d = detectMode('делаем задачу в no-sonnet');
+    expect(d.mode).toBe('no-sonnet');
+    expect(d.transient).toBe(true);
+  });
+
   test('detects no-sonnet mode (EN)', () => {
     expect(detectMode('switch to no-sonnet mode').mode).toBe('no-sonnet');
   });
@@ -77,7 +95,7 @@ describe('mode-detector — buildModeSwitchBlock', () => {
 
   test('EN transient uses /model slash command', () => {
     const b = buildModeSwitchBlock({ mode: 'no-sonnet', transient: true }, 'en');
-    expect(b).toContain('/model claude-opus-4-6');
+    expect(b).toContain('/model claude-opus-4-7');
     expect(b).toContain('session-local');
   });
 

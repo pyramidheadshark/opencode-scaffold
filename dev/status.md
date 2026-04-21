@@ -20,6 +20,75 @@
 
 ## Current Phase
 
+**v2.7.0 — IN PROGRESS (2026-04-21, Session 151)**
+
+### Resume Note — v2.7.0 Implementation Progress
+
+**Decision**: Opus effort=`medium` (not `high` per plan) — per user feedback during session.
+
+**Completed**:
+- Step 1 (opus ID migration claude-opus-4-6 → claude-opus-4-7): DONE
+  - lib/models.js (MODEL_IDS + MODEL_LABELS→'Opus 4.7')
+  - lib/commands/model-router.js
+  - scripts/deploy.py MODEL_IDS
+  - .claude/agents/design-doc-architect.md frontmatter
+  - .claude/hooks/session-status-monitor.js MODEL_MAP
+  - .claude/hooks/mode-detector.js (2 places)
+  - .claude/hooks/session-start.js (2 places Opus 4.7 label)
+  - .claude/commands/mode-switch.md (ID + label)
+  - .claude/CLAUDE.md Agent Inventory
+  - .claude/skills/claude-api-patterns/SKILL.md
+  - README.md, README.ru.md (Opus 4.7 label)
+  - Tests updated: mode-detector, session-status-monitor, mode, models, session-start, test_infra
+- Step 2 (quota.js): DONE
+  - Bug fix: `['--json']` → `['daily', '--json']`
+  - tryNpx default true (`opts.tryNpx !== false`)
+  - Added BLOCK_CACHE_PATH, BLOCK_CACHE_TTL_MS (2 min)
+  - Added loadBlockCache / saveBlockCache / getBlockStatus (parses ccusage blocks --active, computes usedPct)
+  - refresh subcmd now calls getBlockStatus({skipCache:true})
+  - Exports updated
+- Step 3 (session-status-monitor.js new format): DONE
+  - Added readWeeklyCost, readBlockStatus, formatBlock, formatWeeklyCost
+  - main() pipeline: context + model + block + cost
+  - Backward compat: kept formatQuota, readQuotaCache exports
+  - Format: `Context: ⚠ 45% │ 🟣 Opus 4.7 │ 5h: 97% ⏱9m │ $36.9`
+  - Plain fallback: `Context: ! 45% | ops | 5h: 97% 9m | $36.9`
+- Step 4a (lib/deploy/copy.js): DONE
+  - Added effortDefaultForProfile() — opus→medium, else→max
+  - applyTuningDefaults(existing, tuning, modelProfile) — opus gets medium
+  - deploySettings passes modelProfile
+
+**Remaining**:
+- Step 4b — scripts/deploy.py apply_tuning_defaults(existing, model_profile=None) mirror for Python
+- Step 4c — lib/commands/mode.js writeSettingsModel: currently hardcodes `'max'` for non-haiku; change to opus→'medium', sonnet→'max'
+- Step 5 — mode-detector.js patterns:
+  - Extend no-sonnet regex: add `/смени.*(?:сессию.*)?(?:на|в)\s*опус|switch.*(?:session.*)?to\s*opus/i`
+  - Add TRANSIENT_PATTERNS: `/(?:смени|переключи).*текущ[а-я]+\s+сессию\s+на/i`, `/switch.*current\s+session\s+to/i`
+  - Fix: `/делаем задачу в (экономн[оа-я]+|no-?sonnet|default)(?: режим)?/i` — режим optional
+- Step 6 — Tests:
+  - tests/cli/quota.test.js — add getBlockStatus tests; update mock args 'daily --json'; test saveBlockCache
+  - tests/hook/session-status-monitor.test.js — add formatBlock / formatWeeklyCost tests; E2E expected output update
+  - tests/hook/mode-detector.test.js — 3 new pattern tests (smeni na opus, "делаем в no-sonnet" → transient)
+  - tests/cli/mode.test.js — 'keeps CLAUDE_CODE_EFFORT_LEVEL=max for opus' test needs update to 'medium' (line 68-74)
+  - tests/infra/test_infra.py — test deploy with model_profile='opus' → effort='medium' (line 497 currently asserts 'max' for sonnet which is fine)
+- Step 7 — package.json bump 2.6.1 → 2.7.0
+- Step 8 — npm test verification
+
+**Key files edited so far** (no commits yet):
+lib/models.js, lib/commands/model-router.js, lib/commands/quota.js, lib/deploy/copy.js,
+.claude/hooks/session-status-monitor.js, .claude/hooks/mode-detector.js, .claude/hooks/session-start.js,
+.claude/agents/design-doc-architect.md, .claude/commands/mode-switch.md, .claude/CLAUDE.md,
+.claude/skills/claude-api-patterns/SKILL.md, scripts/deploy.py (MODEL_IDS only — apply_tuning_defaults not yet),
+README.md, README.ru.md, tests/hook/{mode-detector,session-status-monitor,session-start}.test.js,
+tests/cli/{mode,models}.test.js, tests/infra/test_infra.py
+
+**Commit plan** (3 commits at the end):
+1. `fix: update opus model ID to claude-opus-4-7 across codebase`
+2. `feat: 5h block + weekly cost in statusline, fix ccusage args (v2.7.0)`
+3. `feat: model-aware effort defaults and mode-detector opus patterns (v2.7.0)`
+
+---
+
 **v2.6.1 — PUBLISHED (2026-04-21, Session 10 continued)**
 
 ### Итог v2.6.1

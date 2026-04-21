@@ -46,7 +46,7 @@ REGISTRY_PATH = INFRA_DIR / "deployed-repos.json"
 MODEL_IDS = {
     "sonnet": "claude-sonnet-4-6",
     "haiku":  "claude-haiku-4-5-20251001",
-    "opus":   "claude-opus-4-6",
+    "opus":   "claude-opus-4-7",
 }
 VALID_MODEL_PROFILES = list(MODEL_IDS.keys())
 VALID_BASE_PROFILES = ["power", "standard", "balanced"]
@@ -532,12 +532,13 @@ def generate_skill_rules(
     return result
 
 
-def apply_tuning_defaults(existing: dict) -> None:
+def apply_tuning_defaults(existing: dict, model_profile: str | None = None) -> None:
     env = existing.setdefault("env", {})
+    effort_default = "medium" if model_profile == "opus" else "max"
     if "CLAUDE_CODE_DISABLE_1M_CONTEXT" not in env:
         env["CLAUDE_CODE_DISABLE_1M_CONTEXT"] = "1"
     if "CLAUDE_CODE_EFFORT_LEVEL" not in env:
-        env["CLAUDE_CODE_EFFORT_LEVEL"] = "max"
+        env["CLAUDE_CODE_EFFORT_LEVEL"] = effort_default
     if "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING" not in env:
         env["CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING"] = "1"
     if "showClearContextOnPlanAccept" not in existing:
@@ -571,7 +572,7 @@ def deploy_settings(target: Path, model: str | None = None) -> None:
     if "statusLine" not in existing:
         h = (target / ".claude" / "hooks").as_posix()
         existing["statusLine"] = {"type": "command", "command": f'node "{h}/session-status-monitor.js"'}
-    apply_tuning_defaults(existing)
+    apply_tuning_defaults(existing, model)
     apply_model_profile(existing, model)
     settings_path.write_text(
         json.dumps(existing, indent=2, ensure_ascii=False) + "\n",
