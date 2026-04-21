@@ -20,76 +20,23 @@
 
 ## Current Phase
 
-**v2.5.0 — В РАБОТЕ (2026-04-21, Session 9) — RESUME POINT**
+**v2.5.0 — DONE (2026-04-21, Session 9)**
 
-### Прогресс на момент compact
+### Итог сессии
 
-| Шаг | Файл | Статус |
-|-----|------|--------|
-| Тест: monitor boundary 20→30 | `tests/hook/session-status-monitor.test.js` | ✅ |
-| Тест: env override 30→40 | `tests/hook/session-status-monitor.test.js` | ✅ |
-| Тест: rounding 30.6→31 и 30.4→30 (+2) | `tests/hook/session-status-monitor.test.js` | ✅ |
-| Тест: UUID cache key regression | `tests/hook/session-safety.test.js` | ✅ |
-| Тест: E2E session_end без pyproject (+2) | `tests/hook/python-quality-check.test.js` | ✅ |
-| Fix Баг 1: убрать sanitizeSessionId() | `.claude/hooks/session-safety.js:96` | ✅ |
-| Fix Баг 2: writeSessionEnd до guard | `.claude/hooks/python-quality-check.js` | ✅ |
-| Fix Баг 3: threshold 20→30, round before | `.claude/hooks/session-status-monitor.js` | ✅ |
-| Fix F: PreToolUse в settings.json | `.claude/settings.json` | ✅ |
-| Fix F: showClearContextOnPlanAccept | `.claude/settings.json` | ❌ НЕ СДЕЛАНО |
-| package.json 2.4.0 → 2.5.0 | `package.json` | ❌ НЕ СДЕЛАНО |
-| npm test | — | ❌ НЕ ЗАПУЩЕНО |
-| Commit 1 (баги 1+2 + тесты) | — | ❌ |
-| Commit 2 (баг 3 + settings + pkg) | — | ❌ |
-| deploy.py --update-all | — | ❌ |
-| git tag v2.5.0 | — | ❌ |
+- **npm@2.5.0 pending publish** — `git tag v2.5.0 && git push origin v2.5.0` (waiting for user command)
+- **HEAD: `d227c37`** (main)
+- **630 тестов** (568 Jest + 62 Python), 0 failed
+- **30 репо** задеплоены через `python scripts/deploy.py --update-all`
 
-### Следующий шаг после resume
-
-1. Добавить `"showClearContextOnPlanAccept": true` в `.claude/settings.json` (рядом с `showThinkingSummaries`)
-2. `package.json`: `"version": "2.4.0"` → `"version": "2.5.0"`
-3. `npm test` — ожидаем ~629 Jest + 62 Python = ~691 total
-4. Smoke-тесты из плана (4 команды echo | node ...)
-5. Commit 1: `fix: correct session_id cache key and unconditional session_end write (v2.5.0)`
-   — session-safety.js + python-quality-check.js + tests/hook/session-safety.test.js + tests/hook/python-quality-check.test.js
-6. Commit 2: `fix: raise context threshold to 30, add scaffold self-hooks (v2.5.0)`
-   — session-status-monitor.js + tests/hook/session-status-monitor.test.js + .claude/settings.json + package.json
-7. `python scripts/deploy.py --update-all`
-8. `git tag v2.5.0 && git push origin v2.5.0`
-
----
-
-### Что реализуем
-
-4 бага из анализа логов 491 сессии:
+**Что исправлено:**
 
 | Баг | Файл | Суть |
 |-----|------|------|
-| A | `session-safety.js:96` | `sanitizeSessionId()` хэширует UUID→MD5, кэш пишется в другой файл, чем читает python-quality-check |
-| B | `python-quality-check.js:24` | `appendSessionEvent(session_end)` внутри pyproject guard — не пишется для JS/infra репо |
-| C | `session-status-monitor.js:6,23` | DEFAULT_THRESHOLD=20 слишком близко к авто-компакту; сравнение на нераундованном float |
-| F | `.claude/settings.json` | Scaffold не применяет к себе: нет `showClearContextOnPlanAccept`, нет PreToolUse хуков |
-
-### Ключевые архитектурные решения
-
-- `sanitizeSessionId` убирается из main() session-safety — нужна только внутри `createSnapshot` для git-тега
-- `writeSessionEnd()` выносится до pyproject guard — всегда выполняется
-- DEFAULT_THRESHOLD: 20 → 30; round перед сравнением (не после)
-- scaffold settings.json: относительные пути для PreToolUse (как уже используются в PostToolUse)
-
-### Порядок реализации
-
-1. Тесты (TDD — написать сначала)
-2. Исправить session-safety.js
-3. Исправить python-quality-check.js
-4. Исправить session-status-monitor.js
-5. Обновить .claude/settings.json
-6. Обновить package.json → 2.5.0
-7. Прогнать `npm test` → ожидаем 629 Jest + 62 Python = 691
-8. Smoke-тесты из плана
-9. Commit 1: session-safety + quality-check + их тесты
-10. Commit 2: monitor + settings + package.json + monitor тесты
-11. `python scripts/deploy.py --update-all`
-12. `git tag v2.5.0 && git push origin v2.5.0`
+| A | `session-safety.js:96` | `sanitizeSessionId()` хэшировал UUID→MD5, кэш писался не туда |
+| B | `python-quality-check.js` | `session_end` не писался для JS/infra репо (guard срабатывал раньше) |
+| C | `session-status-monitor.js` | threshold 20→30; round перед сравнением |
+| F | `.claude/settings.json` | scaffold теперь имеет PreToolUse хуки + showClearContextOnPlanAccept |
 
 ---
 
