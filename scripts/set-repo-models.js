@@ -32,7 +32,12 @@ for (const repo of repos) {
     const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
     const currentModel = settings.model || '(none)';
 
-    if (currentModel === targetModel) {
+    // Always update env vars (CCR URL and auth)
+    settings.env = settings.env || {};
+    const needsEnvUpdate = settings.env.ANTHROPIC_BASE_URL !== 'http://127.0.0.1:3456' ||
+                          !settings.env.ANTHROPIC_AUTH_TOKEN || settings.env.ANTHROPIC_AUTH_TOKEN === '${OPENROUTER_API_KEY}';
+
+    if (currentModel === targetModel && !needsEnvUpdate) {
       console.log(`✅ ${repo}: already ${targetModel}`);
       continue;
     }
@@ -40,10 +45,9 @@ for (const repo of repos) {
     settings.model = targetModel;
     settings.altModelProvider = 'openrouter';
 
-    // Ensure OpenRouter env vars
-    settings.env = settings.env || {};
-    settings.env.ANTHROPIC_BASE_URL = 'https://openrouter.ai/api/v1';
-    settings.env.ANTHROPIC_AUTH_TOKEN = '${OPENROUTER_API_KEY}';
+    // Ensure CCR env vars
+    settings.env.ANTHROPIC_BASE_URL = 'http://127.0.0.1:3456';
+    settings.env.ANTHROPIC_AUTH_TOKEN = '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';
     settings.env.ANTHROPIC_API_KEY = '';
 
     // Add scaffold metadata

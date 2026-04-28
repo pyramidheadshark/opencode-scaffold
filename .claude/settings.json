@@ -75,9 +75,17 @@
   },
   "env": {
     "CLAUDE_CODE_EFFORT_LEVEL": "max",
-    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1"
+    "CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING": "1",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:3456",
+    "ANTHROPIC_AUTH_TOKEN": "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",
+    "ANTHROPIC_API_KEY": ""
   },
   "showThinkingSummaries": true,
   "showClearContextOnPlanAccept": true,
-  "model": "claude-sonnet-4-6"
+  "model": "moonshotai/kimi-k2.6",
+  "altModelProvider": "openrouter",
+  "scaffold": {
+    "provider": "openrouter",
+    "ccrEnabled": true
+  }
 }
