@@ -4,6 +4,27 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Mock ccr-config so tests use legacy path (no CCR config present)
+jest.mock('../../lib/ccr-config', () => ({
+  OPENROUTER_MODEL_PRESETS: {
+    deepseek: { model: 'deepseek/deepseek-v4-flash', label: 'DeepSeek V4 Flash', description: 'DeepSeek V4 Flash' },
+    glm: { model: 'z-ai/glm-5.1', label: 'GLM 5.1', description: 'GLM 5.1' },
+    kimi: { model: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6', description: 'Kimi K2.6' },
+    sonnet: { model: 'anthropic/claude-sonnet-4.6', label: 'Sonnet 4.6 (OR)', description: 'Sonnet 4.6 via OpenRouter' },
+    opus: { model: 'anthropic/claude-opus-4.7', label: 'Opus 4.7 (OR)', description: 'Opus 4.7 via OpenRouter' },
+    haiku: { model: 'anthropic/claude-haiku-4.5', label: 'Haiku 4.5 (OR)', description: 'Haiku 4.5 via OpenRouter' },
+    gemini: { model: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', description: 'Gemini 2.5 Pro' },
+    'gemini-flash': { model: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', description: 'Gemini 2.5 Flash' },
+    mixed: { model: null, label: 'Mixed', description: 'Mixed mode', isMixed: true },
+  },
+  readCCRConfig: jest.fn(() => null),
+  updateCCRRouter: jest.fn(() => true),
+  writeScaffoldMode: jest.fn(),
+  restartCCR: jest.fn(() => Promise.resolve(true)),
+  getCCRConfigPath: jest.fn(),
+  isCCRConfigured: jest.fn(() => false),
+}));
+
 const {
   PROFILES,
   PRESETS,

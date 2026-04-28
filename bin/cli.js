@@ -43,6 +43,8 @@ program
   .option('--skills <list>', 'Comma-separated skill names (overrides profile)')
   .option('--ci <profile>', 'CI profile: minimal|fastapi|fastapi-db|ml-heavy')
   .option('--deploy <target>', 'Deploy target: none|yc|vps', 'none')
+  .option('--provider <provider>', 'API provider: openrouter|anthropic', 'openrouter')
+  .option('--force', 'Overwrite existing CCR config and custom router')
   .option('--dry-run', 'Preview what will be deployed without writing files')
   .option('--org-profile <org>', 'Org profile name (e.g. techcon-ml)')
   .option('--org-type <type>', 'Project type within org (required with --org-profile)')
@@ -113,6 +115,8 @@ program
       lang: opts.lang || 'en',
       ciProfile: opts.ci || '',
       deployTarget: opts.deploy || 'none',
+      provider: opts.provider || 'openrouter',
+      force: !!opts.force,
       dryRun: !!opts.dryRun,
       orgProfile: opts.orgProfile || '',
       orgType: opts.orgType || '',
@@ -195,14 +199,99 @@ program
 
 program
   .command('use <model>')
-  .description('Switch active model profile (sonnet, haiku, opus, gemini-flash, or preset: executor, architect, critic)')
+  .description('Switch active model: deepseek|glm|kimi|sonnet|opus|haiku|gemini|mixed (OpenRouter) or sonnet|haiku|opus (legacy)')
   .option('--show-env', 'Print env vars to stdout instead of writing file')
-  .action((model, opts) => require('../lib/commands/model-router').use(model, opts));
+  .option('--session', 'Output /model command for in-session switching (CCR only)')
+  .action((model, opts) => {
+    if (model === 'status') {
+      require('../lib/commands/model-router').showModelStatus();
+    } else {
+      require('../lib/commands/model-router').use(model, opts);
+    }
+  });
 
 program
   .command('install-aliases')
   .description('Install claude-sonnet, claude-haiku, claude-opus, claude-gemini-flash shell aliases')
   .action(() => require('../lib/commands/model-router').installAliases());
+
+// ── CCR Commands ──────────────────────────────────────────────────────
+
+const ccrCmd = program.command('ccr').description('Claude Code Router management');
+
+ccrCmd
+  .command('setup')
+  .description('Install CCR and create config + custom router + preset')
+  .option('--profile <name>', 'Scaffold profile for CCR routing', 'ai-developer')
+  .option('--force', 'Overwrite existing CCR config')
+  .action(async (opts) => {
+    const ccr = require('../lib/ccr-config');
+    if (!ccr.checkCCRInstalled()) {
+      await ccr.installCCR();
+    }
+    ccr.deployCCRConfig(opts.profile, { force: opts.force });
+    ccr.deployCustomRouter({ force: opts.force });
+    ccr.deployCCRPreset(opts.profile, { force: opts.force });
+    ccr.writeScaffoldMode('default');
+    console.log('\n✅ CCR setup complete. Run `ccr start` to start the router.');
+  });
+
+ccrCmd
+  .command('status')
+  .description('Check CCR running status and show Router config')
+  .action(async () => {
+    const ccr = require('../lib/ccr-config');
+    const status = await ccr.getCCRStatus();
+    if (status.running) {
+      console.log(`\n  ✅ CCR is running (PID: ${status.pid}, Port: ${status.port})`);
+    } else {
+      console.log('\n  ❌ CCR is not running. Start with: ccr start');
+    }
+    const config = ccr.readCCRConfig();
+    if (config) {
+      const router = config.Router || {};
+      const display = { ...router };
+      delete display._scaffoldProfile;
+      console.log('\n  Router config:');
+      for (const [key, value] of Object.entries(display)) {
+        console.log(`    ${key}: ${value}`);
+      }
+      const mode = ccr.readScaffoldMode();
+      console.log(`\n  Scaffold mode: ${mode}`);
+    } else {
+      console.log('\n  No CCR config found. Run: claude-scaffold ccr-setup');
+    }
+    console.log();
+  });
+
+ccrCmd
+  .command('restart')
+  .description('Restart CCR (starts if not running)')
+  .action(async () => {
+    const ccr = require('../lib/ccr-config');
+    const success = await ccr.restartCCR();
+    if (success) {
+      console.log('✅ CCR restarted.');
+    } else {
+      console.error('❌ Failed to restart CCR. Try manually: ccr restart');
+      process.exit(1);
+    }
+  });
+
+ccrCmd
+  .command('config')
+  .description('Show current CCR config.json')
+  .action(() => {
+    const ccr = require('../lib/ccr-config');
+    const config = ccr.readCCRConfig();
+    if (!config) {
+      console.error('No CCR config found. Run: claude-scaffold ccr-setup');
+      process.exit(1);
+    }
+    const display = { ...config };
+    delete display.Router?._scaffoldProfile;
+    console.log(JSON.stringify(display, null, 2));
+  });
 
 program
   .command('new-session [description]')

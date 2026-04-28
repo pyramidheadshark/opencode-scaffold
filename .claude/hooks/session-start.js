@@ -327,6 +327,36 @@ function buildModelConflictAddition(settings, envModel, lang) {
   return buildModelConflictBlockFallback(envModel, settings.model);
 }
 
+function buildCCRStatusBlock(settings, cwd, lang) {
+  // Only check CCR for OpenRouter projects
+  if (!settings || !settings.scaffold || settings.scaffold.provider !== 'openrouter') return null;
+
+  const ccrUrl = process.env.ANTHROPIC_BASE_URL || 'http://127.0.0.1:3456';
+  const isCCR = ccrUrl.includes('127.0.0.1') || ccrUrl.includes('localhost');
+
+  if (!isCCR) return null; // Not using CCR
+
+  // Try health check
+  let ccrRunning = false;
+  try {
+    const http = require('http');
+    const url = new URL(ccrUrl.replace(/\/api$/, '') + '/health');
+    // Synchronous check via execSync (hook context)
+    const { execSync } = require('child_process');
+    const result = execSync(`curl -s -o /dev/null -w "%{http_code}" ${url.href} --connect-timeout 2 --max-time 2 2>/dev/null || echo "000"`, { encoding: 'utf8', timeout: 5000 });
+    ccrRunning = result.trim() === '200';
+  } catch {
+    ccrRunning = false;
+  }
+
+  if (ccrRunning) return null; // CCR is running, no warning needed
+
+  if (lang === 'ru') {
+    return `## [CCR НЕ ЗАПУЩЕН]\nClaude Code Router не запущен. Запустите: \`ccr start\`\nЗатем перезапустите Claude Code.`;
+  }
+  return `## [CCR NOT RUNNING]\nClaude Code Router is not running. Start it with: \`ccr start\`\nThen restart Claude Code.`;
+}
+
 function main(inputStr, cwd, platform, detectPython) {
   let input = {};
   try {
@@ -384,6 +414,10 @@ function main(inputStr, cwd, platform, detectPython) {
   const quotaBlock = buildQuotaWarningBlock(quotaCache, lang);
   if (quotaBlock) additions.push(quotaBlock);
 
+  // CCR health check for OpenRouter projects
+  const ccrBlock = buildCCRStatusBlock(settings, effectiveCwd, lang);
+  if (ccrBlock) additions.push(ccrBlock);
+
   if (process.env.SCAFFOLD_LIGHT_AGENTS === "true" || process.env.SCAFFOLD_LIGHT_AGENTS === "1") {
     additions.push(LIGHT_AGENTS_BLOCK);
   }
@@ -400,4 +434,4 @@ if (require.main === module) {
   process.stdout.write(JSON.stringify(result));
 }
 
-module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, loadRegistryEntry, buildModelConflictAddition, buildModelConflictBlockFallback, buildHubModeGuideBlock, buildQuotaWarningBlock, readQuotaCache, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };
+module.exports = { main, buildEnvBlock, loadConfig, saveConfig, parseSimpleYaml, buildDepsBlock, buildInfraBlock, buildContractMissingBlock, buildDiscoverySuggestionBlock, loadSettings, loadRegistryEntry, buildModelConflictAddition, buildModelConflictBlockFallback, buildHubModeGuideBlock, buildQuotaWarningBlock, readQuotaCache, buildCCRStatusBlock, ONBOARDING_BLOCK, WINDOWS_RULES_BLOCK, COMMIT_RULES_REMINDER_BLOCK, buildLocalizedBlocks, LIGHT_AGENTS_BLOCK };

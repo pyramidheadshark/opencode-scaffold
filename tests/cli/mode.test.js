@@ -4,6 +4,16 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+// Mock ccr-config to return null so tests use legacy path
+jest.mock('../../lib/ccr-config', () => ({
+  readCCRConfig: jest.fn(() => null),
+  MODE_CCR_ROUTING: {},
+  PROFILE_CCR_ROUTING: {},
+  writeCCRConfig: jest.fn(),
+  writeScaffoldMode: jest.fn(),
+  restartCCR: jest.fn(() => Promise.resolve(true)),
+}));
+
 const {
   applyMode,
   setProfile,

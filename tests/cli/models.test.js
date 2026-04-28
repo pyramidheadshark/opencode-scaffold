@@ -13,6 +13,7 @@ const {
   labelFromModelId,
   emojiFromModelId,
   shortNameFromModelId,
+  isOpenRouterModelId,
 } = require('../../lib/models');
 
 describe('models — PROFILE_MATRIX', () => {
@@ -208,11 +209,43 @@ describe('models — shortNameFromModelId (backward compat)', () => {
 });
 
 describe('models — constants', () => {
-  test('VALID_MODES includes all three modes', () => {
-    expect(VALID_MODES).toEqual(['default', 'economy', 'no-sonnet']);
+  test('VALID_MODES includes all modes including CCR modes', () => {
+    expect(VALID_MODES).toEqual(['default', 'economy', 'no-sonnet', 'reasoning', 'openrouter-full']);
   });
 
   test('VALID_PROFILES includes all three profiles', () => {
     expect(VALID_PROFILES).toEqual(['power', 'standard', 'balanced']);
+  });
+});
+
+describe('models — OpenRouter model IDs', () => {
+  test('labelFromModelId returns correct labels for OpenRouter models', () => {
+    expect(labelFromModelId('deepseek/deepseek-v4-flash')).toBe('DeepSeek V4 Flash');
+    expect(labelFromModelId('z-ai/glm-5.1')).toBe('GLM 5.1');
+    expect(labelFromModelId('moonshotai/kimi-k2.6')).toBe('Kimi K2.6');
+    expect(labelFromModelId('anthropic/claude-sonnet-4.6')).toBe('Sonnet 4.6 (OR)');
+    expect(labelFromModelId('google/gemini-2.5-pro')).toBe('Gemini 2.5 Pro');
+  });
+
+  test('shortNameFromModelId returns correct short names for OpenRouter models', () => {
+    expect(shortNameFromModelId('deepseek/deepseek-v4-flash')).toBe('ds');
+    expect(shortNameFromModelId('z-ai/glm-5.1')).toBe('glm');
+    expect(shortNameFromModelId('moonshotai/kimi-k2.6')).toBe('kimi');
+    expect(shortNameFromModelId('google/gemini-2.5-pro')).toBe('gem');
+  });
+
+  test('isOpenRouterModelId detects slash-separated IDs', () => {
+    expect(isOpenRouterModelId('deepseek/deepseek-v4-flash')).toBe(true);
+    expect(isOpenRouterModelId('z-ai/glm-5.1')).toBe(true);
+    expect(isOpenRouterModelId('claude-sonnet-4-6')).toBe(false);
+    expect(isOpenRouterModelId(null)).toBe(false);
+    expect(isOpenRouterModelId('')).toBe(false);
+  });
+
+  test('emojiFromModelId returns correct emojis for OpenRouter models', () => {
+    expect(emojiFromModelId('deepseek/deepseek-v4-flash')).toBe('🟠');
+    expect(emojiFromModelId('z-ai/glm-5.1')).toBe('🔷');
+    expect(emojiFromModelId('moonshotai/kimi-k2.6')).toBe('🌙');
+    expect(emojiFromModelId('google/gemini-2.5-pro')).toBe('💠');
   });
 });
