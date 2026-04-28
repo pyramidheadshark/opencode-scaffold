@@ -1,81 +1,46 @@
 {
-  "name": "claude-scaffold",
-  "version": "2.7.2",
-  "description": "Claude Code infrastructure for ML and AI engineers — skills, hooks, agents, and CI profiles.",
-  "bin": {
-    "claude-scaffold": "bin/cli.js"
-  },
-  "files": [
-    "bin/",
-    "lib/",
-    "templates/",
-    "registry/",
-    ".claude/skills/",
-    ".claude/hooks/",
-    ".claude/agents/",
-    ".claude/commands/",
-    "README.md",
-    "README.ru.md",
-    "LICENSE"
-  ],
+  "name": "opencode-scaffold",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "test": "jest tests/hook/ tests/cli/ --no-coverage && (python3 tests/infra/test_infra.py || python tests/infra/test_infra.py)",
-    "test:hook": "jest tests/hook/ --no-coverage",
-    "test:cli": "jest tests/cli/ --no-coverage",
-    "test:infra": "python3 tests/infra/test_infra.py || python tests/infra/test_infra.py",
-    "test:watch": "jest tests/hook/ tests/cli/ --watch",
-    "check:budget": "python3 tests/infra/test_infra.py TestSkillMdFiles.test_skill_line_budget || python tests/infra/test_infra.py TestSkillMdFiles.test_skill_line_budget",
-    "metrics": "node scripts/metrics-report.js",
-    "benchmark": "jest tests/benchmark/ --no-coverage --verbose",
-    "bench:check": "python scripts/benchmark/check_sdk.py",
-    "bench:baseline": "python scripts/benchmark/token_runner.py --mode baseline",
-    "bench:optimized": "python scripts/benchmark/token_runner.py --mode optimized",
-    "bench:token": "npm run bench:baseline && npm run bench:optimized",
-    "bench:report": "python scripts/benchmark/report.py",
-    "bench:full": "npm run bench:token && npm run bench:report"
+    "build": "tsup",
+    "dev": "tsup src/index.ts --format esm --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run tests/e2e/"
   },
-  "keywords": [
-    "claude",
-    "claude-code",
-    "anthropic",
-    "scaffold",
-    "cli",
-    "ai-agents",
-    "developer-tools",
-    "llm",
-    "hooks",
-    "skills",
-    "agents",
-    "coding-assistant",
-    "automation",
-    "prompt-engineering"
-  ],
-  "author": "pyramidheadshark",
-  "homepage": "https://github.com/pyramidheadshark/claude-scaffold",
   "repository": {
     "type": "git",
-    "url": "https://github.com/pyramidheadshark/claude-scaffold.git"
+    "url": "git+https://github.com/pyramidheadshark/opencode-scaffold.git"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "bugs": {
-    "url": "https://github.com/pyramidheadshark/claude-scaffold/issues"
+    "url": "https://github.com/pyramidheadshark/opencode-scaffold/issues"
   },
-  "license": "MIT",
-  "engines": {
-    "node": ">=18"
-  },
+  "homepage": "https://github.com/pyramidheadshark/opencode-scaffold#readme",
   "dependencies": {
-    "commander": "^14.0.0"
-  },
-  "optionalDependencies": {
-    "ccusage": "^18.0.11"
+    "@types/react": "^19.2.14",
+    "chalk": "^4.1.2",
+    "commander": "^14.0.3",
+    "ink": "^7.0.1",
+    "inquirer": "^13.4.2",
+    "react": "^19.2.5",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "jest": "^30.2.0"
+    "@types/inquirer": "^9.0.9",
+    "@types/node": "^25.6.0",
+    "dotenv": "^17.4.2",
+    "execa": "^9.6.1",
+    "fs-extra": "^11.3.4",
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.5"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ]
+  "type": "module",
+  "bin": {
+    "opencode-scaffold": "dist/index.js"
   }
 }

@@ -1,0 +1,4 @@
+{
+  "model": "google/gemini-3.1-pro-preview",
+  "default_permissions": "websearch,webfetch,bash,read,edit,glob,grep"
+}

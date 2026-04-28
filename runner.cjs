@@ -1,0 +1,1 @@
+const Module = require('module'); const orig = Module.prototype.require; Module.prototype.require = function(id) { try { console.log('REQ:', id); return orig.apply(this, arguments); } catch (e) { console.log('ERR REQ:', id, e.message); throw e; } }; import('./dist/index.js').catch(e => console.log('ERR IMPORT:', e.message));
