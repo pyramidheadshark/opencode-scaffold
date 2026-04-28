@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>claude-scaffold — Posting Guide</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #12151e;
+    --border: #2a2d3a;
+    --accent: #6366f1;
+    --accent2: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #0d0f18;
+    --p1: #4f46e5;
+    --p1t: #a5b4fc;
+    --p2: #065f46;
+    --p2t: #6ee7b7;
+    --p3: #78350f;
+    --p3t: #fcd34d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.65; }
+
+  .layout { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 20px 16px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 20px 0 6px; }
+  .sidebar-title:first-child { margin-top: 0; }
+  .sidebar a { display: flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 5px; color: var(--muted); text-decoration: none; font-size: 12.5px; transition: all .12s; }
+  .sidebar a:hover { background: var(--border); color: var(--text); }
+
+  .badge { font-size: 9px; padding: 1px 5px; border-radius: 3px; font-weight: 700; white-space: nowrap; }
+  .p1 { background: var(--p1); color: var(--p1t); }
+  .p2 { background: var(--p2); color: var(--p2t); }
+  .p3 { background: var(--p3); color: var(--p3t); }
+
+  .main { padding: 40px 48px; max-width: 900px; }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+  .stats-bar { display: flex; gap: 12px; margin-bottom: 36px; flex-wrap: wrap; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 18px; display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
+  .stat-val { font-size: 22px; font-weight: 700; color: var(--accent2); font-variant-numeric: tabular-nums; }
+  .stat-val.blue { color: #60a5fa; }
+  .stat-val.purple { color: #a78bfa; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+  .section { margin-bottom: 52px; scroll-margin-top: 20px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .section-header h2 { font-size: 16px; font-weight: 600; }
+  .effort { font-size: 10px; color: var(--muted); background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; }
+
+  .info { background: #0d1526; border: 1px solid #1e3a5f; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; color: #93c5fd; }
+  .warn { background: #1a0f00; border: 1px solid #78350f; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; color: #fcd34d; }
+  .success { background: #052e16; border: 1px solid #14532d; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; color: #86efac; }
+
+  .steps { margin-bottom: 14px; }
+  .step { display: flex; gap: 12px; margin-bottom: 8px; align-items: flex-start; }
+  .step-num { background: var(--accent); color: white; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-text { font-size: 13px; color: var(--text); padding-top: 2px; }
+  .step-text a { color: var(--accent); }
+  .step-text code { background: var(--code-bg); border: 1px solid var(--border); padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 12px; color: #86efac; }
+
+  .field-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 14px; }
+  .field-table th { text-align: left; padding: 6px 10px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+  .field-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .field-table td:first-child { color: var(--muted); white-space: nowrap; width: 140px; }
+  .field-table tr:last-child td { border-bottom: none; }
+  .field-table code { background: var(--code-bg); padding: 1px 5px; border-radius: 3px; font-family: monospace; font-size: 12px; color: #86efac; }
+
+  .copy-block { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .copy-block-header { display: flex; align-items: center; justify-content: space-between; padding: 7px 14px; background: var(--code-bg); border-bottom: 1px solid var(--border); }
+  .copy-block-label { font-size: 11px; color: var(--muted); font-family: monospace; }
+  .copy-block-label span { color: var(--accent); }
+  .copy-btn { font-size: 11px; padding: 3px 10px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all .15s; font-family: inherit; }
+  .copy-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .copy-btn.copied { background: var(--accent2); color: white; border-color: var(--accent2); }
+  .copy-block pre { padding: 16px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12.5px; line-height: 1.75; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+
+  .analysis-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-bottom: 14px; }
+  .analysis-box h4 { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 12px; }
+  .kill { color: #f87171; font-size: 12.5px; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+  .keep { color: #86efac; font-size: 12.5px; margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+  .kill::before { content: '✗'; flex-shrink: 0; margin-top: 1px; }
+  .keep::before { content: '✓'; flex-shrink: 0; margin-top: 1px; }
+
+  .media-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .media-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
+  .media-card h4 { font-size: 12px; font-weight: 600; margin-bottom: 6px; }
+  .media-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .media-card .platform-list { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .platform-tag { font-size: 10px; padding: 2px 6px; background: var(--border); border-radius: 3px; color: var(--muted); }
+  .media-url { margin-top: 8px; font-family: monospace; font-size: 11px; color: var(--accent); word-break: break-all; }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+  .note { font-size: 12px; color: #94a3b8; padding: 9px 14px; background: rgba(255,255,255,.03); border-left: 3px solid var(--border); border-radius: 0 5px 5px 0; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="sidebar">
+  <div class="sidebar-title">Приоритет 1</div>
+  <a href="#awesome-claude-code">awesome-claude-code <span class="badge p1">Issue</span></a>
+  <a href="#github-topics">GitHub Topics <span class="badge p1">5 мин</span></a>
+  <a href="#anthropic-form">Anthropic форма <span class="badge p1">20 мин</span></a>
+
+  <div class="sidebar-title">Приоритет 2</div>
+  <a href="#reddit-claudecode">r/ClaudeCode <span class="badge p1">P1</span></a>
+  <a href="#reddit-claudeai">r/ClaudeAI <span class="badge p2">P2</span></a>
+  <a href="#discord-anthropic">Discord Anthropic <span class="badge p2">P2</span></a>
+  <a href="#discord-mlops">Discord MLOps <span class="badge p2">P2</span></a>
+
+  <div class="sidebar-title">Листинги</div>
+  <a href="#devhunt">DevHunt.org <span class="badge p2">P2</span></a>
+  <a href="#uneed">Uneed.best <span class="badge p2">P2</span></a>
+
+  <div class="sidebar-title">Медиа</div>
+  <a href="#media">Что прикреплять</a>
+
+  <div class="sidebar-title">Разбор</div>
+  <a href="#writing">Живой текст vs нейро</a>
+  <a href="#competitors">Конкуренты — критично</a>
+  <a href="#positioning">Позиционирование</a>
+</nav>
+
+<main class="main">
+  <h1>claude-scaffold — Posting Guide</h1>
+  <p class="subtitle">Готовые тексты для копипаста. Обновлено 2026-03-21.</p>
+
+  <div class="stats-bar">
+    <div class="stat">
+      <div class="stat-val">500+</div>
+      <div class="stat-label">npm downloads</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val blue">6</div>
+      <div class="stat-label">PR открыто</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val">v1.3.1</div>
+      <div class="stat-label">текущая версия</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val purple">18</div>
+      <div class="stat-label">domain skills</div>
+    </div>
+  </div>
+
+  <!-- WRITING ANALYSIS -->
+  <section class="section" id="writing">
+    <div class="section-header">
+      <h2>Живой текст vs нейропост — разбор</h2>
+    </div>
+    <div class="analysis-box">
+      <h4>Убиваем из текстов</h4>
+      <div class="kill">«Key capabilities:» — никто так не пишет в живых постах</div>
+      <div class="kill">«Streamline», «leverage», «powerful», «seamlessly» — маркетинг-слова</div>
+      <div class="kill">Все буллиты одинаковой грамматической структуры и длины</div>
+      <div class="kill">«Happy to dig into» — фраза-маркер GPT</div>
+      <div class="kill">Симметричная структура каждого поста (вступление → список → вывод)</div>
+      <div class="kill">«Cross-repo sync:» — превращать всё в заголовок фичи</div>
+      <div class="kill">Идеальная расстановка em-dash везде</div>
+      <div class="kill">Начинать каждый пост с «If you use X across multiple Y...»</div>
+    </div>
+    <div class="analysis-box">
+      <h4>Что делает текст живым</h4>
+      <div class="keep">Конкретные цифры из опыта: «14 репо», «~500 загрузок», «20 минут»</div>
+      <div class="keep">Код врезан в середину мысли, не выделен в отдельный блок</div>
+      <div class="keep">Неравномерная длина абзацев — один длинный, потом один короткий</div>
+      <div class="keep">Честное признание ограничений: «ещё не всё гладко», «грубовато местами»</div>
+      <div class="keep">Разговорные переходы: «в итоге перестал терпеть», «это та штука, которой я пользуюсь каждый день»</div>
+      <div class="keep">Конкретная техническая деталь объяснена inline, не в отдельном разделе</div>
+      <div class="keep">Правильный регистр технологий: FastAPI, LangGraph, MLflow, Qdrant (не fastapi, не FASTAPI)</div>
+      <div class="keep">Заголовок Reddit — строчными, как человек пишет, не как пресс-релиз</div>
+    </div>
+  </section>
+
+  <!-- MEDIA -->
+  <section class="section" id="media">
+    <div class="section-header">
+      <h2>Медиаконтент — что прикреплять</h2>
+    </div>
+    <div class="media-grid">
+      <div class="media-card">
+        <h4>🎬 Demo GIF</h4>
+        <p>Уже готов. Показывает <code>npx claude-scaffold init</code> → вывод → <code>ls .claude/skills/</code>. Catppuccin Mocha, WindowBar Colorful.</p>
+        <div class="platform-list">
+          <span class="platform-tag">r/ClaudeCode</span>
+          <span class="platform-tag">Discord</span>
+          <span class="platform-tag">Twitter</span>
+        </div>
+        <div class="media-url">docs/demo.gif (в репо)<br>Raw URL: https://raw.githubusercontent.com/pyramidheadshark/claude-scaffold/main/docs/demo.gif</div>
+      </div>
+      <div class="media-card">
+        <h4>🖼 Social Card</h4>
+        <p>Сгенерирован. Открой в браузере → Print → Save as PDF / скриншот на 1200×630px. Тёмная тема, stats bar.</p>
+        <div class="platform-list">
+          <span class="platform-tag">Twitter/X</span>
+          <span class="platform-tag">LinkedIn</span>
+          <span class="platform-tag">Habr</span>
+        </div>
+        <div class="media-url">dev/media/social-card.html</div>
+      </div>
+      <div class="media-card">
+        <h4>📷 README скриншот</h4>
+        <p>Скриншот GitHub-страницы репо с GIF-демо видным. Быстрый вариант для постов где нельзя прикрепить GIF напрямую.</p>
+        <div class="platform-list">
+          <span class="platform-tag">Habr</span>
+          <span class="platform-tag">dev.to</span>
+        </div>
+      </div>
+      <div class="media-card">
+        <h4>⚡ Для Reddit</h4>
+        <p>Reddit лучше всего — загрузить GIF напрямую при создании поста (кнопка «Add media»). Не ссылкой, а файлом. Поднимает engagement в 2–3 раза.</p>
+        <div class="platform-list">
+          <span class="platform-tag">r/ClaudeCode</span>
+          <span class="platform-tag">r/ClaudeAI</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AWESOME-CLAUDE-CODE -->
+  <section class="section" id="awesome-claude-code">
+    <div class="section-header">
+      <h2>hesreallyhim/awesome-claude-code</h2>
+      <span class="badge p1">P1</span>
+      <span class="effort">Issue — только через браузер</span>
+    </div>
+    <div class="warn">⚠️ Бот автоматически закрывает Issues, созданные через gh CLI или любой скрипт. Только github.com в браузере, вручную.</div>
+    <div class="success">29k ★ — самая ценная площадка из всего списка. Приоритет №1.</div>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Открой: <a href="https://github.com/hesreallyhim/awesome-claude-code/issues/new?template=recommend-resource.yml" target="_blank">github.com/hesreallyhim/awesome-claude-code/issues/new?template=recommend-resource.yml</a></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Заполни поля по таблице ниже</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Отметь <strong>все 5 чекбоксов</strong> внизу (включая последний про «human-y stuff»)</div></div>
+      <div class="step"><div class="step-num">4</div><div class="step-text">Submit Issue</div></div>
+    </div>
+
+    <table class="field-table">
+      <thead><tr><th>Поле</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td>Display Name</td><td>claude-scaffold</td></tr>
+        <tr><td>Category</td><td>CLAUDE.md Files</td></tr>
+        <tr><td>Sub-Category</td><td>CLAUDE.md Files: Project Scaffolding &amp; MCP</td></tr>
+        <tr><td>Primary Link</td><td><code>https://github.com/pyramidheadshark/claude-scaffold</code></td></tr>
+        <tr><td>Author Name</td><td>pyramidheadshark</td></tr>
+        <tr><td>Author Link</td><td><code>https://github.com/pyramidheadshark</code></td></tr>
+        <tr><td>License</td><td>MIT</td></tr>
+      </tbody>
+    </table>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Description</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>npx CLI that deploys CLAUDE.md, hooks, skills, and agents to any repository in one command. 18 domain skills auto-activate via a UserPromptSubmit hook based on the project's file context — no manual loading per repo. Cross-repo sync: `npx claude-scaffold update --all` keeps all registered repositories on the same version.</pre>
+    </div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Validate Claims</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>Run `npx claude-scaffold init . --profile ml-engineer` in an empty git repo. The hook deploys to .claude/. Start a Claude Code session in a repo that has FastAPI code — fastapi-patterns will load automatically without any prompt. Run `npx claude-scaffold update --all` from any machine where you've run init before — it reads the registry and updates all repos in one shot.</pre>
+    </div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Specific Task</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>Deploy to a test repo with `npx claude-scaffold init . --profile ml-engineer`, then open a Claude Code session and ask: "What skills are available in this project and when does each one activate?"</pre>
+    </div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Specific Prompt</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>"List all the skills configured in this project and explain what triggers each one to load automatically."</pre>
+    </div>
+  </section>
+
+  <!-- GITHUB TOPICS -->
+  <section class="section" id="github-topics">
+    <div class="section-header">
+      <h2>GitHub Topics</h2>
+      <span class="badge p1">P1</span>
+      <span class="effort">5 мин</span>
+    </div>
+    <div class="info">Settings → General → Topics на странице репо. claude-md — малоконкурентный topic, попасть в топ легко.</div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Открой <a href="https://github.com/pyramidheadshark/claude-scaffold" target="_blank">github.com/pyramidheadshark/claude-scaffold</a></div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Справа от описания — шестерёнка ⚙️ рядом с About</div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Поле «Topics» — добавь через пробел:</div></div>
+    </div>
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Topics</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>claude-code claude-md anthropic claude scaffold npx cli developer-tools ai-workflow hooks agents npm-package workflow-automation project-template</pre>
+    </div>
+  </section>
+
+  <!-- ANTHROPIC FORM -->
+  <section class="section" id="anthropic-form">
+    <div class="section-header">
+      <h2>Anthropic — официальная форма</h2>
+      <span class="badge p1">P1</span>
+      <span class="effort">20 мин</span>
+    </div>
+    <div class="warn">URL: <a href="https://clau.de/plugin-directory-submission" target="_blank">clau.de/plugin-directory-submission</a> — проверь доступность, может редиректить на platform.claude.com/plugins/submit</div>
+
+    <table class="field-table">
+      <thead><tr><th>Поле</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td>claude-scaffold</td></tr>
+        <tr><td>Category</td><td>claude-md-management / developer-tools</td></tr>
+        <tr><td>GitHub URL</td><td><code>https://github.com/pyramidheadshark/claude-scaffold</code></td></tr>
+        <tr><td>npm URL</td><td><code>https://npmjs.com/package/claude-scaffold</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Description</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>npx CLI that deploys a complete Claude Code configuration to any repository in one command — CLAUDE.md for the chosen profile, hooks wired into settings.json, 18 domain skills, agents, and CI templates.
+
+How the activation works: a UserPromptSubmit hook checks the project's file tree before each prompt and injects relevant skill context. FastAPI routes → fastapi-patterns loads. LangGraph code → langgraph-patterns. RAG setup → rag-vector-db. A session cache prevents duplicate loading.
+
+Cross-repo sync: `npx claude-scaffold update --all` reads a local registry and updates every deployed instance.
+
+~500 npm downloads. 226 Jest + 48 Python tests. MIT licensed.
+
+Use case: engineers maintaining consistent Claude Code workflow across multiple repositories.</pre>
+    </div>
+  </section>
+
+  <!-- REDDIT CLAUDECODE -->
+  <section class="section" id="reddit-claudecode">
+    <div class="section-header">
+      <h2>Reddit r/ClaudeCode</h2>
+      <span class="badge p1">P1</span>
+      <span class="effort">~15 мин + прикрепить GIF</span>
+    </div>
+    <div class="info">96k подписчиков. Техническая аудитория, скептичная к маркетингу. Постить в будни 9–11am EST (17–19 МСК). Прикрепить docs/demo.gif напрямую при создании поста — кнопка «Add media».</div>
+    <div class="warn">Оставаться онлайн первые 1–2 часа после поста — отвечать на комментарии критично для алгоритма.</div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Заголовок</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>built an npx CLI that finally fixed my "copy CLAUDE.md to every new repo" problem</pre>
+    </div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Текст поста</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>My workflow for starting a new project was embarrassing. Copy CLAUDE.md from the last repo. Realize it's three versions behind. Remember which hooks I added six months ago. Re-add them to settings.json manually. Forget to update the skill paths. Spend 20 minutes getting it working.
+
+Did this across ~14 repos. At some point I stopped tolerating it.
+
+**claude-scaffold**:
+
+```bash
+npx claude-scaffold init
+```
+
+Deploys CLAUDE.md (pick a profile: ml-engineer, fastapi, fullstack, etc.), hooks wired into settings.json, skills directory, agents. One shot, ~4 seconds.
+
+The part I actually use every day: there's a UserPromptSubmit hook that checks the project's file tree before each prompt. If you're in a FastAPI repo, it injects `fastapi-patterns` into the context. LangGraph code → `langgraph-patterns`. RAG stuff → `rag-vector-db`. Session cache so it doesn't double-load across a session. Took a few iterations to tune, but it's solid now.
+
+```bash
+npx claude-scaffold update --all
+```
+
+Reads a local registry of where the scaffold is deployed and updates all of them. I run this after changing any skill definition. Went from "this skill exists in 14 slightly different versions" to "they're all the same."
+
+~500 npm downloads, 226 tests. Still rough in a few places, core is solid.
+
+https://github.com/pyramidheadshark/claude-scaffold
+
+If the hook architecture is interesting — happy to get into it. The skill activation heuristics are the most non-obvious part of the implementation.</pre>
+    </div>
+    <div class="note">Тон: технический, личный, конкретный. Никаких «powerful», «seamlessly», «comprehensive».</div>
+  </section>
+
+  <!-- REDDIT CLAUDEAI -->
+  <section class="section" id="reddit-claudeai">
+    <div class="section-header">
+      <h2>Reddit r/ClaudeAI</h2>
+      <span class="badge p2">P2</span>
+      <span class="effort">~10 мин</span>
+    </div>
+    <div class="info">612k подписчиков. Менее техническая аудитория чем ClaudeCode. Короткий пост, больше фокус на «зачем», меньше «как».</div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Заголовок</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>built a CLI that deploys your full Claude Code setup to any repo in one command</pre>
+    </div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Текст</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>If you work across several repos with Claude Code, keeping your CLAUDE.md and hooks in sync everywhere is annoying. Every new project starts with copy-paste and manual setup.
+
+**claude-scaffold** is what I made for this:
+
+```bash
+npx claude-scaffold init
+```
+
+Deploys your CLAUDE.md profile, hooks, and 18 domain skills (FastAPI, LangGraph, MLflow, RAG, etc.) to a repo. Skills activate via a hook based on what's in the project — no per-repo configuration.
+
+```bash
+npx claude-scaffold update --all
+```
+
+Syncs everything when you change something. ~500 npm downloads so far, MIT licensed.
+
+→ https://github.com/pyramidheadshark/claude-scaffold</pre>
+    </div>
+  </section>
+
+  <!-- DISCORD ANTHROPIC -->
+  <section class="section" id="discord-anthropic">
+    <div class="section-header">
+      <h2>Anthropic Discord &mdash; #show-and-tell</h2>
+      <span class="badge p2">P2</span>
+      <span class="effort">5 мин</span>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Зайди на <a href="https://discord.gg/anthropic" target="_blank">discord.gg/anthropic</a> (72k участников)</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Найди <code>#show-and-tell</code> или <code>#projects</code></div></div>
+      <div class="step"><div class="step-num">3</div><div class="step-text">Вставь текст ниже. Прикрепи <code>docs/demo.gif</code> как файл, не ссылкой</div></div>
+    </div>
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Сообщение</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>hey, made a thing and it started getting more downloads than expected so sharing here for feedback
+
+https://github.com/pyramidheadshark/claude-scaffold — npx CLI that deploys CLAUDE.md, hooks, and skills to a repo in one shot. the interesting part: there's a UserPromptSubmit hook that reads the file tree before each prompt and activates skill context automatically. fastapi repo → fastapi-patterns loads. langgraph code → langgraph-patterns. no per-project setup.
+
+built this for my own 14 repos, hit ~500 npm downloads which i didn't really expect
+
+if you have a specific usecase where this could help — tell me, i'm at the stage where individual requests still shape what gets built. and ⭐ on github would mean a lot</pre>
+    </div>
+    <div class="note">Тон: excited but not salesy. Маленький проект, живой человек, просит фидбек — не объявление продукта.</div>
+  </section>
+
+  <!-- DISCORD MLOPS -->
+  <section class="section" id="discord-mlops">
+    <div class="section-header">
+      <h2>Discord MLOps &mdash; #share-your-work</h2>
+      <span class="badge p2">P2</span>
+      <span class="effort">5 мин</span>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div class="step-text">Зайди: <a href="https://discord.com/invite/uUeZbWwvt3" target="_blank">discord.com/invite/uUeZbWwvt3</a> (31k участников)</div></div>
+      <div class="step"><div class="step-num">2</div><div class="step-text">Найди <code>#share-your-work</code></div></div>
+    </div>
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Сообщение</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>sharing something i built for my own ML repos — would genuinely love to hear if it maps to what others deal with
+
+claude-scaffold: `npx claude-scaffold init` deploys a full Claude Code config to any repo. ML-specific skills — MLflow experiment tracking, Pandera, LangGraph, RAG/Qdrant, ONNX/Parquet handling — activate automatically based on what's in the project. no per-repo setup.
+
+the thing i keep using: `npx claude-scaffold update --all` — i have ~14 ML repos, when i improve a skill definition it propagates everywhere in one command. started as "just for me," hit ~500 npm downloads, which made me think others might have the same problem
+
+if you're dealing with a specific ML stack that needs better Claude Code support — tell me, i can build that skill. early enough that individual requests actually shape what gets built
+
+→ https://github.com/pyramidheadshark/claude-scaffold (⭐ appreciated)</pre>
+    </div>
+    <div class="note">«I can build that skill» — ключевая фраза. Делает проект доступным, не корпоративным.</div>
+  </section>
+
+  <!-- TELEGRAM -->
+  <section class="section" id="telegram">
+    <div class="section-header">
+      <h2>Telegram &mdash; RU ML-каналы</h2>
+      <span class="badge p3">P3</span>
+      <span class="effort">10 мин</span>
+    </div>
+    <div class="info">Каналы: @ai_machinelearning_big_data (93k), @evocoders. Русский язык, чуть короче.</div>
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Пост</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>Выложил опенсорс-пакет — неожиданно пошли загрузки, решил поделиться шире.
+
+claude-scaffold — npx-пакет, который разворачивает полную конфигурацию Claude Code в любой репозиторий одной командой: CLAUDE.md, хуки, скиллы под ML-стек (MLflow, Pandera, LangGraph, RAG/Qdrant и т.д.). Скиллы активируются автоматически — хук смотрит на файлы проекта перед каждым промптом и подгружает нужный контекст.
+
+`npx claude-scaffold update --all` — синхронизирует все репозитории разом.
+
+Пользуюсь сам на ~14 репозиториях, набралось ~500 загрузок на npm. Вкатываюсь в опенсорс, любой фидбек очень ценен. Если есть специфический ML-стек — пишите, на этом этапе могу делать фичи под конкретные запросы.
+
+⭐ на GitHub: https://github.com/pyramidheadshark/claude-scaffold</pre>
+    </div>
+  </section>
+
+  <!-- DEVHUNT -->
+  <section class="section" id="devhunt">
+    <div class="section-header">
+      <h2>DevHunt.org</h2>
+      <span class="badge p2">P2</span>
+      <span class="effort">30 мин</span>
+    </div>
+    <div class="info">Product Hunt для dev tools. Голосование только через GitHub-аккаунты. Листинг через PR в <a href="https://github.com/MarsX-dev/devhunt" target="_blank">github.com/MarsX-dev/devhunt</a>, или через веб-форму на сайте.</div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Tagline (≤60 символов)</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>Deploy your Claude Code workflow to any repo via npx</pre>
+    </div>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Description (≤250 символов)</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>One command deploys CLAUDE.md, hooks, and 18 domain skills to any repo. Skills auto-activate based on project context. Keep all registered repos in sync: `npx claude-scaffold update --all`. ~500 downloads, MIT.</pre>
+    </div>
+  </section>
+
+  <!-- UNEED -->
+  <section class="section" id="uneed">
+    <div class="section-header">
+      <h2>Uneed.best</h2>
+      <span class="badge p2">P2</span>
+      <span class="effort">20 мин</span>
+    </div>
+    <div class="info">AI + productivity tool directory. Бесплатный листинг через форму на главной страницы.</div>
+
+    <table class="field-table">
+      <thead><tr><th>Поле</th><th>Значение</th></tr></thead>
+      <tbody>
+        <tr><td>Name</td><td>claude-scaffold</td></tr>
+        <tr><td>Category</td><td>Developer Tools / AI Workflow</td></tr>
+        <tr><td>Tagline</td><td>Deploy your Claude Code workflow to any repo via npx</td></tr>
+        <tr><td>URL</td><td><code>https://github.com/pyramidheadshark/claude-scaffold</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="copy-block">
+      <div class="copy-block-header"><span class="copy-block-label"><span>Description</span></span><button class="copy-btn" onclick="copyBlock(this)">Copy</button></div>
+      <pre>If you use Claude Code across multiple repositories, you know the problem: every new repo means manually setting up CLAUDE.md, re-adding hooks to settings.json, copying skills. claude-scaffold fixes this.
+
+`npx claude-scaffold init` deploys your full Claude Code configuration — CLAUDE.md, hooks, 18 domain skills (FastAPI, LangGraph, RAG, MLflow, etc.), agents — to any repository in one command. Skills activate automatically via a UserPromptSubmit hook based on what's in the project. Session cache keeps token usage predictable.
+
+`npx claude-scaffold update --all` syncs every registered repo at once.
+
+~500 npm downloads. Free, open source, no account required.</pre>
+    </div>
+  </section>
+
+  <!-- COMPETITOR ANALYSIS -->
+  <section class="section" id="competitors">
+    <div class="section-header">
+      <h2>Конкуренты &mdash; честный анализ</h2>
+      <span class="effort">Исследовано 2026-03-21</span>
+    </div>
+    <table class="field-table">
+      <thead><tr><th>Проект</th><th>Stars</th><th>Что реально делает</th><th>Главная слабость</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><a href="https://github.com/affaan-m/everything-claude-code" target="_blank">everything-claude-code</a></td>
+          <td>93k</td>
+          <td>Монорепо скиллов/хуков/агентов, cross-harness (Claude Code, Cursor, Codex). 997+ тестов, changelog, security layer (AgentShield). Реально глубокий.</td>
+          <td>Устанавливается в ~/.claude. Нет registry, нет update propagation к проектам. Всё выбираешь вручную. Нет умной активации по контексту.</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/davila7/claude-code-templates" target="_blank">davila7/claude-code-templates</a></td>
+          <td>23k</td>
+          <td>NPX CLI + веб-интерфейс aitmpl.com. Лучший UX: компоненты по штучке, веб-витрина, аналитика сессий. Спонсирован Z.AI.</td>
+          <td>Нет update story для уже установленных компонентов. Нет profile-based defaults. Нет org/team sync. Нет умной активации.</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/maxritter/pilot-shell" target="_blank">pilot-shell</a></td>
+          <td>1.6k</td>
+          <td>Глобальная установка с принудительными TDD-хуками. /setup-rules генерирует правила под проект. Правильная философия: enforce, не suggest.</td>
+          <td>Нет org story. Нет cross-repo sync. Один разработчик.</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/neiii/bridle" target="_blank">bridle</a></td>
+          <td>398</td>
+          <td>TUI + CLI на Rust. Profile switching между контекстами. Multi-harness: Claude Code, Cursor, OpenCode, Amp. Homebrew + Cargo.</td>
+          <td>Profile switching = личная фича, не командная. Нет update propagation к репо, нет registry.</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/rely-ai-org/caliber" target="_blank">caliber</a></td>
+          <td>53</td>
+          <td>Scoring CLAUDE.md без LLM (детерминированный, 0&ndash;100). Drift detection: конфиг устаревает по мере изменения кода. Undo/backup.</td>
+          <td>Нет registry, нет push model. Решает "один репо стареет", не "у меня 15 репо". Почти неизвестен.</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/nicepkg/vsync" target="_blank">vsync</a></td>
+          <td>30</td>
+          <td>Синхронизирует skills/MCP между Claude Code, Cursor, OpenCode, Codex. Конвертирует форматы. 612 тестов.</td>
+          <td>Cross-tool sync для одного девелопера &mdash; нишевая задача. Нет multi-repo, нет team sync.</td>
+        </tr>
+        <tr>
+          <td><a href="https://github.com/GeiserX/LynxPrompt" target="_blank">LynxPrompt</a></td>
+          <td>24</td>
+          <td>Self-hosted веб-платформа (Docker Compose). SAML/OIDC/LDAP, blueprint marketplace, 30+ AI tools, REST API. Самый амбициозный team play.</td>
+          <td>Self-hosting = deployment barrier. GPL-3.0. Управляет шаблонами, но не деплоит их в репо. 24 &star; = никто не знает.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- POSITIONING -->
+  <section class="section" id="positioning">
+    <div class="section-header">
+      <h2>Позиционирование &mdash; что делать дальше</h2>
+    </div>
+    <div class="analysis-box">
+      <h4>Что никто не делает &mdash; реальные gaps</h4>
+      <div class="keep"><strong>Update propagation</strong> &mdash; ни один конкурент не решает "у меня 14 репо, я обновил скилл, как распространить?" <code>update --all</code> + registry &mdash; уникальная архитектура. Это надо маркетить как главную фичу, не прятать во втором абзаце README.</div>
+      <div class="keep"><strong>Runtime-активация с token budget</strong> &mdash; хук читает файловое дерево, выбирает 2&ndash;3 скилла, не грузит лишнего. ECC = 93k звёзд, но там ручная куратура. Никто не делает decision-at-prompt-time.</div>
+      <div class="keep"><strong>Domain profile defaults</strong> &mdash; "я ML-инженер" = конкретный набор из коробки. Davila7 = витрина, выбирай сам. Разные модели мышления.</div>
+    </div>
+    <div class="analysis-box">
+      <h4>Честная оценка слабых мест</h4>
+      <div class="kill">4 звезды против 93k &mdash; это не конкурентная позиция, это obscurity. Архитектура лучше многих, но без дистрибуции это приватный инжиниринг.</div>
+      <div class="kill">Нет сайта. davila7 &mdash; aitmpl.com, pilot-shell &mdash; pilot-shell.com. Выше 1k звёзд почти все инструменты имеют landing page.</div>
+      <div class="kill">Demo GIF не показывает авто-активацию &mdash; самую уникальную фичу. Видно deploy, но не видно "вот как хук сам решил что грузить".</div>
+      <div class="kill">README не ведёт с update --all. Самый дифференциирующий feature &mdash; не на первом экране.</div>
+    </div>
+    <div class="analysis-box">
+      <h4>Нарратив который стоит занять</h4>
+      <div class="keep"><em>Не "ещё одна коллекция скиллов."</em> Это ops-слой для Claude Code config &mdash; deploy, update, sync. Как Terraform для CLAUDE.md.</div>
+      <div class="keep">Не конкурировать с ECC по объёму. Занять нишу: ML-инженеры с 5&ndash;20 репо которым нужна управляемая, синхронизированная конфигурация.</div>
+      <div class="keep">caliber (53 &star;, scoring + drift detection) &mdash; скорее дополняет, чем конкурирует. Потенциальная интеграция: scaffold деплоит, caliber проверяет качество.</div>
+    </div>
+    <div class="analysis-box">
+      <h4>Идеи для v1.4+ (реальные gaps рынка)</h4>
+      <div class="keep"><strong>Dry-run diff для update</strong> &mdash; "вот что изменится в 14 репо перед применением." Никто не делает preview для config updates.</div>
+      <div class="keep"><strong>Observability</strong> &mdash; какие скиллы реально загружаются, сколько токенов сжигает каждый хук. metrics-report.js &mdash; начало. Вырасти в "Claude Code analytics."</div>
+      <div class="keep"><strong>Changelog для конфига</strong> &mdash; "fastapi-patterns обновлён, применено к 14 репо." Как dependabot, но для CLAUDE.md.</div>
+      <div class="keep"><strong>Scoring после deploy</strong> &mdash; показывать caliber-стиль score: "ваш CLAUDE.md: 78/100, вот что улучшить." Интеграция с caliber или своя реализация.</div>
+    </div>
+  </section>
+
+
+</main>
+</div>
+
+<script>
+function copyBlock(btn) {
+  const pre = btn.closest('.copy-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent.trim()).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+</script>
+</body>
+</html>

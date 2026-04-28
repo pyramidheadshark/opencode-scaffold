@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>claude-scaffold — Distribution Review</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --border: #2a2d3a;
+    --accent: #6366f1;
+    --accent2: #10b981;
+    --warn: #f59e0b;
+    --danger: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --code-bg: #12151e;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.6; }
+  .layout { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
+
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 20px; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar h2 { font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 8px; margin-top: 18px; }
+  .sidebar h2:first-child { margin-top: 0; }
+  .sidebar a { display: block; padding: 5px 10px; border-radius: 5px; color: var(--muted); text-decoration: none; font-size: 12.5px; transition: all .12s; }
+  .sidebar a:hover { background: var(--border); color: var(--text); }
+  .badge { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; font-weight: 600; vertical-align: middle; }
+  .badge.p1 { background: #312e81; color: #a5b4fc; }
+  .badge.p2 { background: #064e3b; color: #6ee7b7; }
+  .badge.p3 { background: #451a03; color: #fcd34d; }
+
+  .main { padding: 40px; max-width: 880px; }
+  h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); margin-bottom: 28px; font-size: 13px; }
+
+  .section { margin-bottom: 44px; scroll-margin-top: 20px; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .section-header h2 { font-size: 15px; font-weight: 600; }
+  .priority { font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 700; }
+  .priority.p1 { background: #312e81; color: #a5b4fc; }
+  .priority.p2 { background: #064e3b; color: #6ee7b7; }
+  .priority.p3 { background: #451a03; color: #fcd34d; }
+  .action-tag { font-size: 10px; padding: 2px 7px; border-radius: 3px; background: #1e293b; color: #94a3b8; }
+
+  .content-box { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 14px; }
+  .content-box .label { padding: 7px 14px; background: var(--code-bg); border-bottom: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  .content-box .label span { color: var(--accent); }
+  .content-box pre { padding: 14px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 12px; line-height: 1.75; color: var(--text); white-space: pre-wrap; }
+
+  .registry { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .registry th { text-align: left; padding: 7px 10px; border-bottom: 2px solid var(--border); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+  .registry td { padding: 7px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .registry tr:last-child td { border-bottom: none; }
+  .registry tr:hover td { background: rgba(255,255,255,.02); }
+  .s-todo { color: var(--warn); font-size: 11px; }
+  .s-done { color: var(--accent2); font-size: 11px; }
+  .s-skip { color: var(--muted); font-size: 11px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .note { font-size: 12px; color: #94a3b8; margin-top: 8px; padding: 9px 14px; background: rgba(255,255,255,.03); border-left: 3px solid var(--border); border-radius: 0 5px 5px 0; }
+  .warn { background: #1a0f00; border: 1px solid #78350f; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; color: #fcd34d; }
+  .info { background: #0d1526; border: 1px solid #1e3a5f; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; color: #93c5fd; }
+  .success { background: #052e16; border: 1px solid #14532d; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; color: #86efac; }
+  .danger { background: #1f0505; border: 1px solid #7f1d1d; border-radius: 7px; padding: 10px 14px; font-size: 12.5px; margin-bottom: 14px; color: #fca5a5; }
+  .stars { color: var(--warn); font-size: 11px; }
+  small { font-size: 11px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="layout">
+
+<nav class="sidebar">
+  <h2>Обзор</h2>
+  <a href="#strategy">Стратегия</a>
+  <a href="#competitor">Конкурент</a>
+  <a href="#registry">Полный реестр</a>
+
+  <h2>Немедленно (1ч)</h2>
+  <a href="#github-topics">GitHub Topics <span class="badge p1">P1</span></a>
+  <a href="#llms-txt">llms.txt <span class="badge p1">P1</span></a>
+  <a href="#llms-txt-hub">llms-txt-hub PR <span class="badge p1">P1</span></a>
+
+  <h2>Tier 1 — Каталоги</h2>
+  <a href="#anthropic-official">Anthropic official <span class="badge p1">P1</span></a>
+  <a href="#awesome-claude-code">awesome-claude-code <span class="badge p1">P1</span></a>
+  <a href="#awesome-vibe">awesome-vibe-coding <span class="badge p1">P1</span></a>
+  <a href="#awesome-ai-devtools">awesome-ai-devtools <span class="badge p2">P2</span></a>
+  <a href="#devhunt">DevHunt <span class="badge p2">P2</span></a>
+  <a href="#uneed">Uneed.best <span class="badge p2">P2</span></a>
+
+  <h2>Tier 2 — Посты</h2>
+  <a href="#reddit-claudecode">r/ClaudeCode <span class="badge p1">P1</span></a>
+  <a href="#reddit-claudeai">r/ClaudeAI <span class="badge p2">P2</span></a>
+  <a href="#discord-anthropic">Discord Anthropic <span class="badge p2">P2</span></a>
+  <a href="#discord-mlops">Discord MLOps <span class="badge p2">P2</span></a>
+
+  <h2>Tier 3</h2>
+  <a href="#show-hn">Show HN <span class="badge p2">P2</span></a>
+  <a href="#devto-article">dev.to статья <span class="badge p2">P2</span></a>
+  <a href="#habr">Habr (RU) <span class="badge p3">P3</span></a>
+  <a href="#telegram">Telegram (RU) <span class="badge p3">P3</span></a>
+</nav>
+
+<main class="main">
+  <h1>claude-scaffold — Distribution Review</h1>
+  <p class="subtitle">Черновой контент всех площадок. Критикуй, правь, отмечай комментарии. Обновлено: 2026-03-20.</p>
+
+  <!-- СТРАТЕГИЯ -->
+  <section class="section" id="strategy">
+    <div class="section-header"><h2>Стратегия одной фразой</h2></div>
+    <div class="info">
+      <strong>Цель:</strong> стать "владельцем" концепции "manage CLAUDE.md across multiple repositories" — так, чтобы когда пользователь спрашивает AI-агента или ищет в Google, первым ответом был claude-scaffold.<br><br>
+      <strong>Как это работает:</strong> не прямая реклама, а присутствие в авторитетных источниках (awesome-листы, официальный каталог Anthropic, технические статьи) + AI-индексация (llms.txt, GitHub Topics). Когда Claude или ChatGPT ищет инструменты — они читают эти источники.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Единый pitch</span> — одна формулировка на все площадки</div>
+      <pre>claude-scaffold: deploy your entire Claude Code workflow — CLAUDE.md, hooks, skills, agents — to any repository with one npx command. Skills auto-activate based on project context. Keep all repos in sync with `update --all`.</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Дифференциация от davila7/claude-code-templates</span> (23k stars — главный конкурент)</div>
+      <pre>davila7: 1000+ static templates to copy manually
+claude-scaffold: live system — deploys via npx, hooks auto-activate context, update --all keeps every repo in sync
+
+One is a library. The other is infrastructure.</pre>
+    </div>
+  </section>
+
+  <!-- КОНКУРЕНТ -->
+  <section class="section" id="competitor">
+    <div class="section-header"><h2>Конкурентный анализ</h2></div>
+    <div class="danger">
+      <strong>davila7/claude-code-templates</strong> — 23k stars, активный. Их pitch: "1000+ pre-built components for Claude Code". Нужно упоминать отличие везде, где это органично.
+    </div>
+    <table class="registry">
+      <thead><tr><th>Параметр</th><th>claude-scaffold</th><th>davila7/claude-code-templates</th></tr></thead>
+      <tbody>
+        <tr><td>Установка</td><td>npx команда</td><td>ручное копирование</td></tr>
+        <tr><td>Обновление</td><td>update --all</td><td>вручную</td></tr>
+        <tr><td>Активация контекста</td><td>автоматически через hooks</td><td>нет</td></tr>
+        <tr><td>Кол-во репо</td><td>все сразу (registry)</td><td>по одному</td></tr>
+        <tr><td>Командная синхронизация</td><td>org-profiles</td><td>нет</td></tr>
+        <tr><td>Тест покрытие</td><td>226 Jest + 48 Python</td><td>нет</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- РЕЕСТР -->
+  <section class="section" id="registry">
+    <div class="section-header"><h2>Полный реестр площадок</h2></div>
+    <table class="registry">
+      <thead>
+        <tr><th>Площадка</th><th>Тип</th><th>Аудитория</th><th>Усилие</th><th>Статус</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>GitHub Topics (репо)</td><td>Настройка репо</td><td>AI поиск + GitHub search</td><td>5 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td>llms.txt в корне репо</td><td>Файл</td><td>AI агенты при поиске</td><td>10 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://github.com/thedaviddias/llms-txt-hub" target="_blank">thedaviddias/llms-txt-hub</a></td><td>GitHub PR</td><td>AI discoverability directory</td><td>10 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://clau.de/plugin-directory-submission" target="_blank">Anthropic claude-plugins-official</a> <span class="stars">★13.5k</span></td><td>Форма</td><td>Официальный каталог Anthropic</td><td>20 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://github.com/hesreallyhim/awesome-claude-code" target="_blank">hesreallyhim/awesome-claude-code</a> <span class="stars">★29k</span></td><td>GitHub Issue (не PR!)</td><td>Claude Code users</td><td>15 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://github.com/filipecalegario/awesome-vibe-coding" target="_blank">filipecalegario/awesome-vibe-coding</a> <span class="stars">★3.6k</span></td><td>GitHub PR</td><td>AI coders</td><td>15 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://github.com/jamesmurdza/awesome-ai-devtools" target="_blank">jamesmurdza/awesome-ai-devtools</a> <span class="stars">★3.6k</span></td><td>GitHub PR</td><td>AI dev tools</td><td>15 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://devhunt.org" target="_blank">DevHunt.org</a></td><td>Launch (GitHub PR)</td><td>Dev tool enthusiasts</td><td>30 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://uneed.best" target="_blank">Uneed.best</a></td><td>Листинг</td><td>AI + productivity tools</td><td>20 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://www.reddit.com/r/ClaudeCode/" target="_blank">r/ClaudeCode</a></td><td>Пост</td><td>96k Claude Code users</td><td>30 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://www.reddit.com/r/ClaudeAI/" target="_blank">r/ClaudeAI</a></td><td>Пост</td><td>612k Claude users</td><td>15 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://discord.com/invite/6PPFFzqPDZ" target="_blank">Anthropic Discord</a></td><td>Сообщение #projects</td><td>72k</td><td>10 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://discord.com/invite/uUeZbWwvt3" target="_blank">MLOps Discord (Chip Huyen)</a></td><td>Сообщение #share-your-work</td><td>31k ML-инженеры</td><td>10 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://news.ycombinator.com" target="_blank">Hacker News Show HN</a></td><td>Пост</td><td>Senior engineers</td><td>1–2 ч</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td>dev.to статья</td><td>Статья EN</td><td>AI developers, SEO</td><td>2–3 ч</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://habr.com" target="_blank">Habr</a></td><td>Статья RU</td><td>RU ML-инженеры</td><td>3–4 ч</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td>Telegram @ai_machinelearning_big_data</td><td>Пост RU</td><td>93k ML</td><td>20 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://github.com/ComposioHQ/awesome-claude-plugins" target="_blank">ComposioHQ/awesome-claude-plugins</a> <span class="stars">★1.2k</span></td><td>GitHub PR</td><td>Claude plugins users</td><td>15 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://github.com/rohitg00/awesome-claude-code-toolkit" target="_blank">rohitg00/awesome-claude-code-toolkit</a> <span class="stars">★863</span></td><td>GitHub PR</td><td>Claude Code toolkit users</td><td>15 мин</td><td class="s-todo">⬜ todo</td></tr>
+        <tr><td><a href="https://github.com/ccplugins/awesome-claude-code-plugins" target="_blank">ccplugins/awesome-claude-code-plugins</a></td><td>—</td><td>—</td><td>—</td><td class="s-skip">⛔ заброшен (oct 2025)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- GITHUB TOPICS -->
+  <section class="section" id="github-topics">
+    <div class="section-header">
+      <h2>GitHub Topics — добавить в репо</h2>
+      <span class="priority p1">P1</span>
+      <span class="action-tag">5 минут</span>
+    </div>
+    <div class="info">
+      Добавляются через Settings → General → Topics на GitHub. Влияют на поиск внутри GitHub и на AI-индексацию. <code>claude-md</code> — отдельный topic с малой конкуренцией, попасть в топ легко.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Topics для добавления</span></div>
+      <pre>claude-code  claude-md  anthropic  claude  scaffold  npx  cli
+developer-tools  ai-workflow  hooks  agents  npm-package
+workflow-automation  project-template</pre>
+    </div>
+  </section>
+
+  <!-- LLMS.TXT -->
+  <section class="section" id="llms-txt">
+    <div class="section-header">
+      <h2>llms.txt — корень репо</h2>
+      <span class="priority p1">P1</span>
+      <span class="action-tag">10 минут</span>
+    </div>
+    <div class="info">
+      Стандарт: <a href="https://llmstxt.org" target="_blank">llmstxt.org</a>. Строгий формат: H1 заголовок, blockquote-summary, секции со ссылками только на <code>.md</code> файлы (не HTML). AI-агенты читают этот файл для индексации.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>llms.txt</span></div>
+      <pre># claude-scaffold
+
+> npx CLI that deploys CLAUDE.md, hooks, skills, and agents into any repository in one command. Enforces consistent Claude Code workflow and team coding standards across all projects.
+
+## Docs
+
+- [Quick Start](https://github.com/pyramidheadshark/claude-scaffold/blob/main/README.md): Install and deploy in 2 minutes
+- [CLI Reference](https://github.com/pyramidheadshark/claude-scaffold/blob/main/docs/REFERENCE.md): init, update, status, add-skill, org-profiles commands
+- [Integration Guide](https://github.com/pyramidheadshark/claude-scaffold/blob/main/docs/INTEGRATION.md): Step-by-step setup for existing repos
+- [Skills System](https://github.com/pyramidheadshark/claude-scaffold/blob/main/docs/ARCHITECTURE.md): How skill auto-loading and token caching works
+
+## Optional
+
+- [Changelog](https://github.com/pyramidheadshark/claude-scaffold/blob/main/CHANGELOG.md): Release history
+- [npm package](https://www.npmjs.com/package/claude-scaffold): Installation via npm/npx</pre>
+    </div>
+    <p class="note">⚠️ Ссылки ведут на .md файлы в репо — это требование формата. Если создавать GitHub Pages — ссылки надо обновить на .md там. Пока хватит корня репо.</p>
+  </section>
+
+  <!-- LLMS-TXT-HUB -->
+  <section class="section" id="llms-txt-hub">
+    <div class="section-header">
+      <h2>PR: thedaviddias/llms-txt-hub</h2>
+      <span class="priority p1">P1</span>
+      <span class="action-tag">10 минут</span>
+    </div>
+    <div class="info">
+      Крупнейший каталог проектов с llms.txt. PR туда автоматически делает claude-scaffold "видимым" для AI-агентов, которые сканируют этот список.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Строка для добавления</span></div>
+      <pre>- [claude-scaffold](https://github.com/pyramidheadshark/claude-scaffold) - npx CLI that deploys CLAUDE.md, hooks, and skills to any repository. Supports 18 domain skills with auto-activation via hooks.</pre>
+    </div>
+  </section>
+
+  <!-- ANTHROPIC OFFICIAL -->
+  <section class="section" id="anthropic-official">
+    <div class="section-header">
+      <h2>Anthropic claude-plugins-official</h2>
+      <span class="priority p1">P1</span>
+      <span class="action-tag">Форма</span>
+    </div>
+    <div class="success">
+      Официальный каталог Anthropic (13.5k stars, обновляется ежедневно). Там уже есть категория <code>claude-md-management</code> — прямое попадание. Внешние PR автоматически закрываются — только через форму.
+    </div>
+    <div class="warn">
+      ⚠️ Форма: <a href="https://clau.de/plugin-directory-submission" target="_blank">clau.de/plugin-directory-submission</a> или <a href="https://platform.claude.com/plugins/submit" target="_blank">platform.claude.com/plugins/submit</a> — нужно проверить актуальность URL.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Описание для формы</span></div>
+      <pre>Name: claude-scaffold
+Category: claude-md-management / developer-tools
+URL: https://github.com/pyramidheadshark/claude-scaffold
+npm: https://npmjs.com/package/claude-scaffold
+
+Description:
+npx CLI that deploys a complete Claude Code configuration (CLAUDE.md, hooks, skills, agents, CI templates) to any repository with one command.
+
+Key capabilities:
+- 18 domain skills (FastAPI, LangGraph, RAG, MLflow, Pandera, etc.) that auto-activate via UserPromptSubmit hooks based on project context
+- Session cache prevents loading duplicate skills — token-efficient by design
+- Cross-repo sync: `npx claude-scaffold update --all` updates all registered repositories
+- Org profiles: team-specific CLAUDE.md templates that survive updates
+- 226 Jest + 48 Python tests, all green
+
+Use case: ML/AI engineers and teams maintaining consistent Claude Code workflow across 5–20+ repositories.</pre>
+    </div>
+  </section>
+
+  <!-- AWESOME-CLAUDE-CODE -->
+  <section class="section" id="awesome-claude-code">
+    <div class="section-header">
+      <h2>hesreallyhim/awesome-claude-code</h2>
+      <span class="priority p1">P1</span>
+      <span class="action-tag">GitHub Issue (не PR!)</span>
+    </div>
+    <div class="warn">
+      ⚠️ PR от людей не принимаются! Список управляется через CSV (<code>THE_RESOURCES_TABLE.csv</code>), README генерируется скриптом. Нужно открыть Issue через их процесс — проверить <a href="https://github.com/hesreallyhim/awesome-claude-code/blob/main/HOW_IT_WORKS.md" target="_blank">HOW_IT_WORKS.md</a>.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Issue — черновик</span></div>
+      <pre>Title: Add resource: claude-scaffold — npx CLI for deploying Claude Code configuration
+
+**Resource URL:** https://github.com/pyramidheadshark/claude-scaffold
+
+**Category suggestion:** Tooling / Configuration Management
+
+**Description:**
+claude-scaffold is an npx CLI that deploys CLAUDE.md, hooks, skills, and agents to any repository in one command. 18 domain skills auto-activate based on project context via hooks. Includes cross-repo sync (`update --all`) and org-profile support for teams.
+
+**Why it fits:**
+Specifically designed for Claude Code workflow management across multiple repositories — addresses the problem of maintaining consistent CLAUDE.md and hook configuration at scale.</pre>
+    </div>
+  </section>
+
+  <!-- AWESOME-VIBE -->
+  <section class="section" id="awesome-vibe">
+    <div class="section-header">
+      <h2>PR: filipecalegario/awesome-vibe-coding</h2>
+      <span class="priority p1">P1</span>
+      <span class="action-tag">GitHub PR</span>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Строка для README</span></div>
+      <pre>- [claude-scaffold](https://github.com/pyramidheadshark/claude-scaffold) - npx CLI that deploys your full Claude Code setup (CLAUDE.md, hooks, skills) to any repo in one command, with auto-activating domain skills and cross-repo sync.</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>PR Title</span></div>
+      <pre>Add claude-scaffold — npx CLI for deploying Claude Code workflow across repos</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>PR Body</span></div>
+      <pre>Adding claude-scaffold to the Tools / Developer Experience section.
+
+It solves a common vibe coding friction point: every new repo requires recreating the same CLAUDE.md + hooks setup. `npx claude-scaffold init` deploys the full configuration in one command, with 18 domain skills that auto-activate based on what's in the project.
+
+Cross-repo sync: `npx claude-scaffold update --all` keeps every registered repo on the same version.</pre>
+    </div>
+  </section>
+
+  <!-- AWESOME-AI-DEVTOOLS -->
+  <section class="section" id="awesome-ai-devtools">
+    <div class="section-header">
+      <h2>PR: jamesmurdza/awesome-ai-devtools</h2>
+      <span class="priority p2">P2</span>
+      <span class="action-tag">GitHub PR</span>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Строка для README</span></div>
+      <pre>- [claude-scaffold](https://github.com/pyramidheadshark/claude-scaffold) - npx scaffold CLI for Claude Code: deploys CLAUDE.md, hooks, and 18 domain skills (FastAPI, LangGraph, RAG, MLflow, etc.) to any repo. Auto-activates skills via hooks, supports cross-repo sync.</pre>
+    </div>
+  </section>
+
+  <!-- DEVHUNT -->
+  <section class="section" id="devhunt">
+    <div class="section-header">
+      <h2>DevHunt.org</h2>
+      <span class="priority p2">P2</span>
+      <span class="action-tag">Launch via GitHub PR</span>
+    </div>
+    <div class="info">
+      Product Hunt для dev tools. Голосование только через GitHub-аккаунты — нет накруток. Листинг через PR в <a href="https://github.com/MarsX-dev/devhunt" target="_blank">github.com/MarsX-dev/devhunt</a>. Еженедельный запуск.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Tagline (≤60 символов)</span></div>
+      <pre>Deploy your Claude Code workflow to any repo via npx</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Description (≤250 символов)</span></div>
+      <pre>One command deploys CLAUDE.md, hooks, and 18 domain skills to any repo. Skills auto-activate based on project context. Keep all your repos in sync with `npx claude-scaffold update --all`.</pre>
+    </div>
+  </section>
+
+  <!-- UNEED -->
+  <section class="section" id="uneed">
+    <div class="section-header">
+      <h2>Uneed.best</h2>
+      <span class="priority p2">P2</span>
+      <span class="action-tag">Листинг</span>
+    </div>
+    <div class="info">
+      AI + productivity tool directory. Есть алгоритм матчинга по категории. Бесплатный листинг через форму на сайте.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Описание для формы</span></div>
+      <pre>Name: claude-scaffold
+Category: Developer Tools / AI Workflow
+Tagline: Deploy your Claude Code workflow to any repo via npx
+
+Description:
+If you use Claude Code across multiple repositories, you know the pain of maintaining consistent CLAUDE.md setups. claude-scaffold is an npx CLI that deploys your full Claude Code configuration — CLAUDE.md, hooks, skills, agents — to any repository in one command.
+
+18 domain skills (FastAPI, LangGraph, RAG, MLflow, etc.) auto-activate based on what's in your project. Session cache keeps token usage predictable. `update --all` syncs every repo at once.
+
+Free, open source, no account required.</pre>
+    </div>
+  </section>
+
+  <!-- REDDIT ClaudeCode -->
+  <section class="section" id="reddit-claudecode">
+    <div class="section-header">
+      <h2>Reddit r/ClaudeCode</h2>
+      <span class="priority p1">P1</span>
+    </div>
+    <div class="warn">
+      ⚠️ Нужен GIF-демо (npx init → вывод в терминале). Без визуала — минус 50% engagement. Сделать через Asciinema → GIF или screen recording.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Заголовок</span></div>
+      <pre>I got tired of setting up CLAUDE.md and hooks from scratch in every new repo — so I built an npx CLI that does it in one command</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Текст поста</span></div>
+      <pre>Every time I started a new project: copy CLAUDE.md, re-add hooks to settings.json, recreate the skills directory. Every. Single. Time.
+
+So I built **claude-scaffold**:
+
+```bash
+npx claude-scaffold init
+```
+
+That deploys:
+- CLAUDE.md for your profile (ML engineer, FastAPI, fullstack, etc.)
+- 18 domain skills that auto-load based on your project's context
+- Hooks (UserPromptSubmit, SessionStart, PostToolUse, Stop)
+- Agents, commands, CI templates
+
+**The part that actually saves time**: skills activate automatically. Working in a repo with FastAPI routes → `fastapi-patterns` loads. LangGraph code → `langgraph-patterns`. RAG setup → `rag-vector-db`. Session cache prevents loading duplicates.
+
+**Cross-repo sync** — the main thing for me personally:
+```bash
+npx claude-scaffold update --all
+```
+Updates every registered repo to the latest version of your scaffold. I have ~15 repos, this is the command I run after any improvement.
+
+GitHub: https://github.com/pyramidheadshark/claude-scaffold
+npm: https://npmjs.com/package/claude-scaffold
+
+Happy to dig into the hook architecture if anyone's curious — the activation system took a few iterations to get right.</pre>
+    </div>
+    <p class="note">Тон: технический, личный ("я для себя"). Composio-стратегия: решение реальной боли, без восклицательных знаков, без маркетинга.</p>
+  </section>
+
+  <!-- REDDIT ClaudeAI -->
+  <section class="section" id="reddit-claudeai">
+    <div class="section-header">
+      <h2>Reddit r/ClaudeAI</h2>
+      <span class="priority p2">P2</span>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Заголовок</span></div>
+      <pre>Built a CLI scaffold for Claude Code — deploy CLAUDE.md, hooks, and skills to any project in one npx command</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Текст (короче)</span></div>
+      <pre>If you use Claude Code across multiple projects, you've probably dealt with maintaining consistent setups.
+
+**claude-scaffold**: `npx claude-scaffold init` deploys a full Claude Code configuration — CLAUDE.md, hooks, 18 domain skills, agents — to any repo.
+
+Skills auto-activate via hooks based on what files are in the project (no manual setup). `update --all` keeps everything synced.
+
+→ https://github.com/pyramidheadshark/claude-scaffold</pre>
+    </div>
+  </section>
+
+  <!-- DISCORD ANTHROPIC -->
+  <section class="section" id="discord-anthropic">
+    <div class="section-header">
+      <h2>Anthropic Discord — #projects / #show-and-tell</h2>
+      <span class="priority p2">P2</span>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Сообщение</span></div>
+      <pre>Built a scaffold CLI for managing Claude Code setups across repos: https://github.com/pyramidheadshark/claude-scaffold
+
+`npx claude-scaffold init` deploys CLAUDE.md + hooks + skills + agents in one shot. 18 domain skills auto-activate based on project context, session caching keeps token use predictable. `update --all` syncs all registered repos.
+
+Might be useful if you're maintaining Claude Code config across several projects or a team.</pre>
+    </div>
+  </section>
+
+  <!-- DISCORD MLOPS -->
+  <section class="section" id="discord-mlops">
+    <div class="section-header">
+      <h2>Discord MLOps (Chip Huyen) — #share-your-work</h2>
+      <span class="priority p2">P2</span>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Сообщение</span></div>
+      <pre>If you use Claude Code for ML projects — sharing something I've found useful.
+
+**claude-scaffold**: npx CLI that deploys a full Claude Code setup to any repo (CLAUDE.md + hooks + domain skills).
+
+ML-specific skills: MLflow experiment tracking, Pandera data validation, LangGraph pipelines, RAG/Qdrant, ONNX/Parquet data handling, YC infra. They auto-activate when you're working in a relevant context.
+
+`npx claude-scaffold update --all` keeps everything synced across repos.
+
+→ https://github.com/pyramidheadshark/claude-scaffold</pre>
+    </div>
+  </section>
+
+  <!-- SHOW HN -->
+  <section class="section" id="show-hn">
+    <div class="section-header">
+      <h2>Hacker News — Show HN</h2>
+      <span class="priority p2">P2</span>
+    </div>
+    <div class="warn">
+      ⚠️ Требует: идеальный README, демо (GIF или live), быть онлайн первые 2 часа. Время: вт-чт 9–11am EST. Не делать раньше этого.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Заголовок</span></div>
+      <pre>Show HN: claude-scaffold – deploy CLAUDE.md, hooks, and skills to any repo via npx</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Первый комментарий автора (обязателен)</span></div>
+      <pre>Hi HN,
+
+I maintain Claude Code configurations across ~15 repositories and was tired of doing it manually. This is the tool I built to solve that.
+
+`npx claude-scaffold init` deploys a full configuration: CLAUDE.md profile, hooks (UserPromptSubmit, SessionStart, PostToolUse, Stop), 18 domain skills, agents, and CI templates.
+
+The interesting part is the skill activation system. On every prompt, a UserPromptSubmit hook inspects the project's file tree and the prompt content, then injects relevant skill context — e.g., fastapi-patterns if you're in a FastAPI repo, rag-vector-db if you're working on embeddings. A session cache prevents the same skill from loading twice. This keeps token usage predictable.
+
+`npx claude-scaffold update --all` reads a local registry of deployed repos and updates all of them — useful when you improve a skill definition or add a new hook.
+
+Technical details:
+- Hooks are pure Node.js, no dependencies (portability requirement)
+- 226 Jest + 48 Python tests
+- Update mechanism uses git SHAs to detect when a repo is already current
+
+Not a SaaS, no account, MIT licensed.
+
+Happy to discuss the design — particularly curious if others have found better approaches to the skill activation heuristics.
+
+https://github.com/pyramidheadshark/claude-scaffold</pre>
+    </div>
+  </section>
+
+  <!-- DEV.TO -->
+  <section class="section" id="devto-article">
+    <div class="section-header">
+      <h2>dev.to — статья EN</h2>
+      <span class="priority p2">P2</span>
+      <span class="action-tag">LLM SEO</span>
+    </div>
+    <div class="info">
+      Статья индексируется AI-моделями. Цель: "владеть" запросом "how to manage CLAUDE.md across multiple repositories". Vercel задокументировал, что 10% их signups приходит с ChatGPT-ответов — именно через такие статьи.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Заголовок (оптимизирован под AI-поиск)</span></div>
+      <pre>Managing CLAUDE.md Across Multiple Repositories Without Going Insane</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Структура статьи</span></div>
+      <pre>## The Problem
+You have 5 repos. Each has a slightly different CLAUDE.md.
+You fixed a prompt in one — now you need to copy it to 4 others.
+You added a hook — repeat 4 times. You updated your team standards — now what?
+
+## What Others Do (and Why It Doesn't Scale)
+- Copy-paste: works for 2 repos, breaks at 5
+- Git submodules: painful to update
+- davila7/claude-code-templates: 1000 static files to copy manually
+
+## The Approach: Treat Claude Code Config as Infrastructure
+One source of truth → npx deploy → registry tracks where it went → update --all to sync
+
+## claude-scaffold in Practice
+[concrete demo: before/after, terminal output]
+
+## How Skill Auto-Activation Works
+[technical section — hooks, pattern matching, session cache]
+
+## Cross-Repo Sync
+[update --all, SHA detection, what gets updated]
+
+## When It Makes Sense (and When It Doesn't)
+[honest: overkill for 1 repo, useful for 3+]
+
+## Getting Started
+npx claude-scaffold init</pre>
+    </div>
+  </section>
+
+  <!-- HABR -->
+  <section class="section" id="habr">
+    <div class="section-header">
+      <h2>Habr — статья RU</h2>
+      <span class="priority p3">P3</span>
+    </div>
+    <div class="info">
+      На Habr уже есть живые статьи про Claude Code (44 настройки, гайд 2026). Рабочая ниша. Статья вида "как я стандартизировал..." — стандартный формат для Песочницы → хаба.
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Заголовок</span></div>
+      <pre>Как я стандартизировал Claude Code в 15 проектах через одну npx-команду</pre>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Структура</span></div>
+      <pre>## Проблема: 15 репозиториев, 15 разных CLAUDE.md
+## Что такое CLAUDE.md, хуки и скиллы (кратко для тех, кто не в теме)
+## Архитектура claude-scaffold: как это устроено
+## Демо: npx claude-scaffold init
+## Как скиллы активируются автоматически (технический раздел)
+## update --all: обновление всех репо сразу
+## Что в итоге: конкретные цифры
+## Ссылки</pre>
+    </div>
+  </section>
+
+  <!-- TELEGRAM -->
+  <section class="section" id="telegram">
+    <div class="section-header">
+      <h2>Telegram @ai_machinelearning_big_data / @evocoders</h2>
+      <span class="priority p3">P3</span>
+    </div>
+    <div class="content-box">
+      <div class="label"><span>Шаблон поста</span></div>
+      <pre>🛠 Сделал CLI-инструмент для тех, кто работает с Claude Code в нескольких проектах.
+
+**claude-scaffold** — одной командой разворачивает полную конфигурацию в любой репозиторий: CLAUDE.md, хуки, 18 доменных скиллов (FastAPI, LangGraph, RAG, MLflow, Pandera и др.), агентов и CI-шаблоны.
+
+Главная фича: скиллы подключаются автоматически через хуки — система сама определяет по файлам проекта, что загрузить. Нет дублирования контекста, нет лишних токенов.
+
+Обновление всех репо сразу: `npx claude-scaffold update --all`
+
+→ https://github.com/pyramidheadshark/claude-scaffold</pre>
+    </div>
+  </section>
+
+</main>
+</div>
+</body>
+</html>

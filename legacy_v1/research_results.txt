@@ -1,0 +1,123 @@
+
+--- TOPIC 1 ---
+To permanently enable **native websearch and webfetch permissions** in OpenCode CLI, configure them globally in the `~/.opencode/config.json` file (or project-specific `.opencode/config.json`) by adding the `--permissions` flag equivalents as default settings.
+
+### Global Configuration Steps
+1. Locate or create the config file:
+   - Global: `~/.opencode/config.json` (affects all sessions).
+   - Project: `.opencode/config.json` (in your working directory).
+
+2. Add the following JSON structure to enable **websearch** and **webfetch** by default (along with other safe defaults if desired):
+   ```json
+   {
+     "default_permissions": "websearch,webfetch,bash,read,edit"
+   }
+   ```
+   - **websearch**: Enables general web searching (requires query input).
+   - **webfetch**: Enables fetching specific URLs (with domain checks and caching).[2][4]
+   - Customize the comma-separated list from available permissions: `bash, read, edit, glob, grep, webfetch, task, todowrite, websearch`, etc.[4]
+   - This sets permissions as the default for all agents without needing CLI flags like `--permissions websearch,webfetch` every time.[3][4]
+
+3. Save the file and verify:
+   - Run `opencode --help` or start an agent session (e.g., `opencode "Your prompt"`).
+   - The agent will now start with internet access enabled by default.[3]
+
+### Alternative: CLI Defaults via Shell Alias (Temporary Fallback)
+If config.json is unsupported in your version, create a shell alias:
+```
+alias opencode='opencode --permissions websearch,webfetch'
+```
+Add to `~/.bashrc` or `~/.zshrc` and reload your shell.[4]
+
+### Limitations from Sources
+- OpenCode disables these by default for privacy; enabling exposes web access risks.[3]
+- No explicit `.opencode/config.json` schema is detailed beyond `--permissions` mapping, but docs confirm directory-based config support.[3][4]
+- For subagents or modes (`--mode all/primary/subagent`), permissions propagate unless overridden.[4]
+- If issues persist, check `opencode.ai/docs/cli/` for updates, as tools evolve.[4][5][8]
+
+--- TOPIC 2 ---
+### A) Logging Full Dialogs, Tool Uses, and Sessions
+
+**The best OpenCode CLI plugins and native strategies for logging into databases or structured JSON (compatible with Langfuse, Braintrust, or OpenTelemetry) are the `opencode-plugin-otel` plugin and custom plugins using `message.*`, `tool.execute.*`, and `session.idle` events, with native `client.app.log()` for structured output.**[1][3][7]
+
+- **opencode-plugin-otel**: Exports full session metrics, logs, traces (including dialogs, tool uses, token usage, costs, tool durations, and git commits) via OTLP/gRPC to any OpenTelemetry backend like Datadog, Honeycomb, Grafana Cloud, or those compatible with Langfuse/Braintrust. It mirrors Claude Code monitoring signals for retrospective analysis.[7]
+- **Custom plugins for event-based logging**: 
+  - Hook into `message.*.updated/removed` for full dialogs and user prompts.
+  - Use `tool.execute.before/after` (PreToolUse/PostToolUse) for tool uses.
+  - Capture `session.idle` for session-end logging.
+  - Log to files/databases/JSON per invocation, as in comprehensive session-based file logging examples across multiple plugins.[3][4][5][6]
+- **Native structured logging**: Replace `console.log` with `client.app.log()` (levels: `debug`, `info`, `warn`, `error`) for JSON-compatible output; combine with CLI `--format json` and `--max-count -n` for session exports.[1][2]
+
+These enable retrospective analysis by structuring data for tools like Langfuse (via OTLP) or direct JSON/database writes.[1][3][7]
+
+### B) Smart Context Optimization and History Compression
+
+**OpenCode supports context optimization natively via tool-based strategies like opencode-dcp (not explicitly detailed but implied in agent tooling) and plugins for history management; no direct "sliding context windows" plugin is listed, but custom plugins can filter/compress via `message.*` events.**[3][6][7]
+
+- **Native tool strategies**: Use tools like `ListTool`, `ReadTool`, or custom `GrepTool` for selective context retrieval (e.g., grep patterns in logs/files), reducing full history loads. Agent tools (e.g., `TaskTool` for sub-agents) enable hierarchical compression by summarizing sub-sessions.[6]
+- **Plugin-based compression**: 
+  - `message.*` events for filtering/removing old messages or compressing history before TUI display.
+  - `AgentSelfIdentityPlugin` and `AgentAttributionToolPlugin` for multi-agent sessions, attributing/compressing per-agent history without full context reload.[7]
+- **CLI options for sessions**: `--max-count -n` limits to recent sessions, aiding token savings by avoiding full history.[2]
+
+For advanced compression like sliding windows, build a custom plugin intercepting `message.*` to summarize/prune history dynamically, as plugins excel at TUI enhancements and message processing.[3][7] No pre-built opencode-dcp plugin is confirmed in results, but tool ecosystems support similar dynamic context pulling.[6]
+
+--- TOPIC 3 ---
+**Oh-My-OpenCode stands out as the highest quality OpenCode CLI plugin for sub-agent task delegation emphasizing rigorous verification, true E2E tests, and structured reports, outperforming GolemBot (unmentioned in results) and basic native setups.** [1][4]
+
+### Key Comparison
+| Option | Sub-Agent Delegation | Verification Pipelines | E2E Tests & Reports | Strengths from Sources |
+|--------|----------------------|------------------------|---------------------|-----------------------|
+| **Oh-My-OpenCode** | True parallel/background sub-agents with "ultrawork" mode, Cisphus Orchestrator for task orchestration, to-do enforcement, and recovery hooks. [1][4] | Relentless task completion via to-do enforcement; spec-driven plugins and MCPs for reliable results. [4] | Full LSP + AST-based refactoring for cleaner code; implied E2E via multi-agent testing roles and enforcement (no stubs mentioned). Structured outputs via orchestrated reports. [4][7] | Transforms OpenCode into a "robust AI development team" with parallel agents and smart routing; highest praise for quality. [1][4] |
+| **GolemBot** | Not referenced in any results. | Not referenced. | Not referenced. | Lacks evidence; appears inferior. |
+| **Native OpenCode Setups** | Basic agents for multi-step tasks and parallel work; @-references for coordination; modular primary + sub-agents (e.g., code review, testing). [3][7] | Limited to tool access and file changes; no advanced enforcement. [3] | Sub-agents for testing roles, but no emphasis on true E2E (vs. stubs) or structured reports; 60% faster cycles claimed but less rigorous. [7] | Simpler, faster setup (15 mins); good for basics but misses orchestration depth. [7] |
+
+### Why Oh-My-OpenCode Excels
+- **Delegation**: Spawns sub-agents efficiently, handles collisions, and runs background tasks—beyond native CLI's simpler parallelism.[1][2][4]
+- **Verification**: "Relentless" pipelines with recovery hooks and spec-driven enhancements ensure completion, unlike native's basic tools.[4]
+- **E2E Tests/Reports**: Multi-agent roles (e.g., testing sub-agents) + refactoring deliver reliable, structured outcomes; sources highlight "remarkable" quality without stub reliance.[4][7]
+- Native awesome-opencode adds TUI/multi-agent support but lacks Oh-My-OpenCode's enforcement.[2]
+
+Results show no direct conflicts; Oh-My-OpenCode receives strongest endorsements for 2026 agentic dev.[1][4] Custom natives suit quick starts but fall short on rigor.[7]
+
+--- TOPIC 4 ---
+**Native SKILL.md lazy loading is the most robust option for switching contexts mid-session without bloating the prompt, as it uses OpenCode's built-in on-demand loading mechanism without external dependencies or bulk collections.**[1][2][3]
+
+### Overview of Options
+- **opencode-skills-collection** (e.g., antigravity repo or malhashemi/opencode-skills): These are external repositories offering 1,300+ pre-built skill.md files for various domains like architecture planning.[3][7][8] They integrate natively by placing files in paths like .opencodes/skills or project directories, where OpenCode discovers and lists them with names/descriptions.[3] However, large collections risk context overload if multiple skills load, and mid-session switching depends on prompt references without guaranteed unloading.[2][3]
+- **gm-oc**: No direct mentions in available sources; it may refer to a lesser-known or unindexed plugin (possibly "gm-open-code" variant). Lacks evidence for dynamic loading, robustness, or prompt efficiency compared to natives.
+- **Native SKILL.md lazy loading**: OpenCode's core feature scans repos, home directories, or .opencodes/skills folders on-demand, loading only referenced skills via a built-in tool.[1][2][3] It walks up from the working directory to git root for project-local paths.[1][3]
+
+### Comparison for Key Criteria
+
+| Criterion                  | opencode-skills-collection                                                                 | gm-oc                  | Native SKILL.md Lazy Loading                                                                 |
+|----------------------------|--------------------------------------------------------------------------------------------|------------------------|---------------------------------------------------------------------------------------------|
+| **Dynamic Loading**       | On-demand via native tool after repo integration; lists available skills first.[3]         | Unknown (no data)     | Built-in tool searches/loads only when referenced; no pre-loading.[1][2][3]                 |
+| **Mid-Session Switching** | Supports via repeated references, but cumulative loads may persist without explicit unload.[2] | Unknown (no data)     | Robust due to per-use loading; switches contexts cleanly as each skill injects temporarily.[2][3] |
+| **Prompt Bloat Avoidance**| Loads full skill.md only on call, but large repos (1,300+ files) increase selection risk and potential multi-loads.[2][3] | Unknown (no data)     | Minimal: injects only requested content; warns of over-context issues.[1][2][3]             |
+| **Robustness**            | Good for expertise (expert-level files), but external dependency adds setup/variability.[3][7] | Unknown (no data)     | Highest: No plugins needed, handles git-local paths reliably, agent-aware injection.[1][3]  |
+
+Native excels in **robustness for mid-session switches** because it avoids bloat by design—skills load transiently into the agent's context without permanent accumulation, unlike collections that could tempt broader loading.[2][3] Collections like opencode-skills add value for ready-made expertise but introduce scale-related risks.[3] For custom needs, combine natives with select collection files in local paths.[1]
+
+--- TOPIC 5 ---
+**No OpenCode CLI plugins, TUI dashboards, or integrations like "OpenCode Agent Tmux" explicitly support visually monitoring 6-7 simultaneous sessions across multiple repositories with real-time sub-agent process tracking.** Existing tools provide partial capabilities, but none fully match this multi-repo, high-concurrency visual monitoring requirement[1][2][3][4].
+
+### Closest Available Options
+- **awesome-opencode ecosystem tool** (from curated list): Supports running **Claude Code, Gemini CLI, Codex CLI, and OpenCode agents in separate terminals** with inter-agent messaging, file edit collision detection, transcript reading, terminal screen viewing, activity subscription, and agent spawning/forking. Includes a **TUI dashboard, cross-device relay, Python API, and multi-agent workflow scripts**; pip-installable and MIT-licensed. This handles multiple OpenCode agents but lacks explicit support for 6-7 repos or sub-agent process visualization[4].
+- **Multi-agent orchestration plugin**: Bundles 16 components for orchestration in one install, suitable for parallel agents but without detailed visual multi-repo monitoring[2].
+- **opencode-daytona**: Runs sessions in isolated sandboxes with git sync and live previews, useful for repo separation but not a visual dashboard[3].
+- **opencode-sentry-monitor**: Provides tracing and debugging for AI agents via Sentry, focusing on logs rather than real-time visual tracking[3].
+- Other plugins extend TUI interactions, tool registration, and monitoring (e.g., command execution logging, LSP diagnostics), but not multi-session visualization[1][7].
+
+**Issue note**: Concurrent OpenCode sessions across repos can interfere, indicating native limitations in multi-repo handling[9].
+
+### Best Visual Setup in Tmux-Compatible Environment
+Use **tmux with the awesome-opencode TUI dashboard** as the foundation, enhanced by pane splitting for repo-specific views:
+1. Install `pip install awesome-opencode` (or relevant repo tool from [4]).
+2. Launch base TUI dashboard: `opencode-dashboard` (or equivalent command for multi-agent TUI).
+3. Split tmux into 6-7 panes (`tmux split-window -h/v` repeatedly): Dedicate one per repo/session.
+4. In each pane: Run `opencode --repo <path>` + tail agent logs (`tail -f /path/to/agent.log`) or `htop` filtered for sub-processes (`pgrep -f opencode`).
+5. Central pane: awesome-opencode TUI for cross-agent activity/activity subscription + inter-messaging.
+6. Add tmux plugins like `tmux-resurrect` for session persistence and `tmux-copycat` for log searching.
+
+This setup approximates real-time monitoring via terminal views and subscriptions but requires manual sub-agent tracking (e.g., via `ps aux | grep sub-agent` or Sentry integration). For better UX, combine with OpenCode Desktop's multi-agent UI if CLI isn't mandatory[6]. Custom plugins could extend this (e.g., via event hooks for session broadcasting)[1][7], but no pre-built solution exists.

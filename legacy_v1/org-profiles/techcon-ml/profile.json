@@ -1,0 +1,22 @@
+{
+  "org": "techcon-ml",
+  "description": "TechCon ML Team — AI/ML services on Yandex Cloud infrastructure",
+  "project_types": {
+    "ml-pipeline": {
+      "description": "PyTorch/FastAPI ML pipelines with YC GPU workers",
+      "base_profile": "ai-developer"
+    },
+    "infra": {
+      "description": "Terraform/Packer YC infrastructure management",
+      "base_profile": "ai-developer"
+    },
+    "api-service": {
+      "description": "FastAPI services with Redis, Docker Compose",
+      "base_profile": "ai-developer"
+    },
+    "hub": {
+      "description": "Knowledge aggregation hub (read-only cross-repo analysis)",
+      "base_profile": "ai-developer"
+    }
+  }
+}
