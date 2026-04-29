@@ -1,0 +1,9 @@
+{
+  "version": "2.0",
+  "features": {
+    "enableWeb": true,
+    "enableMemoryBank": true,
+    "installOhMyOpenCode": true
+  },
+  "lastInit": "2026-04-29T06:14:12.184Z"
+}

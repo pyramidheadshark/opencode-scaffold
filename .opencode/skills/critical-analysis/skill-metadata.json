@@ -1,0 +1,20 @@
+{
+  "version": "1.1.0",
+  "updated": "2026-03-23",
+  "size_lines": 161,
+  "description": "Auto-analytics by default: 8-role SPP critique for ML experiments and architecture",
+  "resources": [
+    {
+      "file": "resources/role-prompts.md",
+      "description": "Full SPP system prompts for all 6 roles — used in Deep Mode subagents"
+    },
+    {
+      "file": "resources/ml-audit-protocol.md",
+      "description": "ML plateau detection, pivot signal logic, experiment manifest format"
+    },
+    {
+      "file": "resources/failure-patterns.md",
+      "description": "Annotated failure pattern catalog from defectoscopy + hub project history"
+    }
+  ]
+}

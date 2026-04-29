@@ -23,6 +23,6 @@ repos:
     hooks:
       - id: tests
         name: AI Verification Tests (pytest or npm test)
-        entry: bash -c "if [ -f pytest.ini ] || [ -f tox.ini ] || [ -d tests ] && ! [ -f package.json ]; then pytest tests/; elif [ -f package.json ]; then npm test; else echo 'No tests found'; fi"
+        entry: bash -c "if [ -f package.json ]; then npm test; else pytest tests/; fi"
         language: system
         pass_filenames: false

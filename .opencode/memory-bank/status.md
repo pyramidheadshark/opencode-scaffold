@@ -16,7 +16,7 @@ The codebase was reviewed against `opencode-scaffold-design.md`. The overall arc
 
 3. **Sub-agent Orchestration and Plugins (`init` command)**:
    - *Bug*: The design specified that `init` should automatically inject dependencies into `package.json`, but the script was only printing it as a "next step".
-   - *Fix*: Updated `init.ts` to actively modify `package.json` (if present), injecting `oh-my-opencode-slim`, `@tarquinen/opencode-dcp`, and `opencode-plugin-otel` as `devDependencies`. 
+   - *Fix*: Updated `init.ts` to actively modify `package.json` (if present), injecting `oh-my-opencode-slim` and `@tarquinen/opencode-dcp` as `devDependencies`. 
    - *Feature*: Automatically injected plugin configurations into the `.opencode/config.json` file.
    - *UX Improvement*: Updated the generated `OPENCODE.md` prompt to explicitly instruct the `Architect` agent to use the `delegateTask_Background` tool provided by `oh-my-opencode-slim` to invoke the created sub-agents.
 

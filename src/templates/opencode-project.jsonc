@@ -1,0 +1,51 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "openrouter/z-ai/glm-5.1",
+  "small_model": "openrouter/deepseek/deepseek-v4-flash",
+  "provider": {
+    "openrouter": {
+      "options": {
+        "apiKey": "{env:OPENROUTER_API_KEY}",
+        "baseURL": "https://openrouter.ai/api/v1"
+      }
+    }
+  },
+  "plugin": [
+    "oh-my-openagent",
+    "@tarquinen/opencode-dcp",
+    "opencode-skillful",
+    "opencode-mem",
+    "opencode-vibeguard",
+    "opencode-deepseek-thinking-fix",
+    "opencode-command-hooks",
+    "setu-opencode",
+    "cc-safety-net",
+    "opencode-injection-guard",
+    "block-no-verify",
+    "opencode-rules"
+  ],
+  "compaction": {
+    "auto": true,
+    "prune": true,
+    "reserved": 10000
+  },
+  "permission": {
+    "edit": "allow",
+    "bash": "ask",
+    "websearch": "allow",
+    "webfetch": "allow",
+    "skill": "allow"
+  },
+  "agent": {
+    "deep-worker": {
+      "description": "Deep autonomous worker for complex multi-file implementation",
+      "mode": "subagent",
+      "model": "openrouter/moonshotai/kimi-k2.6",
+      "temperature": 0.3,
+      "permission": {
+        "edit": "allow",
+        "bash": "allow"
+      }
+    }
+  }
+}
