@@ -3,7 +3,6 @@ import { initCommand } from './commands/init.js';
 import { syncSkillsCommand } from './commands/skills.js';
 import { telemetryServerCommand } from './commands/telemetry.js';
 import { astCommand } from './commands/ast.js';
-import { towerCommand } from './tui/index.js';
 
 const program = new Command();
 
@@ -33,10 +32,5 @@ program
   .description('Generate AST project map for LLM RAG indexing')
   .option('-d, --dir <path>', 'Target directory to index')
   .action(astCommand);
-
-program
-  .command('tower')
-  .description('Start the Control Tower TUI dashboard')
-  .action(towerCommand);
 
 program.parse(process.argv);

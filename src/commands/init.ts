@@ -14,6 +14,7 @@ export async function initCommand(options: { yes?: boolean }) {
         enableWeb: true,
         enableMemoryBank: true,
         installOhMyOpenCode: true,
+        setupPreCommit: true,
       }
     : await inquirer.prompt([
         {
