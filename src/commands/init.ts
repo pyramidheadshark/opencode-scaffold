@@ -75,8 +75,17 @@ export async function initCommand(options: { yes?: boolean }) {
   // 4. Setup OpenCode Config (.opencode/config.json)
   const ocConfig: any = {
     model: 'google/gemini-3.1-pro-preview',
+    plugins: []
   };
   
+  if (answers.installOhMyOpenCode) {
+    ocConfig.plugins.push('oh-my-opencode-slim');
+    ocConfig.plugins.push('@tarquinen/opencode-dcp');
+  }
+  if (answers.enableTelemetry) {
+    ocConfig.plugins.push('opencode-plugin-otel');
+  }
+
   if (answers.enableWeb) {
     ocConfig.default_permissions = 'websearch,webfetch,bash,read,edit,glob,grep';
   } else {
@@ -104,10 +113,36 @@ export async function initCommand(options: { yes?: boolean }) {
   // 8. Sync Skills
   await syncSkillsCommand();
 
-  console.log(chalk.green.bold('\n✅ opencode-scaffold successfully initialized!\n'));
+  // 9. Inject Plugins into package.json (if it exists)
+  if (answers.installOhMyOpenCode || answers.enableTelemetry) {
+    const pkgPath = path.join(cwd, 'package.json');
+    try {
+      const pkgRaw = await fs.readFile(pkgPath, 'utf8');
+      const pkg = JSON.parse(pkgRaw);
+      pkg.devDependencies = pkg.devDependencies || {};
+      
+      if (answers.installOhMyOpenCode) {
+        pkg.devDependencies['oh-my-opencode-slim'] = '^1.0.0';
+        pkg.devDependencies['@tarquinen/opencode-dcp'] = '^1.0.0';
+      }
+      if (answers.enableTelemetry) {
+        pkg.devDependencies['opencode-plugin-otel'] = '^1.0.0';
+      }
+
+      await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
+      console.log(chalk.gray('Injected dependencies into package.json'));
+    } catch (e) {
+      console.log(chalk.yellow('No package.json found. Please install plugins manually.'));
+    }
+  }
+
+  console.log(chalk.green.bold('\n? opencode-scaffold successfully initialized!\n'));
   console.log(chalk.white('Next steps:'));
-  if (answers.installOhMyOpenCode) {
-    console.log(chalk.yellow('  npm install -D oh-my-opencode-slim @tarquinen/opencode-dcp'));
+  if (answers.installOhMyOpenCode || answers.enableTelemetry) {
+    console.log(chalk.yellow('  npm install'));
+  }
+  if (answers.setupPreCommit || options.yes) {
+    console.log(chalk.yellow('  pre-commit install'));
   }
   console.log(chalk.yellow('  opencode --system-prompt-file .opencode/OPENCODE.md'));
 }
@@ -176,6 +211,11 @@ It is your persistent memory. ALWAYS update \`activeContext.md\` and \`progress.
 Consult \`systemContext.md\` before making architectural decisions.
 </memory_bank_rules>
 
+<orchestration_rules>
+You have access to sub-agents via the 'oh-my-opencode-slim' plugin.
+When a task is complex or requires deep testing, use the \`delegateTask_Background\` tool to assign it to a sub-agent (e.g., QA Engineer, Security Sentinel). Let them work in the background and only return the summary to you to save your context window.
+</orchestration_rules>
+
 You are the Architect agent. Please read .opencode/memory-bank/projectbrief.md to begin.
 `;
   await fs.writeFile(path.join(baseDir, 'OPENCODE.md'), mainPrompt);
@@ -205,11 +245,25 @@ async function generatePreCommitHooks(cwd: string) {
       - id: ruff
         args: [ --fix ]
       - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        additional_dependencies: [types-all]
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.0.0
+    hooks:
+      - id: eslint
+        additional_dependencies:
+          - eslint
+          - typescript
+          - typescript-eslint
+        types: [javascript, typescript]
   - repo: local
     hooks:
       - id: tests
-        name: AI Verification Tests
-        entry: pytest tests/
+        name: AI Verification Tests (pytest or npm test)
+        entry: bash -c "if [ -f package.json ]; then npm test; else pytest tests/; fi"
         language: system
         pass_filenames: false
 `;

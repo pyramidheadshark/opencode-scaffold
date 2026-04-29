@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 try:
+    import tree_sitter
     import tree_sitter_python
     from tree_sitter import Language, Parser, Query
 except ImportError:
@@ -57,27 +58,42 @@ def build_ast_map(directory):
                     code_bytes = f.read()
                     
                 tree = parser.parse(code_bytes)
-                captures = query.captures(tree.root_node)
-                
-                # Deduplicate or group by node
                 func_sigs = []
                 class_names = []
-                
-                for capture in captures:
-                    node = capture[0]
-                    tag = capture[1]
-                    text = code_bytes[node.start_byte:node.end_byte].decode('utf-8')
-                    if tag == 'class_name':
-                        class_names.append(text)
-                    elif tag == 'func_name':
-                        func_sigs.append(text)
+                if hasattr(query, 'captures'):
+                    captures = query.captures(tree.root_node)
+                    for capture in captures:
+                        node = capture[0]
+                        tag = capture[1]
+                        text = code_bytes[node.start_byte:node.end_byte].decode('utf-8')
+                        if tag == 'class_name':
+                            class_names.append(text)
+                        elif tag == 'func_name':
+                            func_sigs.append(text)
+                else:
+                    cursor = tree_sitter.QueryCursor(query)
+                    captures = cursor.captures(tree.root_node)
+                    all_nodes = []
+                    for tag, nodes in captures.items():
+                        for node in nodes:
+                            all_nodes.append((tag, node))
+                    
+                    # Sort nodes by start_byte to preserve file order
+                    all_nodes.sort(key=lambda x: x[1].start_byte)
+                    
+                    for tag, node in all_nodes:
+                        text = code_bytes[node.start_byte:node.end_byte].decode('utf-8')
+                        if tag == 'class_name':
+                            class_names.append(text)
+                        elif tag == 'func_name':
+                            func_sigs.append(text)
                 
                 for cls in class_names:
                     output.append(f"{sub_indent}│   # class {cls}(...)")
                 for func in func_sigs:
                     output.append(f"{sub_indent}│   # def {func}(...)")
             except Exception as e:
-                output.append(f"{sub_indent}│   # Error parsing AST")
+                output.append(f"{sub_indent}│   # Error parsing AST: {str(e)}")
                 
     return "\n".join(output)
 
