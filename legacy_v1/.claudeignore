@@ -1,7 +1,0 @@
-node_modules/
-.claude/logs/
-.claude/cache/
-dev/active/
-*.jsonl
-*.tar.gz
-*.zip
