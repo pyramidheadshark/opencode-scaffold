@@ -3,7 +3,9 @@ import path from 'path';
 import chalk from 'chalk';
 import { existsSync } from 'fs';
 
-const HUB_SKILLS_PATH = 'C:\\Users\\pyramidheadshark\\Repos\\techcon_hub\\.claude\\skills';
+const HUB_SKILLS_PATH = process.env.TECHCON_HUB_PATH 
+  ? path.join(process.env.TECHCON_HUB_PATH, '.claude', 'skills')
+  : 'C:\\Users\\pyramidheadshark\\Repos\\techcon_hub\\.claude\\skills';
 
 export async function syncSkillsCommand() {
   console.log(chalk.cyan('🔄 Syncing skills from TechCon Hub...'));

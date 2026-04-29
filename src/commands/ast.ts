@@ -10,11 +10,16 @@ export async function astCommand(options: { dir?: string }) {
   console.log(chalk.cyan.bold('\n🔍 Generating AST Index...'));
 
   const targetDir = options.dir || process.cwd();
-  // Assumes script is at project_root/scripts/generate_ast.py and this file is compiled to dist/index.js
-  const scriptPath = path.join(__dirname, '..', 'scripts', 'generate_ast.py');
+  console.log(`Target Dir: ${targetDir}`);
+  // We use `__dirname` which is in dist/commands when running compiled code, or src/commands when running tsx
+  // By calculating path from project root we avoid dist/src confusion if we just rely on process.cwd() or relative from package root.
+  // Instead of relative to __dirname, let's find the package root.
+  const packageRoot = path.join(__dirname, '..');
+  const scriptPath = path.join(packageRoot, 'scripts', 'generate_ast.py');
 
   try {
-    const { stdout } = await execa('python', [scriptPath, targetDir]);
+    const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
+    const { stdout } = await execa(pythonCmd, [scriptPath, targetDir]);
     console.log(chalk.green(stdout));
   } catch (error: any) {
     console.log(chalk.red('\nFailed to generate AST. Make sure `tree-sitter` and `tree-sitter-python` are installed.'));
