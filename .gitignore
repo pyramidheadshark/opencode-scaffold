@@ -42,3 +42,5 @@ registry/cache/
 *.tgz
 *.tape
 *.cast
+legacy_v1/
+test_repo_telemetry/
