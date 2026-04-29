@@ -3,8 +3,7 @@
   "features": {
     "enableWeb": true,
     "enableMemoryBank": true,
-    "enableTelemetry": true,
     "installOhMyOpenCode": true
   },
-  "lastInit": "2026-04-28T23:02:58.856Z"
+  "lastInit": "2025-02-23T18:02:18.995Z"
 }

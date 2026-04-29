@@ -13,7 +13,6 @@ export async function initCommand(options: { yes?: boolean }) {
     ? {
         enableWeb: true,
         enableMemoryBank: true,
-        enableTelemetry: true,
         installOhMyOpenCode: true,
       }
     : await inquirer.prompt([
@@ -27,12 +26,6 @@ export async function initCommand(options: { yes?: boolean }) {
           type: 'confirm',
           name: 'enableMemoryBank',
           message: 'Set up Memory Bank architecture (prevents context amnesia)?',
-          default: true,
-        },
-        {
-          type: 'confirm',
-          name: 'enableTelemetry',
-          message: 'Enable local telemetry (SQLite/JSONL tracking for tokens & costs)?',
           default: true,
         },
         {
@@ -82,9 +75,6 @@ export async function initCommand(options: { yes?: boolean }) {
     ocConfig.plugins.push('oh-my-opencode-slim');
     ocConfig.plugins.push('@tarquinen/opencode-dcp');
   }
-  if (answers.enableTelemetry) {
-    ocConfig.plugins.push('opencode-plugin-otel');
-  }
 
   if (answers.enableWeb) {
     ocConfig.default_permissions = 'websearch,webfetch,bash,read,edit,glob,grep';
@@ -114,7 +104,7 @@ export async function initCommand(options: { yes?: boolean }) {
   await syncSkillsCommand();
 
   // 9. Inject Plugins into package.json (if it exists)
-  if (answers.installOhMyOpenCode || answers.enableTelemetry) {
+  if (answers.installOhMyOpenCode) {
     const pkgPath = path.join(cwd, 'package.json');
     try {
       const pkgRaw = await fs.readFile(pkgPath, 'utf8');
@@ -124,9 +114,6 @@ export async function initCommand(options: { yes?: boolean }) {
       if (answers.installOhMyOpenCode) {
         pkg.devDependencies['oh-my-opencode-slim'] = '^1.0.0';
         pkg.devDependencies['@tarquinen/opencode-dcp'] = '^1.0.0';
-      }
-      if (answers.enableTelemetry) {
-        pkg.devDependencies['opencode-plugin-otel'] = '^1.0.0';
       }
 
       await fs.writeFile(pkgPath, JSON.stringify(pkg, null, 2));
@@ -138,7 +125,7 @@ export async function initCommand(options: { yes?: boolean }) {
 
   console.log(chalk.green.bold('\n? opencode-scaffold successfully initialized!\n'));
   console.log(chalk.white('Next steps:'));
-  if (answers.installOhMyOpenCode || answers.enableTelemetry) {
+  if (answers.installOhMyOpenCode) {
     console.log(chalk.yellow('  npm install'));
   }
   if (answers.setupPreCommit || options.yes) {
