@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "z-ai/glm-5.1",
-  "small_model": "openai/gpt-5.4-nano",
+  "model": "openrouter/z-ai/glm-5.1",
+  "small_model": "openrouter/deepseek/deepseek-v4-flash",
   "provider": {
     "z-ai": {
       "options": {
@@ -33,12 +33,28 @@
     "cc-safety-net",
     "opencode-injection-guard",
     "block-no-verify",
-    "opencode-rules"
+    "opencode-rules",
+    "my-jogyo",
+    "omo-pulse",
+    "@lesquel/opencode-pilot",
+    ["opencode-tool-search", {
+      "alwaysLoad": ["read", "write", "edit", "bash", "glob", "grep", "lsp_diagnostics", "lsp_goto_definition", "lsp_find_references", "task", "todowrite", "compress"],
+      "searchLimit": 5,
+      "bm25": { "k1": 0.9, "b": 0.4 }
+    }],
+    "opencode-lazy-loader"
   ],
   "compaction": {
     "auto": true,
     "prune": true,
-    "reserved": 10000
+    "reserved": 15000
+  },
+  "mcp": {
+    "sqlite": {
+      "type": "local",
+      "command": ["uvx", "mcp-server-sqlite"],
+      "enabled": true
+    }
   },
   "permission": {
     "edit": "allow",
@@ -51,11 +67,37 @@
     "deep-worker": {
       "description": "Deep autonomous worker for complex multi-file implementation",
       "mode": "subagent",
-      "model": "openai/gpt-5.5",
+      "model": "openrouter/moonshotai/kimi-k2.6",
       "temperature": 0.3,
       "permission": {
         "edit": "allow",
         "bash": "allow"
+      }
+    },
+    "qa-engineer": {
+      "description": "Strict QA engineer for E2E testing and defect reports",
+      "mode": "subagent",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "bash": "allow"
+      }
+    },
+    "security-sentinel": {
+      "description": "Security analyst - finds vulnerabilities, injection risks, supply chain flaws",
+      "mode": "subagent",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "permission": {
+        "edit": "deny"
+      }
+    },
+    "performance-analyst": {
+      "description": "Performance analyst - Big-O, memory leaks, N+1 queries",
+      "mode": "subagent",
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "permission": {
+        "edit": "deny"
       }
     }
   }
