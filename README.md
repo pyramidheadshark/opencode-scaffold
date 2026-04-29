@@ -1,112 +1,118 @@
-# opencode-scaffold
+<div align="center">
 
-> CLI tool that bootstraps a powerful agentic environment for [OpenCode](https://opencode.ai).
+# 🏗️ opencode-scaffold
 
-One command sets up your project with agents, memory-bank, skills, MCP servers, and pre-commit hooks — everything needed for an AI-augmented development workflow.
+**Bootstrap a powerful agentic environment for [OpenCode](https://opencode.ai) in seconds**
 
-## What it does
+[![npm version](https://img.shields.io/npm/v/opencode-scaffold?color=blue&label=npm)](https://www.npmjs.com/package/opencode-scaffold)
+[![license](https://img.shields.io/github/license/pyramidheadshark/opencode-scaffold)](LICENSE)
+[![node](https://img.shields.io/node/v/opencode-scaffold?color=green)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
-Running `opencode-scaffold init` in a project directory generates:
+[English](#features) · [Русский](README.ru.md)
 
-| Component | Path | Description |
-|-----------|------|-------------|
-| Agent configs | `.opencode/agents/` | Architect (primary), QA Engineer, Security Sentinel, Performance Analyst |
-| Memory bank | `.opencode/memory-bank/` | Persistent context — project brief, progress, active context |
-| Entry prompt | `.opencode/OPENCODE.md` | System prompt with orchestration and memory rules |
-| Per-project config | `.opencode/config.json` | Model, plugins, permissions |
-| Pre-commit hooks | `.pre-commit-config.yaml` | ruff, mypy, eslint, test gate |
-| Skills | `.opencode/skills/` | Auto-detected from tech stack (Python → testing patterns, FastAPI → API patterns) |
-| Scaffold manifest | `.opencode-scaffold.json` | Tracks init options and version |
+</div>
 
-## Commands
+---
 
-```
-opencode-scaffold init          # Interactive scaffolding (-y for defaults)
-opencode-scaffold sync-skills   # Sync skills based on detected tech stack
-opencode-scaffold ast           # Generate AST map for LLM RAG indexing
-opencode-scaffold telemetry     # Start OTLP → SQLite telemetry server
-```
+## ✨ Features
 
-## Quick start
+### 🤖 AI Agent Team
+Sets up a complete agent hierarchy — from an orchestrating Architect to specialized sub-agents for testing, security, and performance analysis. Each agent knows its role and works autonomously.
+
+### 🧠 Persistent Memory Bank
+No more context amnesia between sessions. The memory bank stores project briefs, progress logs, and active context — your AI agents remember what you built yesterday.
+
+### 🔍 Auto Skill Detection
+Detects your tech stack (Python, FastAPI, Node.js, React) and copies relevant skills automatically. FastAPI project? You get API patterns. Python repo? Testing patterns. Zero configuration.
+
+### 🔒 Pre-commit Guards
+Generates battle-tested pre-commit hooks: ruff for linting, mypy for types, eslint for JS, plus a test gate that runs pytest or npm test before every commit.
+
+### 📊 Telemetry Server
+Built-in OTLP listener that maps traces to SQLite — see exactly how your agents spend their context budget and which tools they call most.
+
+### 🌳 AST Indexing
+Generates a tree-sitter-powered project map for LLM RAG indexing. Your AI agents get a structural understanding of the codebase, not just raw text.
+
+---
+
+## 🚀 Quick Start
 
 ```bash
-# Run directly (no install needed)
+# One command — no install needed
 npx opencode-scaffold init -y
-
-# Or install globally
-npm install -g opencode-scaffold
-opencode-scaffold init
 ```
 
-## Generated agents
+That's it. Your project now has:
 
-| Agent | Role | Model | Mode |
-|-------|------|-------|------|
-| Architect | Primary orchestrator, memory-bank maintainer | `zai-coding-plan/glm-5.1` | primary |
-| QA Engineer | E2E testing, defect reports | `zai-coding-plan/glm-4.7` | subagent |
-| Security Sentinel | Vulnerability scanning, injection risks | `zai-coding-plan/glm-4.7` | subagent |
-| Performance Analyst | Big-O analysis, memory leaks, N+1 queries | `zai-coding-plan/glm-4.7` | subagent |
+```
+your-project/
+├── .opencode/
+│   ├── agents/              # 🤖 Agent configs + prompts
+│   │   ├── architect.md
+│   │   ├── qa_engineer.md
+│   │   ├── security_sentinel.md
+│   │   ├── performance_analyst.md
+│   │   └── prompts/
+│   ├── memory-bank/         # 🧠 Persistent context
+│   │   ├── projectbrief.md
+│   │   ├── activeContext.md
+│   │   ├── progress.md
+│   │   ├── systemContext.md
+│   │   └── productContext.md
+│   ├── skills/              # 🔍 Auto-detected skills
+│   ├── config.json          # ⚙️ Per-project config
+│   └── OPENCODE.md          # 📋 Entry prompt
+├── .pre-commit-config.yaml  # 🔒 Lint + test gates
+└── .opencode-scaffold.json  # 📦 Manifest
+```
 
-Models can be changed per-project via `.opencode/config.json`.
+## 📋 Commands
 
-## Template
+| Command | Description |
+|---------|-------------|
+| `opencode-scaffold init` | Interactive scaffolding (use `-y` for defaults) |
+| `opencode-scaffold sync-skills` | Detect tech stack and sync relevant skills |
+| `opencode-scaffold ast` | Generate AST map for LLM RAG indexing |
+| `opencode-scaffold telemetry` | Start OTLP → SQLite telemetry server |
 
-`src/templates/opencode-project.jsonc` contains the canonical OpenCode config with:
-- Provider setup (Z.AI Coding Plan, OpenRouter fallback)
-- Plugin stack (oh-my-openagent, opencode-dcp, opencode-tool-search, and 12 more)
-- MCP servers (web search, web reader, GitHub repo knowledge, SQLite)
-- Agent definitions for the sub-agent orchestration layer
+## 🤖 Generated Agents
 
-## Development
+| Agent | Role | Mode | Description |
+|-------|------|------|-------------|
+| 🏛️ Architect | Orchestrator | Primary | Main agent — delegates work, maintains memory bank |
+| 🧪 QA Engineer | Testing | Subagent | E2E tests, defect reports, 3 retries max |
+| 🛡️ Security Sentinel | Security | Subagent | Vulnerability scanning, injection risks, supply chain |
+| ⚡ Performance Analyst | Optimization | Subagent | Big-O analysis, memory leaks, N+1 queries |
+
+Agents are configured for [Z.AI Coding Plan](https://z.ai) models but can be changed per-project via `.opencode/config.json`.
+
+## 🔌 Plugin Ecosystem
+
+The generated config includes a curated plugin stack:
+
+| Category | Plugins |
+|----------|---------|
+| Orchestration | [oh-my-openagent](https://github.com/nicepkg/oh-my-opencode), [opencode-skillful](https://github.com/nicepkg/opencode-skillful) |
+| Context | [@tarquinen/opencode-dcp](https://github.com/Tarquinen/opencode-dcp), [opencode-mem](https://github.com/nicepkg/opencode-mem) |
+| Quality | [opencode-vibeguard](https://github.com/nicepkg/opencode-vibeguard), [cc-safety-net](https://github.com/nicepkg/cc-safety-net) |
+| Efficiency | [opencode-tool-search](https://github.com/nicepkg/opencode-tool-search), [opencode-lazy-loader](https://github.com/nicepkg/opencode-lazy-loader) |
+| Governance | [opencode-rules](https://github.com/nicepkg/opencode-rules), [opencode-command-hooks](https://github.com/nicepkg/opencode-command-hooks) |
+| MCP Servers | Web Search, Web Reader, GitHub Knowledge (zread), SQLite |
+
+## 🛠️ Development
 
 ```bash
+git clone https://github.com/pyramidheadshark/opencode-scaffold.git
+cd opencode-scaffold
+npm install
 npm run build      # tsup → dist/index.js
 npm test           # vitest run tests/e2e/
 npx tsc --noEmit   # typecheck
 ```
 
-## Project structure
-
-```
-src/
-├── commands/          # CLI command handlers
-│   ├── init.ts        #   Scaffold .opencode/ directories + agents + memory-bank
-│   ├── ast.ts         #   Tree-sitter AST indexing via Python subprocess
-│   ├── skills.ts      #   Tech stack detection + skill copying
-│   └── telemetry.ts   #   Express OTLP receiver → SQLite
-├── templates/         # Embedded config templates
-│   └── opencode-project.jsonc
-└── index.ts           # Commander CLI entry point
-```
-
-## Dependencies
-
-This project builds on the work of many excellent open-source libraries:
-
-| Library | Purpose | License |
-|---------|---------|---------|
-| [commander](https://github.com/tj/commander.js) | CLI framework | MIT |
-| [inquirer](https://github.com/SBoudrias/Inquirer.js) | Interactive prompts | MIT |
-| [chalk](https://github.com/chalk/chalk) | Terminal colors | MIT |
-| [express](https://github.com/expressjs/express) | Telemetry HTTP server | MIT |
-| [sqlite3](https://github.com/TryGhost/node-sqlite3) | Telemetry storage | BSD-3-Clause |
-| [tsup](https://github.com/egoist/tsup) | Build tool (esbuild wrapper) | MIT |
-| [typescript](https://github.com/microsoft/TypeScript) | Type system | Apache-2.0 |
-| [vitest](https://github.com/vitest-dev/vitest) | Test framework | MIT |
-| [execa](https://github.com/sindresorhus/execa) | Process execution in tests | MIT |
-
-Plugins configured by the template (installed separately in target projects):
-
-| Plugin | Purpose |
-|--------|---------|
-| [oh-my-openagent](https://github.com/nicepkg/oh-my-opencode) | Sub-agent orchestration, model routing |
-| [@tarquinen/opencode-dcp](https://github.com/Tarquinen/opencode-dcp) | Dynamic context pruning |
-| [opencode-tool-search](https://github.com/nicepkg/opencode-tool-search) | BM25 lazy tool loading |
-| [opencode-skillful](https://github.com/nicepkg/opencode-skillful) | Skill system |
-| [opencode-mem](https://github.com/nicepkg/opencode-mem) | Memory management |
-| [opencode-vibeguard](https://github.com/nicepkg/opencode-vibeguard) | Output quality guard |
-
-## Publishing to npm
+## 📦 Publishing
 
 ```bash
 npm run build
@@ -114,8 +120,20 @@ npm version patch        # or minor, major
 npm publish --access public
 ```
 
-The package is configured as an ESM CLI tool with `bin` entry and `files` whitelist. Users can run it via `npx opencode-scaffold init -y` without global install.
+## 📝 Dependencies & Attribution
+
+| Library | Purpose | Author | License |
+|---------|---------|--------|---------|
+| [commander](https://github.com/tj/commander.js) | CLI framework | [@tj](https://github.com/tj) | MIT |
+| [inquirer](https://github.com/SBoudrias/Inquirer.js) | Interactive prompts | [@SBoudrias](https://github.com/SBoudrias) | MIT |
+| [chalk](https://github.com/chalk/chalk) | Terminal styling | [@chalk](https://github.com/chalk) | MIT |
+| [express](https://github.com/expressjs/express) | Telemetry HTTP server | [Express.js](https://github.com/expressjs) | MIT |
+| [sqlite3](https://github.com/TryGhost/node-sqlite3) | Telemetry storage | [Ghost Foundation](https://github.com/TryGhost) | BSD-3-Clause |
+| [tsup](https://github.com/egoist/tsup) | Build tool | [@egoist](https://github.com/egoist) | MIT |
+| [TypeScript](https://github.com/microsoft/TypeScript) | Type system | [Microsoft](https://github.com/microsoft) | Apache-2.0 |
+| [vitest](https://github.com/vitest-dev/vitest) | Test framework | [@sheremet-va](https://github.com/sheremet-va) | MIT |
+| [execa](https://github.com/sindresorhus/execa) | Process execution | [@sindresorhus](https://github.com/sindresorhus) | MIT |
 
 ## License
 
-MIT
+[MIT](LICENSE) © pyramidheadshark

@@ -9,5 +9,5 @@ export default defineConfig({
   splitting: false,
   dts: false,
   banner: { js: '#!/usr/bin/env node' },
-  external: ['ink', 'react', 'chokidar', 'commander', 'inquirer', 'chalk', 'execa']
+  external: ['commander', 'inquirer', 'chalk', 'execa']
 });
